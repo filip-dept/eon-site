@@ -1,0 +1,58 @@
+/* ─── E.ON brand fonts ───────────────────────────────────────────────────── */
+
+/* Display headline font — "EON" / Head */
+@font-face {
+  font-family: 'EON Head';
+  src: url('/fonts/EON-Head.otf') format('opentype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* EON Brix Sans — Regular */
+@font-face {
+  font-family: 'EON Brix Sans';
+  src: url('/fonts/EONBrixSans-Regular.otf') format('opentype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'EON Brix Sans';
+  src: url('/fonts/EONBrixSans-RegularItalic.otf') format('opentype');
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+}
+
+/* EON Brix Sans — Medium */
+@font-face {
+  font-family: 'EON Brix Sans';
+  src: url('/fonts/EONBrixSans-Medium.otf') format('opentype');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'EON Brix Sans';
+  src: url('/fonts/EONBrixSans-MediumItalic.otf') format('opentype');
+  font-weight: 500;
+  font-style: italic;
+  font-display: swap;
+}
+
+/* EON Brix Sans — Bold */
+@font-face {
+  font-family: 'EON Brix Sans';
+  src: url('/fonts/EONBrixSans-Bold.otf') format('opentype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'EON Brix Sans';
+  src: url('/fonts/EONBrixSans-BoldItalic.otf') format('opentype');
+  font-weight: 700;
+  font-style: italic;
+  font-display: swap;
+}

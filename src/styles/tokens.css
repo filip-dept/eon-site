@@ -1,0 +1,52 @@
+:root {
+  /* ─── Brand colours (from Figma variables) ─── */
+  --c-red: #ea1b0a;             /* SCH background/interactive/primary, gradient stop 1 */
+  --c-magenta: #c11054;         /* gradient stop 3 */
+  --c-purple: #941481;          /* gradient stop 4 */
+  --c-white: #ffffff;
+  --c-text-primary: #262626;    /* SCH Text/decorative/primary */
+  --c-text-secondary: #5c5c5c;  /* UI text/decorative/secondary (placeholder) */
+  --c-chip-bg: #ebebeb;
+  --c-chip-border: #e5e4e4;
+  --c-black: #0a0a0a;
+
+  /* Hero brand gradient (red → magenta → purple), top-left origin */
+  --hero-gradient: linear-gradient(135deg, #ea1b0a 0%, #ea1b0a 35%, #c11054 72%, #941481 100%);
+
+  /* ─── Typography ─── */
+  --font-head: 'EON Head', 'Arial Black', system-ui, sans-serif;
+  --font-body: 'EON Brix Sans', Arial, system-ui, sans-serif;
+
+  --fs-headline: 72px;
+  --lh-headline: 80px;
+  --fs-subhead: 28px;
+  --lh-subhead: 40px;
+  --fs-nav: 18px;
+  --fs-input: 18px;
+  --lh-input: 27px;
+  --fs-chip: 16px;
+  --lh-chip: 24px;
+
+  /* ─── Layout ─── */
+  --nav-height: 68px;
+  --nav-pad-x: clamp(16px, 4vw, 48px);
+  --hero-pad: 20px;
+  --container-max: 1440px;
+
+  /* Chat module */
+  --chat-width: 660px;
+  --chat-radius: 24px;
+  --chat-pad: 12px;
+  --chat-gap: 24px;
+  --chat-shadow: 0px 4px 24px 0px rgba(0, 0, 0, 0.1);
+
+  /* Image area */
+  --media-radius: 20px;
+
+  /* Scroll indicator */
+  --scroll-size: 66px;
+
+  /* ─── Easings ─── */
+  --ease-eon: cubic-bezier(0.33, 0.02, 0, 0.99);
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+}

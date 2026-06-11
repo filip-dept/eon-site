@@ -1,0 +1,304 @@
+/* ─── Hero (taller than viewport for parallax) ──────────────────────────── */
+.hero {
+  position: relative;
+  height: 150vh; /* overridden at runtime — capped to 1.5× viewport */
+  /* visible (not clip) so the sticky stage pins to the viewport; the image is
+     clipped by the SVG itself, so nothing leaks */
+  overflow: visible;
+  background: var(--hero-gradient);
+}
+
+/* Sticky stage — pins the composition for one viewport while hero scrolls */
+.stage {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--hero-gradient);
+  overflow: visible; /* image is clipped by the SVG mask, not here, so chat/indicator can straddle freely */
+}
+
+/* ─── Navbar ─────────────────────────────────────────────────────────────── */
+.nav {
+  flex-shrink: 0;
+  height: var(--nav-height);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 var(--nav-pad-x);
+  z-index: 5;
+}
+
+.navLeft {
+  display: flex;
+  align-items: center;
+  gap: 48px;
+}
+
+.navLogo {
+  display: block;
+  width: 95px;
+  height: 28px;
+  will-change: transform, opacity;
+}
+
+.navLogo img { display: block; width: 95px; height: 28px; }
+
+.navLinks {
+  display: flex;
+  gap: 16px;
+  list-style: none;
+}
+
+.navLink {
+  font-family: var(--font-body);
+  font-size: var(--fs-nav);
+  color: var(--c-white);
+  padding: 22px 8px;
+  white-space: nowrap;
+  opacity: 0.95;
+  transition: opacity 0.2s ease;
+  will-change: transform, opacity;
+}
+.navLink:hover { opacity: 1; }
+
+.navIcons {
+  display: flex;
+  align-items: center;
+}
+
+.navIconBtn {
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--c-white);
+  will-change: transform, opacity;
+}
+
+.navIconBtn img { width: 20px; height: 20px; display: block; }
+
+.navAccount {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  height: 48px;
+  padding: 0 16px;
+  font-family: var(--font-body);
+  font-size: var(--fs-nav);
+  color: var(--c-white);
+  white-space: nowrap;
+  cursor: pointer;
+  will-change: transform, opacity;
+}
+.navAccount img { width: 16px; height: 20px; display: block; }
+
+/* ─── Hero body (text + media + chat + indicator) ───────────────────────── */
+.body {
+  position: relative;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 0 var(--hero-pad) var(--hero-pad);
+  min-height: 0;
+}
+
+/* Text block */
+.textWrap {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 30px 0;
+  z-index: 3;
+  position: relative;
+}
+
+.headline {
+  font-family: var(--font-head);
+  font-weight: 400;
+  font-size: clamp(40px, 6.2vw, 72px);
+  line-height: 1.05;
+  color: var(--c-white);
+  white-space: nowrap;
+  will-change: transform, opacity;
+}
+
+.subhead {
+  font-family: var(--font-body);
+  font-weight: 400;
+  font-size: clamp(17px, 2.2vw, 28px);
+  line-height: 1.4;
+  color: var(--c-white);
+  text-align: center;
+  will-change: transform, opacity;
+}
+
+/* ─── Media frame (rounded rect, holds masked image) ────────────────────── */
+.mediaFrame {
+  position: relative;
+  flex: 1;
+  overflow: visible; /* rounded corners come from the mask; chat/indicator must not be clipped */
+  min-height: 0;
+  z-index: 1;
+}
+
+.mediaSvg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  /* Outer rounded corners come from here (reliable), not the SVG mask */
+  border-radius: var(--media-radius);
+  overflow: hidden;
+}
+
+.mediaImage {
+  transform-box: fill-box;
+  transform-origin: center center;
+  will-change: transform;
+}
+
+/* ─── Chat card (straddles media top edge) ──────────────────────────────── */
+.chatWrap {
+  position: absolute;
+  top: 10px;         /* 20px gap above card + 20px CHAT_GAP in mask = 20px on all sides */
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(var(--chat-width), calc(100% - 56px));
+  z-index: 4;
+  will-change: transform, opacity;
+}
+
+.chatCard {
+  display: flex;
+  flex-direction: column;
+  gap: var(--chat-gap);
+  padding: var(--chat-pad);
+  background: var(--c-white);
+  border-radius: var(--chat-radius);
+  box-shadow: var(--chat-shadow);
+}
+
+.chatInputRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 4px;
+}
+
+.chatInput {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-family: var(--font-body);
+  font-size: var(--fs-input);
+  line-height: var(--lh-input);
+  color: var(--c-text-primary);
+  caret-color: var(--c-red);
+}
+.chatInput::placeholder { color: var(--c-text-secondary); }
+
+.chatActions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.chatIconBtn,
+.chatSendBtn {
+  width: 36px;
+  height: 36px;
+  border-radius: 24px;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: transform 0.15s ease, background 0.2s ease;
+}
+.chatIconBtn { background: transparent; }
+.chatIconBtn:hover { background: #f3f3f3; }
+.chatIconBtn svg { width: 22px; height: 22px; }
+
+.chatSendBtn { background: var(--c-red); }
+.chatSendBtn:hover { transform: scale(1.06); }
+.chatSendBtn svg { width: 19px; height: 19px; }
+
+.chatChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  height: 32px;
+  padding: 4px 12px;
+  border-radius: 16px;
+  border: 1px solid var(--c-chip-border);
+  background: var(--c-chip-bg);
+  font-family: var(--font-body);
+  font-size: var(--fs-chip);
+  line-height: var(--lh-chip);
+  color: var(--c-text-primary);
+  white-space: nowrap;
+  cursor: pointer;
+  transition: border-color 0.2s ease, background 0.2s ease, color 0.2s ease;
+  will-change: transform, opacity;
+}
+.chip:hover {
+  border-color: var(--c-red);
+  background: #fdeceb;
+  color: var(--c-red);
+}
+
+/* New journey-starter chip */
+.chipPrimary {
+  border-color: var(--c-red);
+  background: #fdeceb;
+  color: var(--c-red);
+  font-weight: 500;
+}
+.chipPrimary:hover { background: #fbdedb; }
+
+/* ─── Scroll indicator (straddles media bottom edge) ────────────────────── */
+.scrollIndicator {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translate(-50%, 50%);
+  width: var(--scroll-size);
+  height: var(--scroll-size);
+  z-index: 6;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  will-change: transform, opacity;
+}
+
+.scrollIndicator svg { width: 100%; height: 100%; display: block; }
+
+.scrollChevron {
+  animation: scrollBob 1.8s var(--ease-out) infinite;
+}
+
+@keyframes scrollBob {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(4px); }
+}
