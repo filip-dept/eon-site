@@ -1,11 +1,12 @@
 import Hero from '@/components/Hero/Hero';
-import JourneyModal from '@/components/Journey/JourneyModal';
+import OnboardingModal from '@/components/Journey/OnboardingModal';
 
 export default function Home() {
   return (
     <main>
       <Hero />
-      <JourneyModal />
+      {/* Hero chat chips open the 3-question onboarding → routes to /tariff */}
+      <OnboardingModal />
     </main>
   );
 }

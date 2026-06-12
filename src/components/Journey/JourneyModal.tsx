@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import { useRouter } from 'next/navigation';
 import { gsap } from '@/lib/gsap';
 import styles from './journey.module.css';
 
@@ -180,7 +179,6 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 
 /* ─── Main modal ─────────────────────────────────────────────────────────── */
 export default function JourneyModal() {
-  const router = useRouter();
   const [mounted, setMounted] = useState(false);
   const [open, setOpen]       = useState(false);
   const [step, setStep]       = useState(1);
@@ -223,8 +221,8 @@ export default function JourneyModal() {
 
   useEffect(() => {
     const handler = () => openModal();
-    document.addEventListener('eon:journey-start', handler);
-    return () => document.removeEventListener('eon:journey-start', handler);
+    document.addEventListener('eon:checkout-start', handler);
+    return () => document.removeEventListener('eon:checkout-start', handler);
   }, [openModal]);
 
   /* ── Enter animation ── */
@@ -297,11 +295,10 @@ export default function JourneyModal() {
     transitionTo(s, 'bck');
   }, [step, transitionTo]);
 
-  /* ── Submit → tariff page, like before ── */
+  /* ── Submit — checkout journey ends here for now (just close) ── */
   const submit = useCallback(() => {
-    const q = new URLSearchParams({ plz: answers.plz || '81245', persons: '2', kwh: '3200' });
-    router.push(`/tariff?${q.toString()}`);
-  }, [answers.plz, router]);
+    closeModal();
+  }, [closeModal]);
 
   /* Enter advances (typeform-style); on the last step it submits */
   const advance = useCallback(() => {

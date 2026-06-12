@@ -4,7 +4,12 @@ import { useRef, useEffect, useState, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { gsap, ScrollTrigger } from '@/lib/gsap';
 import Navbar from '@/components/Navbar/Navbar';
+import JourneyModal from '@/components/Journey/JourneyModal';
 import styles from './tariff.module.css';
+
+/* the red "Tarif auswählen" CTAs open the conversational checkout journey */
+const startCheckout = () =>
+  document.dispatchEvent(new CustomEvent('eon:checkout-start'));
 
 /* ─── Icons ──────────────────────────────────────────────────────────────── */
 const LocationIcon = () => (
@@ -960,7 +965,7 @@ export default function TariffPage() {
                     ))}
                   </div>
                   <div className={styles.cardBtns}>
-                    <button className={styles.btnPrimary}>Tarif auswählen</button>
+                    <button className={styles.btnPrimary} onClick={startCheckout}>Tarif auswählen</button>
                     <button className={styles.btnSecondary} onClick={() => setComparing(true)}>
                       Tarif vergleichen <ChevronRight />
                     </button>
@@ -1014,7 +1019,7 @@ export default function TariffPage() {
                           </div>
                         ))}
                       </div>
-                      <button className={c.highlight ? styles.compareBtnPrimary : styles.compareBtnOutline}>
+                      <button className={c.highlight ? styles.compareBtnPrimary : styles.compareBtnOutline} onClick={startCheckout}>
                         Tarif auswählen
                       </button>
                     </div>
@@ -1320,6 +1325,9 @@ export default function TariffPage() {
           </div>
         </section>
       </div>
+
+      {/* Conversational checkout journey — opened by the red "Tarif auswählen" CTAs */}
+      <JourneyModal />
     </div>
   );
 }
