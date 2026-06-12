@@ -1,0 +1,78 @@
+/* ─── Shared top navigation — brand (red bg) / light (white bg) variants ─── */
+.nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* variant colors cascade to every item via currentColor */
+.brand { color: #fff; }
+.light { color: var(--c-text-primary, #262626); }
+
+.left {
+  display: flex;
+  align-items: center;
+  gap: 48px;
+}
+
+.logo { display: block; width: 96px; height: 28px; }
+.logo img { display: block; width: 96px; height: 28px; object-fit: contain; }
+
+.links {
+  display: flex;
+  gap: 16px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.link {
+  display: inline-block;
+  font-family: var(--font-body);
+  font-size: 18px;
+  color: inherit;
+  padding: 16px 8px;
+  white-space: nowrap;
+  will-change: transform, opacity;
+}
+.link:hover { opacity: 0.75; }
+
+.icons {
+  display: flex;
+  align-items: center;
+}
+
+.iconBtn {
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: inherit;
+  will-change: transform, opacity;
+}
+
+.account {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 48px;
+  padding: 0 12px;
+  font-family: var(--font-body);
+  font-size: 18px;
+  color: inherit;
+  white-space: nowrap;
+  cursor: pointer;
+  will-change: transform, opacity;
+}
+
+/* icon = currentColor through an SVG mask, so it themes with the variant */
+.icon {
+  display: inline-block;
+  background-color: currentColor;
+  -webkit-mask: var(--icon) no-repeat center / contain;
+  mask: var(--icon) no-repeat center / contain;
+}

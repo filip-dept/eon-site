@@ -80,6 +80,35 @@ const ArrowRight = () => (
   </svg>
 );
 
+/* ─── Left categories (one per step, red indicator on the active one) ──────── */
+const CATEGORIES = [
+  {
+    label: 'Prioritäten',
+    icon: (
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M4 6h9M4 12h6M4 18h12"/>
+        <circle cx="17" cy="6" r="2"/><circle cx="14" cy="12" r="2"/><circle cx="20" cy="18" r="2"/>
+      </svg>
+    ),
+  },
+  {
+    label: 'Dein Zuhause',
+    icon: (
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/><path d="M9.5 20v-6h5v6"/>
+      </svg>
+    ),
+  },
+  {
+    label: 'Verbrauch',
+    icon: (
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M13 2 4 14h7l-1 8 10-12h-7l1-8z"/>
+      </svg>
+    ),
+  },
+];
+
 /* ─── Step 1 ─────────────────────────────────────────────────────────────── */
 function Step1({ answers, setAnswers, goNext }: {
   answers: Answers;
@@ -386,9 +415,9 @@ export default function JourneyModal() {
 
     gsap.to(overlay, { opacity: 0, duration: 0.25, ease: 'none' });
     gsap.to(modal, {
-      clipPath: 'inset(100% 0px 0px 0px round 20px)',
+      clipPath: 'inset(100% 0px 0px 0px round 20px 20px 0px 0px)',
       duration: 0.45,
-      ease: 'eonReveal',
+      ease: 'eonOut',
       onComplete: () => {
         animating.current = false;
         setOpen(false);
@@ -422,13 +451,13 @@ export default function JourneyModal() {
     animating.current = true;
 
     /* Reveal from the bottom edge upward (same eonReveal wipe as hero) */
-    gsap.set(modal, { clipPath: 'inset(100% 0px 0px 0px round 20px)', opacity: 1 });
+    gsap.set(modal, { clipPath: 'inset(100% 0px 0px 0px round 20px 20px 0px 0px)', opacity: 1 });
     gsap.set(overlay, { opacity: 0 });
 
     const tl = gsap.timeline({ onComplete: () => { animating.current = false; } });
 
     tl.to(overlay, { opacity: 1, duration: 0.28, ease: 'none' }, 0)
-      .to(modal, { clipPath: 'inset(0px 0px 0px 0px round 20px)', duration: 0.6, ease: 'eonReveal' }, 0);
+      .to(modal, { clipPath: 'inset(0px 0px 0px 0px round 20px 20px 0px 0px)', duration: 0.7, ease: 'eonOut' }, 0);
 
     /* Content fades up after the shell has mostly revealed */
     const firstStep = stepRefs.current[0];
@@ -479,6 +508,12 @@ export default function JourneyModal() {
     if (step > 1) transitionTo(step - 1, 'bck');
     else closeModal();
   }, [step, transitionTo, closeModal]);
+
+  /* Jump to an already-visited category (sidebar) */
+  const goToStep = useCallback((s: number) => {
+    if (s === step || s > step || animating.current) return;
+    transitionTo(s, 'bck');
+  }, [step, transitionTo]);
 
   const resetJourney = useCallback(() => {
     const outEl = stepRefs.current[step - 1];
@@ -538,78 +573,82 @@ export default function JourneyModal() {
         aria-modal="true"
         aria-label="Tarif-Assistent"
       >
-        {/* ── Top nav — full width, space-between ── */}
-        <nav className={styles.modalNav}>
-          <div className={styles.navLeft}>
-            {step > 1 && (
-              <button className={styles.navBack} onClick={goBack} aria-label="Zurück">
-                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
-                  <path d="M9 3L5 7l4 4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-                Zurück
-              </button>
-            )}
-          </div>
-          <div className={styles.navCenter}>
-            <span className={styles.navStepCount}>Schritt {step} von 3</span>
-          </div>
-          <div className={styles.navRight}>
-            <button className={styles.navClose} onClick={closeModal} aria-label="Schließen">
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-                <path d="M3 3l10 10M13 3L3 13" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
-              </svg>
-            </button>
-          </div>
-        </nav>
+        {/* ── Corner buttons (back / close) ── */}
+        <button className={styles.cornerBtn} data-pos="back" onClick={goBack} aria-label="Zurück">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M15 5l-7 7 7 7" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+        </button>
+        <button className={styles.cornerBtn} data-pos="close" onClick={closeModal} aria-label="Schließen">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M5 5l14 14M19 5L5 19" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round"/>
+          </svg>
+        </button>
 
-        {/* ── Constrained inner wrapper (600px max, centered) ── */}
-        <div className={styles.modalInner}>
+        {/* ── Body: left categories + centered content ── */}
+        <div className={styles.modalBody}>
+          <nav className={styles.sidebar} aria-label="Fortschritt">
+            {CATEGORIES.map((c, i) => {
+              const s = i + 1;
+              const state = s === step ? 'active' : s < step ? 'done' : 'todo';
+              return (
+                <button
+                  key={c.label}
+                  type="button"
+                  className={styles.sideItem}
+                  data-state={state}
+                  onClick={() => goToStep(s)}
+                  disabled={s > step}
+                  aria-current={s === step ? 'step' : undefined}
+                >
+                  <span className={styles.sideIndicator} aria-hidden="true" />
+                  <span className={styles.sideIcon}>{c.icon}</span>
+                  <span className={styles.sideLabel}>{c.label}</span>
+                </button>
+              );
+            })}
+          </nav>
 
-        {/* ── Progress bar ── */}
-        <div className={styles.progress} role="progressbar" aria-valuenow={step} aria-valuemin={1} aria-valuemax={3}>
-          {[1, 2, 3].map((s) => (
-            <div key={s} className={styles.progressSeg} data-active={s <= step ? 'true' : 'false'} />
-          ))}
+          <div className={styles.contentCol}>
+            {/* Step panels (all mounted, GSAP controls visibility) */}
+            <div className={styles.content}>
+              <div
+                ref={(el) => { stepRefs.current[0] = el; }}
+                className={styles.stepPanel}
+                style={{ display: step === 1 ? 'flex' : 'none' }}
+              >
+                <Step1 answers={answers} setAnswers={setAnswers} goNext={goNext} />
+              </div>
+
+              <div
+                ref={(el) => { stepRefs.current[1] = el; }}
+                className={styles.stepPanel}
+                style={{ display: step === 2 ? 'flex' : 'none' }}
+              >
+                <Step2 answers={answers} setAnswers={setAnswers} goNext={goNext} />
+              </div>
+
+              <div
+                ref={(el) => { stepRefs.current[2] = el; }}
+                className={styles.stepPanel}
+                style={{ display: step === 3 ? 'flex' : 'none' }}
+              >
+                <Step3
+                  answers={answers}
+                  setAnswers={setAnswers}
+                  onSubmit={() => {
+                    const q = new URLSearchParams({
+                      plz:     answers.plz     ?? '',
+                      persons: String(answers.persons ?? 2),
+                      kwh:     String(answers.kwh     ?? 3200),
+                    });
+                    router.push(`/tariff?${q.toString()}`);
+                  }}
+                />
+              </div>
+            </div>
+          </div>
         </div>
-
-        {/* ── Step panels (all mounted, GSAP controls visibility) ── */}
-        <div className={styles.content}>
-          <div
-            ref={(el) => { stepRefs.current[0] = el; }}
-            className={styles.stepPanel}
-            style={{ display: step === 1 ? 'flex' : 'none' }}
-          >
-            <Step1 answers={answers} setAnswers={setAnswers} goNext={goNext} />
-          </div>
-
-          <div
-            ref={(el) => { stepRefs.current[1] = el; }}
-            className={styles.stepPanel}
-            style={{ display: step === 2 ? 'flex' : 'none' }}
-          >
-            <Step2 answers={answers} setAnswers={setAnswers} goNext={goNext} />
-          </div>
-
-          <div
-            ref={(el) => { stepRefs.current[2] = el; }}
-            className={styles.stepPanel}
-            style={{ display: step === 3 ? 'flex' : 'none' }}
-          >
-            <Step3
-              answers={answers}
-              setAnswers={setAnswers}
-              onSubmit={() => {
-                const q = new URLSearchParams({
-                  plz:     answers.plz     ?? '',
-                  persons: String(answers.persons ?? 2),
-                  kwh:     String(answers.kwh     ?? 3200),
-                });
-                router.push(`/tariff?${q.toString()}`);
-              }}
-            />
-          </div>
-        </div>
-        </div> {/* /modalInner */}
       </div>
     </>,
     document.body

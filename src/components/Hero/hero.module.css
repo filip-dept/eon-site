@@ -1,22 +1,16 @@
-/* ─── Hero (taller than viewport for parallax) ──────────────────────────── */
+/* ─── Hero (taller than the first viewport — the 1:1.35 frame spills below
+       the fold and the page scrolls past it naturally, zoox-style) ────────── */
 .hero {
   position: relative;
-  height: 150vh; /* overridden at runtime — capped to 1.5× viewport */
-  /* visible (not clip) so the sticky stage pins to the viewport; the image is
-     clipped by the SVG itself, so nothing leaks */
   overflow: visible;
   background: var(--hero-gradient);
 }
 
-/* Sticky stage — pins the composition for one viewport while hero scrolls */
 .stage {
-  position: sticky;
-  top: 0;
-  height: 100vh;
   display: flex;
   flex-direction: column;
   background: var(--hero-gradient);
-  overflow: visible; /* image is clipped by the SVG mask, not here, so chat/indicator can straddle freely */
+  overflow: visible; /* media is clipped by the SVG mask, not here, so chat/indicator can straddle freely */
 }
 
 /* ─── Navbar ─────────────────────────────────────────────────────────────── */
@@ -101,11 +95,10 @@
 /* ─── Hero body (text + media + chat + indicator) ───────────────────────── */
 .body {
   position: relative;
-  flex: 1;
   display: flex;
   flex-direction: column;
+  /* bottom padding only becomes visible once the user scrolls past the frame */
   padding: 0 var(--hero-pad) var(--hero-pad);
-  min-height: 0;
 }
 
 /* Text block */
@@ -141,13 +134,19 @@
   will-change: transform, opacity;
 }
 
-/* ─── Media frame (rounded rect, holds masked image) ────────────────────── */
+/* ─── Media frame (rounded rect, full width × one viewport tall) ────────── */
 .mediaFrame {
   position: relative;
-  flex: 1;
+  width: 100%;
+  height: 100vh;
   overflow: visible; /* rounded corners come from the mask; chat/indicator must not be clipped */
-  min-height: 0;
   z-index: 1;
+  /* the only in-flow child is the scroll indicator — anchor it bottom-center
+     so its sticky offset releases exactly at the bottom of the frame */
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
 }
 
 .mediaSvg {
@@ -161,8 +160,17 @@
   overflow: hidden;
 }
 
-.mediaImage {
-  transform-box: fill-box;
+/* foreignObject clips its content, so the video can zoom inside it without
+   escaping the masked frame */
+.mediaBox {
+  overflow: hidden;
+}
+
+.mediaVideo {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;       /* fill the 1:1.35 frame — clipped + centered */
   transform-origin: center center;
   will-change: transform;
 }
@@ -263,8 +271,8 @@
 }
 .chip:hover {
   border-color: var(--c-red);
-  background: #fdeceb;
-  color: var(--c-red);
+  background: var(--c-red);
+  color: var(--c-white);
 }
 
 /* New journey-starter chip */
@@ -276,29 +284,47 @@
 }
 .chipPrimary:hover { background: #fbdedb; }
 
-/* ─── Scroll indicator (straddles media bottom edge) ────────────────────── */
+/* ─── Scroll indicator — two bare chevrons pulsing downward, sticky near the
+       bottom of the screen until the bottom of the media frame scrolls past ── */
 .scrollIndicator {
-  position: absolute;
-  bottom: 0;
-  left: 50%;
-  transform: translate(-50%, 50%);
+  position: sticky;
+  bottom: 28px;
+  gap: 8px;
   width: var(--scroll-size);
   height: var(--scroll-size);
   z-index: 6;
-  background: none;
-  border: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
   padding: 0;
   cursor: pointer;
+  background: none;
+  border: none;
   will-change: transform, opacity;
 }
 
-.scrollIndicator svg { width: 100%; height: 100%; display: block; }
-
 .scrollChevron {
-  animation: scrollBob 1.8s var(--ease-out) infinite;
+  width: 30px;
+  height: 30px;
+  display: block;
+  color: #fff;
+  filter: drop-shadow(0 1px 6px rgba(0, 0, 0, 0.3));
+  animation: chevronPulse 1.8s ease-in-out infinite;
+  opacity: 0;
+}
+/* the two chevrons overlap into one tight glyph and pulse closely staggered */
+.scrollChevron + .scrollChevron {
+  margin-top: -19px;
+  animation-delay: 0.22s;
 }
 
-@keyframes scrollBob {
-  0%, 100% { transform: translateY(0); }
-  50%       { transform: translateY(4px); }
+@keyframes chevronPulse {
+  0%       { opacity: 0; transform: translateY(-7px); }
+  40%      { opacity: 1; }
+  75%, 100% { opacity: 0; transform: translateY(7px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scrollChevron { animation: none; opacity: 1; }
 }

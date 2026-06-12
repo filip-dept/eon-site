@@ -2,10 +2,10 @@
 
 export interface MaskRefs {
   heroEl: HTMLElement;
-  frameEl: HTMLElement;          // .mediaFrame (one-viewport window into the tall image)
+  frameEl: HTMLElement;          // .mediaFrame (tall 1:1.35 rounded rect)
   svgEl: SVGSVGElement;
   maskEl: SVGMaskElement;
-  imageEl: SVGImageElement;
+  mediaEl: SVGForeignObjectElement; // holds the <video>, fills the frame
   revealRectEl: SVGRectElement;  // white reveal (entrance wipe)
   chatCutEl: SVGPathElement;     // black cutout for chat module
   scrollCutEl: SVGCircleElement; // black cutout for scroll indicator
@@ -13,52 +13,38 @@ export interface MaskRefs {
   scrollIndicatorEl: HTMLElement;
 }
 
-const SCROLL_R = 28;
-const SCROLL_BOTTOM = 40;
 /* CHAT_GAP=20 → cutout is 40px wider & higher than the modal, centered. */
 const CHAT_GAP = 20;
-const SCROLL_GAP = 8;
+/* Concave fillet radius where the notch meets the image's top edge */
+const FILLET = 24;
 
 export interface MaskController {
   frameW: number;
   frameH: number;
-  scrollRange: number;
-  setImageAspect: (aspect: number) => void;
-  getHeroHeight: () => number;
   layout: () => void;
   setReveal: (p: number) => void;
   setScroll: (p: number) => void;
+  /** 0→1: the chat notch pushes down into the image (entrance) */
+  setChatCut: (p: number) => void;
 }
 
 export function initMask(refs: MaskRefs): MaskController {
   const {
-    frameEl, svgEl, maskEl, imageEl, revealRectEl, chatCutEl, scrollCutEl,
+    frameEl, svgEl, maskEl, mediaEl, revealRectEl, chatCutEl, scrollCutEl,
     chatCardEl, scrollIndicatorEl,
   } = refs;
 
-  let imgAspect = 0;        // natural height / width
-  let scrollRange = 0;      // px the tall image can scroll inside the window
-  let pEnd = 0.82;          // scroll progress at which the image reaches its end
+  let chatGeom = { cx: 0, cw: 0, ch: 0, r: 0, f: 0 }; // resting notch geometry
+  let chatP = 1;            // notch depth 0→1 (animated during entrance)
 
   const ctrl: MaskController = {
     frameW: 0,
     frameH: 0,
-    get scrollRange() { return scrollRange; },
-    setImageAspect,
-    getHeroHeight,
     layout,
     setReveal,
     setScroll,
+    setChatCut,
   } as MaskController;
-
-  function setImageAspect(a: number) { imgAspect = a; }
-
-  /* Extra scroll past the image end, for the indicator's fluid exit */
-  function exitBuffer() { return window.innerHeight * 0.4; }
-
-  function getHeroHeight() {
-    return Math.round(window.innerHeight * 1.5);
-  }
 
   function layout() {
     const fr = frameEl.getBoundingClientRect();
@@ -70,41 +56,74 @@ export function initMask(refs: MaskRefs): MaskController {
     svgEl.setAttribute('viewBox', `0 0 ${w} ${h}`);
     svgEl.setAttribute('preserveAspectRatio', 'none');
 
-    /* Display the image at full window width with its natural (tall) height */
-    const aspect = imgAspect || h / w;
-    const imgDisplayH = Math.max(h, w * aspect);
-    scrollRange = Math.max(0, imgDisplayH - h);
-    pEnd = scrollRange > 0 ? scrollRange / (scrollRange + exitBuffer()) : 0.82;
+    /* Video box fills the frame exactly — object-fit: cover inside the
+       foreignObject keeps it clipped + centered at any video aspect. */
+    mediaEl.setAttribute('x', '0');
+    mediaEl.setAttribute('y', '0');
+    mediaEl.setAttribute('width', String(w));
+    mediaEl.setAttribute('height', String(h));
 
-    imageEl.setAttribute('x', '0');
-    imageEl.setAttribute('y', '0');
-    imageEl.setAttribute('width', String(w));
-    imageEl.setAttribute('height', String(imgDisplayH));
-    imageEl.setAttribute('preserveAspectRatio', 'xMidYMid slice');
-
-    /* Mask region = the visible window (a bit taller to include the chat cut above) */
+    /* Mask region = the frame (a bit taller to include the chat cut above) */
     maskEl.setAttribute('maskUnits', 'userSpaceOnUse');
     maskEl.setAttribute('x', '0');
     maskEl.setAttribute('y', '-40');
     maskEl.setAttribute('width', String(w));
-    maskEl.setAttribute('height', String(h + 80));
+    maskEl.setAttribute('height', String(h + 90));
 
-    /* Reveal rect spans the window width; height set by setReveal (entrance wipe) */
+    /* Reveal rect spans the frame width; height set by setReveal (entrance wipe) */
     revealRectEl.setAttribute('x', '0');
     revealRectEl.setAttribute('width', String(w));
 
-    /* Chat cutout — sharp top corners, rounded bottom corners */
-    const cc = chatCardEl.getBoundingClientRect();
+    /* Chat cutout geometry — measured on the card's UNTRANSFORMED wrapper so
+       entrance transforms (y/scale on the card) never distort the notch */
+    const measureEl = chatCardEl.parentElement ?? chatCardEl;
+    const cc = measureEl.getBoundingClientRect();
     const cx = cc.left - fr.left - CHAT_GAP;
     const cw = cc.width + CHAT_GAP * 2;
     const ch = (cc.top - fr.top) + cc.height + CHAT_GAP;
     const r  = 24 + CHAT_GAP;
-    // M top-left → top-right → bottom-right arc → bottom-left arc → close
-    chatCutEl.setAttribute('d',
-      `M ${cx},0 L ${cx + cw},0 L ${cx + cw},${ch - r} Q ${cx + cw},${ch} ${cx + cw - r},${ch} L ${cx + r},${ch} Q ${cx},${ch} ${cx},${ch - r} Z`
-    );
+    /* fillet shrinks gracefully if the notch nearly spans the frame */
+    const f  = Math.max(0, Math.min(FILLET, cx, w - (cx + cw)));
+    chatGeom = { cx, cw, ch, r, f };
+    drawChatCut();
 
+    /* The indicator is positioned by CSS (position: sticky) — it stays near the
+       viewport bottom until the frame's bottom scrolls past. */
     layoutScrollCut();
+  }
+
+  /* Concave fillets where the notch meets the image's top edge (Figma's
+     inverted inner radius), rounded bottom corners. The notch depth scales
+     with chatP so the entrance can "push" it into the image — radii shrink
+     proportionally while the notch is shallow, so corners are always soft. */
+  function drawChatCut() {
+    const { cx, cw, ch, r, f } = chatGeom;
+    const effCh = ch * chatP;
+    if (effCh < 0.5) {
+      chatCutEl.setAttribute('d', '');
+      return;
+    }
+    const k  = Math.min(1, effCh / (f + r || 1));
+    const f2 = f * k;
+    const r2 = r * k;
+    // top edge (left of notch) → fillet sweeps down into the left wall →
+    // rounded bottom corners → up the right wall → fillet sweeps out to the top edge
+    chatCutEl.setAttribute('d',
+      `M ${cx - f2},0` +
+      ` A ${f2} ${f2} 0 0 1 ${cx},${f2}` +
+      ` L ${cx},${effCh - r2}` +
+      ` Q ${cx},${effCh} ${cx + r2},${effCh}` +
+      ` L ${cx + cw - r2},${effCh}` +
+      ` Q ${cx + cw},${effCh} ${cx + cw},${effCh - r2}` +
+      ` L ${cx + cw},${f2}` +
+      ` A ${f2} ${f2} 0 0 1 ${cx + cw + f2},0` +
+      ` Z`
+    );
+  }
+
+  function setChatCut(p: number) {
+    chatP = Math.min(1, Math.max(0, p));
+    drawChatCut();
   }
 
   function layoutScrollCut() {
@@ -112,11 +131,11 @@ export function initMask(refs: MaskRefs): MaskController {
     const sc = scrollIndicatorEl.getBoundingClientRect();
     const cx = sc.left - fr.left + sc.width / 2;
     const cy = sc.top - fr.top + sc.height / 2;
-    const r = sc.width / 2 + SCROLL_GAP;
     scrollCutEl.setAttribute('cx', String(cx));
     scrollCutEl.setAttribute('cy', String(cy));
-    scrollCutEl.dataset.baseR = String(r);
-    scrollCutEl.setAttribute('r', String(r));
+    /* hole hidden — the indicator sits directly on the video, no cutout ring */
+    scrollCutEl.dataset.baseR = '0';
+    scrollCutEl.setAttribute('r', '0');
   }
 
   function setReveal(p: number) {
@@ -125,24 +144,9 @@ export function initMask(refs: MaskRefs): MaskController {
     revealRectEl.setAttribute('height', String(h));
   }
 
-  function setScroll(p: number) {
-    p = Math.min(1, Math.max(0, p));
-
-    /* Scroll the tall image through the window until its end is reached at pEnd */
-    const imgP = pEnd > 0 ? Math.min(1, p / pEnd) : 0;
-    imageEl.setAttribute('y', String(-scrollRange * imgP));
-
-    /* Indicator + its cutout fluidly exit once the image end is reached */
-    const baseR = Number(scrollCutEl.dataset.baseR ?? 0);
-    if (p > pEnd) {
-      const t = (p - pEnd) / (1 - pEnd);   // 0→1
-      const eased = t * t;
-      scrollCutEl.setAttribute('r', String(baseR * (1 - eased)));
-      scrollIndicatorEl.style.opacity = String(1 - eased);
-    } else {
-      scrollCutEl.setAttribute('r', String(baseR));
-      scrollIndicatorEl.style.opacity = '1';
-    }
+  function setScroll(_p: number) {
+    /* The scroll cut stays hidden and the indicator's position + exit are now
+       handled by CSS sticky, so there's nothing to drive per scroll frame. */
   }
 
   layout();

@@ -1,24 +1,25 @@
-/* ─── Overlay ─────────────────────────────────────────────────────────────── */
+/* ─── Overlay backdrop ─────────────────────────────────────────────────────── */
 .overlay {
   position: fixed;
   inset: 0;
-  background: rgba(10, 10, 10, 0.5);
+  background: rgba(10, 10, 10, 0.4);
   z-index: 200;
   opacity: 0;
   cursor: pointer;
 }
 
-/* ─── Modal shell ─────────────────────────────────────────────────────────── */
+/* ─── Modal shell — full-bleed (100vw, no side/bottom padding, top stays) ──── */
 .modal {
   position: fixed;
   top: 80px;
-  left: 20px;
-  right: 20px;
-  bottom: 20px;
-  width: auto;
-  height: auto;
-  background: radial-gradient(ellipse 120% 90% at 50% -10%, #fff 0%, #fdf1ec 100%);
-  border-radius: 20px;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background:
+    radial-gradient(38% 46% at 86% 4%, rgba(234, 27, 10, 0.10), transparent 72%),
+    radial-gradient(46% 42% at 46% 102%, rgba(234, 27, 10, 0.08), transparent 70%),
+    #ffffff;
+  border-radius: 20px 20px 0 0;   /* rounded top corners (rises like a sheet) */
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -26,131 +27,118 @@
   will-change: clip-path;
 }
 
-/* ─── Top navigation — full-width, space-between ─────────────────────────── */
-.modalNav {
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  padding: 20px 32px 12px;
-  gap: 8px;
-}
-
-.navLeft {
-  flex: 1;
-  display: flex;
-  justify-content: flex-start;
-  align-items: center;
-}
-
-.navCenter {
-  flex: 1;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-.navRight {
-  flex: 1;
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
-}
-
-.navStepCount {
-  font-family: var(--font-body);
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--c-text-secondary);
-}
-
-.navBack {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  background: none;
+/* ─── Corner buttons (back / close) — discreet beige rounded squares ───────── */
+.cornerBtn {
+  position: absolute;
+  top: 34px;
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;            /* button-100 radius */
+  background: #f9f6f4;            /* Beige */
   border: none;
-  cursor: pointer;
-  font-family: var(--font-body);
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--c-text-secondary);
-  padding: 6px 0;
-  transition: color 0.15s ease;
-}
-.navBack:hover { color: var(--c-text-primary); }
-.navBack svg { flex-shrink: 0; }
-
-.navClose {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background: none;
-  border: 1.5px solid #d5d4d3;
-  cursor: pointer;
-  color: var(--c-text-secondary);
-  transition: border-color 0.15s, color 0.15s, background 0.15s;
-  flex-shrink: 0;
-}
-.navClose:hover {
-  border-color: var(--c-text-primary);
   color: var(--c-text-primary);
-  background: #f5f4f3;
+  cursor: pointer;
+  z-index: 6;
+  transition: background 0.15s ease;
+}
+.cornerBtn:hover { background: #efe8e3; }
+.cornerBtn[data-pos='back']  { left: clamp(20px, 4vw, 62px); }
+.cornerBtn[data-pos='close'] { right: clamp(20px, 4vw, 32px); }
+
+/* ─── Body — left categories + centred content ────────────────────────────── */
+.modalBody {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  align-items: stretch;
 }
 
-/* ─── Inner wrapper — 800px max, centered ────────────────────────────────── */
-.modalInner {
-  flex: 1;
+/* Left categories nav — vertically centred, red active indicator */
+.sidebar {
+  flex: 0 0 auto;
+  width: clamp(176px, 18vw, 236px);
+  align-self: center;
+  padding-left: clamp(20px, 4vw, 62px);
   display: flex;
   flex-direction: column;
-  min-height: 0;
-  max-width: 600px;
-  width: 100%;
-  margin: 0 auto;
-  overflow: hidden;
+  gap: 4px;
 }
 
-/* ─── Progress bar ────────────────────────────────────────────────────────── */
-.progress {
-  flex-shrink: 0;
-  display: flex;
-  gap: 5px;
-  padding: 0 32px 16px;
-}
-.progressSeg {
-  flex: 1;
-  height: 3px;
-  border-radius: 2px;
-  background: #e0dedd;
-  transition: background 0.5s ease;
-}
-.progressSeg[data-active='true'] {
-  background: var(--c-red);
-}
-
-/* ─── Content area (holds all 3 step panels) ──────────────────────────────── */
-.content {
-  flex: 1;
+.sideItem {
   position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: 52px;
+  padding: 0 8px 0 20px;
+  background: none;
+  border: none;
+  text-align: left;
+  font-family: var(--font-body);
+  color: var(--c-text-secondary);
+  transition: color 0.15s ease, opacity 0.15s ease;
+}
+.sideItem[data-state='active'] { color: var(--c-text-primary); cursor: default; }
+.sideItem[data-state='done']   { cursor: pointer; }
+.sideItem[data-state='done']:hover { color: var(--c-text-primary); }
+.sideItem[data-state='todo']   { opacity: 0.5; cursor: default; }
+
+.sideIndicator {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  width: 3px;
+  height: 26px;
+  border-radius: 2px;
+  background: var(--c-red);
+  transform: translateY(-50%) scaleY(0);
+  transform-origin: center;
+  transition: transform 0.28s var(--ease-out);
+}
+.sideItem[data-state='active'] .sideIndicator { transform: translateY(-50%) scaleY(1); }
+
+.sideIcon {
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.sideLabel {
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+/* Centred content column — max-width matches Figma (800px) */
+.contentCol {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  justify-content: center;
   overflow: hidden;
+}
+.content {
+  flex: 1 1 auto;
+  max-width: 800px;
+  position: relative;
   min-height: 0;
+  overflow: hidden;
 }
 
 /* ─── Step panel ──────────────────────────────────────────────────────────── */
 .stepPanel {
   position: absolute;
   inset: 0;
-  padding: 48px 32px 32px; /* 16px progress bottom + 48px = 64px gap to content */
+  padding: 88px 24px 40px; /* top clears the corner buttons; top spacing preserved */
   display: flex;
   flex-direction: column;
   overflow-y: auto;
-  /* hide scrollbar until needed */
   scrollbar-width: thin;
   scrollbar-color: #e0dedd transparent;
 }
@@ -158,19 +146,19 @@
 /* ─── Step header ─────────────────────────────────────────────────────────── */
 .stepLabel {
   font-family: var(--font-body);
-  font-size: 11px;
+  font-size: 16px;
   font-weight: 700;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--c-text-secondary);
-  margin-bottom: 12px;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--c-red);            /* UI text/decorative/brand headline */
+  margin-bottom: 8px;
 }
 
 .stepHeadline {
   font-family: var(--font-body);
-  font-weight: 800;
-  font-size: clamp(30px, 3.8vw, 46px);
-  line-height: 1.08;
+  font-weight: 700;
+  font-size: clamp(28px, 3.4vw, 40px); /* Headings/2: 40 / 48 */
+  line-height: 1.2;
   color: var(--c-text-primary);
   margin-bottom: 28px;
 }
@@ -595,13 +583,12 @@
 .ctaBtn:hover svg { transform: translateX(2px); }
 
 /* ─── Responsive ──────────────────────────────────────────────────────────── */
-@media (max-width: 600px) {
-  .modalNav { padding: 16px 20px 10px; }
-  .progress { padding: 0 20px 12px; }
-  .stepPanel { padding: 4px 20px 24px; }
+@media (max-width: 760px) {
+  .sidebar { display: none; }              /* categories hide; content goes full width */
+  .stepPanel { padding: 84px 20px 28px; }
   .optionGrid { grid-template-columns: 1fr; }
   .s2row { flex-direction: column; gap: 28px; }
   .presets { flex-direction: column; }
-  .navLeft, .navCenter, .navRight { flex: none; }
-  .navCenter { flex: 1; }
+  .cornerBtn[data-pos='back']  { left: 16px; }
+  .cornerBtn[data-pos='close'] { right: 16px; }
 }

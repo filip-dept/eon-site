@@ -12,13 +12,22 @@
   right: 0;
   z-index: 80;
   padding: 10px 40px 0;
-  transition: transform 0.55s var(--ease-out), opacity 0.4s ease;
+  transition: transform 0.85s var(--ease-out), opacity 0.6s ease, background 0.5s ease;
 }
 /* nav hides — moves to the top — once horizontal scroll starts */
 .scrolled .topBar {
   transform: translateY(-120%);
   opacity: 0;
   pointer-events: none;
+}
+/* scrolling backwards reveals it again, floating over the content */
+.scrolled.navShow .topBar {
+  transform: translateY(0);
+  opacity: 1;
+  pointer-events: auto;
+  background: rgba(255, 255, 255, 0);
+  backdrop-filter: blur(8px);
+  padding-bottom: 10px;
 }
 
 .nav {
@@ -106,30 +115,88 @@
   color: var(--c-text-primary);
 }
 
-/* ─── Context bar (below nav, hides on scroll) ───────────────────────────── */
+/* ─── Context bar — ONE component that morphs into the floating modal ────── */
 .ctxWrap {
   position: fixed;
   top: 90px;
   left: 0;
   right: 0;
-  z-index: 70;
+  z-index: 90;
+  pointer-events: none;
+  transition: top 0.85s var(--ease-out);
+}
+.scrolled .ctxWrap { top: 20px; }
+/* nav re-revealed while scrolling backwards pushes the floater below it —
+   same offset as the initial state so it never overlaps content */
+.scrolled.navShow .ctxWrap { top: 90px; }
+
+/* the bar itself: full-width and transparent at rest, narrows into a
+   centered white pill once scrolling starts (insets are animatable) */
+.ctxBar {
+  pointer-events: auto;
+  position: absolute;
+  top: 0;
+  left: 27px;
+  right: 27px;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 0 27px;
-  transition: opacity 0.35s ease, transform 0.45s var(--ease-out);
+  gap: 8px;
+  background: rgba(255, 255, 255, 0);
+  border-radius: 16px;
+  box-shadow: 0 0 2px rgba(0, 0, 0, 0), 0 12px 40px rgba(0, 0, 0, 0);
+  padding: 0;
+  transition:
+    left 0.9s var(--ease-out),
+    right 0.9s var(--ease-out),
+    padding 0.8s var(--ease-out),
+    background 0.6s ease,
+    box-shadow 0.6s ease;
 }
-.scrolled .ctxWrap {
-  opacity: 0;
-  transform: translateY(-16px);
-  pointer-events: none;
+.scrolled .ctxBar {
+  left: calc(50% - 461px);
+  right: calc(50% - 461px);
+  background: rgba(255, 255, 255, 1);
+  box-shadow: 0 0 2px rgba(0, 0, 0, 0.08), 0 12px 40px rgba(0, 0, 0, 0.14);
+  padding: 8px 8px 8px 20px;
+}
+/* slider + checkbox are gone in compact — pill narrows further */
+.compact .ctxBar {
+  left: calc(50% - 253px);
+  right: calc(50% - 253px);
 }
 
-.contextLeft {
+/* group: PLZ / persons / kWh — collapses away in the floating state */
+.ctxItems {
   display: flex;
   align-items: center;
   gap: 2px;
+  max-width: 520px;
+  overflow: hidden;
+  transition: max-width 0.8s var(--ease-out), opacity 0.5s ease;
 }
+.scrolled .ctxItems { max-width: 0; opacity: 0; }
+
+/* "Deine Eingaben" — grows in once floating */
+.floatLabel {
+  font-family: var(--font-body);
+  font-weight: 500;
+  font-size: 15px;
+  color: var(--c-text-primary);
+  white-space: nowrap;
+  max-width: 0;
+  overflow: hidden;
+  opacity: 0;
+  transition: max-width 0.8s var(--ease-out), opacity 0.5s ease;
+}
+.scrolled .floatLabel { max-width: 180px; opacity: 1; }
+
+/* spacer that spreads left cluster and sliders apart at rest;
+   collapses so everything hugs together in the pill */
+.ctxGap {
+  flex: 1 1 0;
+  transition: flex-grow 0.9s var(--ease-out);
+}
+.scrolled .ctxGap { flex-grow: 0.001; }
 
 .contextItem {
   display: flex;
@@ -161,11 +228,55 @@
   white-space: nowrap;
 }
 
-.contextRight {
+/* slider + checkbox group — labels collapse when floating, whole group in compact */
+.ctxSliders {
   display: flex;
   align-items: center;
   gap: 16px;
+  max-width: 520px;
+  overflow: hidden;
+  transition: max-width 0.8s var(--ease-out), opacity 0.5s ease;
 }
+.compact .ctxSliders { max-width: 0; opacity: 0; }
+.ctxSliders .prefSlider { flex-shrink: 0; }
+
+/* its divider collapses with it so compact keeps a single divider */
+.compact .midDivider { width: 0; opacity: 0; }
+
+/* "Besonders nachhaltig" checkbox — interactive (switches the tariff family) */
+.checkItem {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-family: var(--font-body);
+  font-size: 15px;
+  color: var(--c-text-primary);
+  white-space: nowrap;
+  cursor: pointer;
+  flex-shrink: 0;
+  background: none;
+  border: none;
+  padding: 0;
+}
+
+.checkBox {
+  width: 22px;
+  height: 22px;
+  border-radius: 4px;
+  background: #0075c2;
+  border: 1.5px solid #0075c2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+.checkBox svg { display: block; transition: opacity 0.15s ease; }
+.checkBox[data-checked='false'] {
+  background: transparent;
+  border-color: #b5b4b3;
+}
+.checkBox[data-checked='false'] svg { opacity: 0; }
 
 .prefItem {
   display: flex;
@@ -178,8 +289,11 @@
   font-size: 15px;
   color: rgba(38,38,38,0.75);
   white-space: nowrap;
+  max-width: 180px;
+  overflow: hidden;
+  transition: max-width 0.7s var(--ease-out), opacity 0.4s ease;
 }
-.prefLabel:empty { display: none; }
+.scrolled .prefLabel { max-width: 0; opacity: 0; }
 
 .prefSlider {
   background: #fff;
@@ -189,6 +303,9 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
+  cursor: pointer;
+  touch-action: none;   /* the rail is pointer-dragged */
+  user-select: none;
 }
 
 .prefSliderLabels {
@@ -213,6 +330,7 @@
   width: 55%;
   background: #0075c2;
   border-radius: 1px;
+  transition: width 0.25s var(--ease-out);
 }
 
 .prefSliderThumb {
@@ -226,73 +344,32 @@
   background: #0075c2;
   border: 2.5px solid #fff;
   box-shadow: 0 0 0 1px #0075c2;
+  transition: left 0.25s var(--ease-out);
 }
 
-/* ─── Floating modal (during horizontal scroll) ──────────────────────────── */
-.floatBar {
-  position: fixed;
-  top: 20px;
-  left: 50%;
-  transform: translate(-50%, -110px);
-  z-index: 90;
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  background: #fff;
-  border-radius: 16px;
-  box-shadow: 0 0 2px rgba(0,0,0,0.08), 0 12px 40px rgba(0,0,0,0.14);
-  padding: 8px 8px 8px 20px;
-  opacity: 0;
-  pointer-events: none;
-  transition: transform 0.6s var(--ease-out), opacity 0.4s ease;
-}
-.scrolled .floatBar {
-  transform: translate(-50%, 0);
-  opacity: 1;
-  pointer-events: auto;
-}
-
-.floatInputs {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.floatLabel {
-  font-family: var(--font-body);
-  font-weight: 500;
-  font-size: 15px;
-  color: var(--c-text-primary);
-  white-space: nowrap;
-}
-
+/* ─── Float-state pieces (divider, tariff + cart) ────────────────────────── */
 .floatDivider {
-  width: 1px;
+  width: 0;
   height: 40px;
   background: rgba(217,217,217,0.9);
   flex-shrink: 0;
-}
-
-/* sliders inside the floating modal collapse away on the later frames */
-.floatSliders {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  max-width: 520px;
-  overflow: hidden;
-  transition: max-width 0.55s var(--ease-out), opacity 0.3s ease;
-}
-.compact .floatSliders {
-  max-width: 0;
   opacity: 0;
+  transition: opacity 0.5s ease, width 0.5s ease;
 }
-.floatSliders .prefSlider { padding: 6px 16px 14px; width: 188px; flex-shrink: 0; }
+.scrolled .floatDivider { width: 1px; opacity: 1; }
 
+/* tariff + cart — grows in once floating; never squeezes (cart stays whole) */
 .floatTariff {
   display: flex;
   align-items: center;
   gap: 16px;
+  max-width: 0;
+  overflow: hidden;
+  opacity: 0;
+  flex-shrink: 0;
+  transition: max-width 0.8s var(--ease-out), opacity 0.5s ease;
 }
+.scrolled .floatTariff { max-width: 320px; opacity: 1; }
 
 .floatTariffText {
   display: flex;
@@ -339,7 +416,7 @@
   display: flex;
   gap: 16px;
   height: 100%;
-  padding: 0 16px 16px;
+  padding: 12px 16px 16px;
   will-change: transform;
 }
 
@@ -354,7 +431,7 @@
 /* ─── Frame 1: photo + red panel ─────────────────────────────────────────── */
 .frameHero {
   display: flex;
-  gap: 8px;
+  gap: 16px;
   padding-top: 150px;
   border-radius: 0;
 }
@@ -436,20 +513,85 @@
   flex-shrink: 0;
 }
 
-/* Red gradient panel */
+/* Red gradient panel — "WebGL-style" living gradient: two off-center
+   radial blooms orbit on independent paths/speeds over the red base */
 .panel {
+  position: relative;
   flex: 1;
   border-radius: 20px;
-  background: linear-gradient(138deg, #ea1b0a 0%, #ea1b0a 55%, #c11054 80%, #941481 95%);
+  background: linear-gradient(138deg, #ea1b0a 0%, #e0190f 55%, #c11054 100%);
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  padding: 28px 16px 16px 28px;
+  padding: 16px 16px 16px 16px;
   gap: 16px;
   overflow: hidden;
 }
 
-.panelHeader { display: flex; flex-direction: column; gap: 12px; }
+/* content rides above the blooms */
+.panel > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* deep magenta→purple bloom — heavily blurred, wandering a closed,
+   non-linear path along the bottom half of the panel */
+.panel::before {
+  content: '';
+  position: absolute;
+  z-index: 0;
+  width: 95%;
+  aspect-ratio: 1;
+  left: 15%;
+  bottom: -45%;
+  pointer-events: none;
+  filter: blur(80px);
+  background: radial-gradient(circle at 45% 40%,
+    #c11054 0%, #941481 45%, rgba(148, 20, 129, 0) 70%);
+  animation: panelBloomA 9s ease-in-out infinite;
+}
+
+/* hot orange flare, sweeping through the upper half in counter-phase */
+.panel::after {
+  content: '';
+  position: absolute;
+  z-index: 0;
+  width: 90%;
+  aspect-ratio: 1;
+  left: -30%;
+  top: -30%;
+  pointer-events: none;
+  background: radial-gradient(circle at 60% 60%,
+    rgba(255, 110, 60, 0.85) 0%, rgba(255, 90, 50, 0.3) 42%, rgba(255, 90, 50, 0) 68%);
+  animation: panelBloomB 8.5s ease-in-out infinite alternate;
+}
+
+/* unevenly spaced waypoints = wandering, never-straight motion */
+@keyframes panelBloomA {
+  0%   { transform: translate(0%, 0%)     scale(1)    rotate(0deg); }
+  22%  { transform: translate(-24%, -7%)  scale(1.18) rotate(25deg); }
+  47%  { transform: translate(-38%, 9%)   scale(0.9)  rotate(60deg); }
+  71%  { transform: translate(-12%, -12%) scale(1.3)  rotate(95deg); }
+  100% { transform: translate(0%, 0%)     scale(1)    rotate(0deg); }
+}
+
+@keyframes panelBloomB {
+  0%   { transform: translate(-8%, -6%) scale(1);    opacity: 0.5; }
+  50%  { transform: translate(20%, 26%) scale(1.35); opacity: 0.95; }
+  100% { transform: translate(38%, 6%)  scale(1.05); opacity: 0.6; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .panel::before,
+  .panel::after { animation: none; }
+}
+
+.panelHeader { 
+  display: flex; 
+  flex-direction: column; 
+  gap: 12px;
+  padding: 12px;  
+}
 
 .panelTitle {
   font-family: var(--font-body);
@@ -667,8 +809,8 @@
 .editorialContent {
   display: flex;
   flex-direction: column;
-  gap: 14px;
-  max-width: 556px;
+  gap: 12px;
+  max-width: 420px;
 }
 
 .editorialLabel {
@@ -682,7 +824,7 @@
 .editorialTitle {
   font-family: var(--font-body);
   font-weight: 700;
-  font-size: clamp(36px, 3.4vw, 48px);
+  font-size: clamp(48px, 3.4vw, 48px);
   line-height: 1.16;
   color: #262626;
   margin: 0;
@@ -698,35 +840,55 @@
 }
 
 /* ─── Frame 2: Editorial intro ───────────────────────────────────────────── */
+/* hugs its content instead of spanning the full viewport width */
 .frameEditorial {
   background: #fff;
-  overflow: hidden;
+  /* visible so the travelling headline can ride out of the frame; the frame
+     itself stays at z-auto so the photos slide BEHIND the bars frame — only
+     the headline (z-index on .editorialContent) paints above it */
+  overflow: visible;
+  width: min(var(--fw, calc(100vw - 32px)), 1024px);
 }
 
 .frameEditorial .editorialContent {
   position: absolute;
-  left: 33%;
+  left: 15%;
   top: 42%;
+  will-change: transform, opacity;
+  z-index: 2; /* stays above the photos while it travels */
 }
 
+/* photo wrappers: the static mask (clip + radius) lives here, the image zooms
+   underneath — same structure as the hero's <g mask>/<image> split */
 .edPhotoTopRight {
   position: absolute;
   top: 19%;
   right: 12px;
   width: 226px;
   height: 310px;
-  object-fit: cover;
   border-radius: 8px;
+  overflow: hidden;
+  will-change: transform, opacity;
 }
 
 .edPhotoBottomLeft {
   position: absolute;
-  left: 25%;
+  left: 30%;   /* starts well right of the text, drives left as you scroll */
   bottom: 24px;
   width: 342px;
   height: 223px;
-  object-fit: cover;
   border-radius: 8px;
+  overflow: hidden;
+  will-change: transform, opacity;
+}
+
+.edPhotoImg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform-origin: center center;
+  will-change: transform;
 }
 
 /* ─── Frame 3: Stacked bars ──────────────────────────────────────────────── */
@@ -742,6 +904,7 @@
   flex-direction: column;
   justify-content: center;
   padding: 0 24px 0 40px;
+  min-width: 0;
 }
 
 .hubWrap {
@@ -848,16 +1011,17 @@
   flex-shrink: 0;
 }
 
+/* centering applied via gsap xPercent so x can animate during the rotation */
 .bar {
   position: absolute;
   left: 50%;
-  transform: translateX(-50%);
   border-radius: 4px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   padding: 12px 15px;
   color: #fff;
+  overflow: hidden;
 }
 
 .barBack {
@@ -867,6 +1031,7 @@
   background: #8a247f;
   filter: blur(4px);
   opacity: 0.9;
+  z-index: 0;
 }
 
 .barMid {
@@ -876,6 +1041,7 @@
   background: #ac0000;
   filter: blur(2px);
   opacity: 0.95;
+  z-index: 1;
 }
 
 .barFront {
@@ -937,35 +1103,57 @@
   line-height: 1.1;
 }
 
-/* AI orb */
-.orbDock {
-  position: absolute;
-  right: 14px;
-  bottom: 12px;
-  width: 80px;
-  height: 80px;
-  background: #fff;
-  border-radius: 16px;
+/* ─── Gradient sphere — fixed bottom-right, follows the scroll ───────────── */
+.orbFloat {
+  position: fixed;
+  right: 30px;
+  bottom: 26px;
+  z-index: 60;
   display: flex;
   align-items: center;
-  justify-content: center;
+  background: #fff;
+  border-radius: 16px;
+  padding: 10px 14px;
+  box-shadow: 0 0 2px rgba(0,0,0,0.06), 0 10px 32px rgba(0,0,0,0.12);
+  opacity: 0;
+  transform: translateY(24px);
+  pointer-events: none;
+  transition: opacity 0.4s ease, transform 0.55s var(--ease-out);
 }
+.scrolled .orbFloat {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+/* mic slides into the dock on the expanded breakdown state */
+.orbMicWrap {
+  display: flex;
+  align-items: center;
+  max-width: 0;
+  overflow: hidden;
+  transition: max-width 0.5s var(--ease-out);
+}
+.compact .orbMicWrap { max-width: 100px; }
+.orbMicWrap .voiceDivider { margin-left: 14px; margin-right: 10px; }
 
 .orb {
   width: 44px;
   height: 44px;
   border-radius: 50%;
   background: radial-gradient(circle at 32% 28%, #f9c8b8 0%, #ee7e9d 45%, #c46be0 100%);
+  flex-shrink: 0;
 }
 
-/* ─── Frame 4: Full breakdown ────────────────────────────────────────────── */
-.frameBreakdown {
-  background: #f8f5f2;
-  border-radius: 20px;
+/* ─── Expanded breakdown (revealed inside barsPanel by the morph) ────────── */
+.bdContent {
+  position: absolute;
+  inset: 0;
   display: flex;
   flex-direction: column;
   padding: 0 24px;
-  overflow: hidden;
+  visibility: hidden;
+  opacity: 0;
 }
 
 .bdCols {
@@ -1109,28 +1297,6 @@
   background: #d7e9ca;
 }
 
-/* Footer row: Gesamtpreis left, voice dock centered */
-.bdFooter {
-  margin-top: auto;
-  position: relative;
-  display: flex;
-  align-items: flex-end;
-  padding: 16px 12px 24px;
-}
-
-.voiceDock {
-  position: absolute;
-  left: 50%;
-  bottom: 20px;
-  transform: translateX(-50%);
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  background: #fff;
-  border-radius: 14px;
-  padding: 10px 16px;
-}
-
 .voiceDivider {
   width: 1px;
   height: 36px;
@@ -1148,3 +1314,635 @@
   justify-content: center;
   color: var(--c-text-primary);
 }
+
+/* ─── Red zone — stories + HEMS + FAQ share ONE continuous gradient ──────── */
+.redZone {
+  position: relative;
+}
+
+/* fades in over the initial white, then runs seamlessly through HEMS + FAQ.
+   Stops are anchored to fixed scroll distances (vh) rather than % of total
+   height, so appending a section deepens the bottom without shifting the
+   sections above it. */
+.redZoneBg {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  background: linear-gradient(165deg,
+    #ea1b0a 0vh,
+    #ea1b0a 230vh,
+    #c11054 360vh,
+    #941481 480vh);
+}
+
+/* ─── Stories section — vertical continuation after the pinned scroll ────── */
+.stories {
+  position: relative;
+  height: 260vh;
+}
+
+.storiesStage {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* black at rest, tweened to white as the gradient fades in */
+.storiesText {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -60%);
+  width: min(640px, 88vw);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  text-align: center;
+  z-index: 2;
+  color: #262626;
+}
+
+.storiesLabel {
+  font-family: var(--font-body);
+  font-weight: 500;
+  font-size: 20px;
+  line-height: 1.64;
+  color: inherit;
+}
+
+.storiesTitle {
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: clamp(40px, 4.45vw, 64px);
+  line-height: 1.05;
+  margin: 0;
+  color: inherit;
+}
+
+.storiesDesc {
+  font-family: var(--font-body);
+  font-size: 20px;
+  line-height: 1.45;
+  opacity: 0.8;
+  margin: 0;
+  color: inherit;
+}
+
+/* story cards — start below the viewport, fly up with scroll */
+.storyCard {
+  position: absolute;
+  width: clamp(250px, 23.75vw, 342px);
+  aspect-ratio: 342 / 475;
+  border-radius: 8px;
+  overflow: hidden;
+  transform: translateY(120vh);
+  z-index: 1;
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.22);
+}
+
+.storyCard1 { left: 9.3%;  top: 69.7%; }
+.storyCard2 { left: 38.1%; top: 89.9%; }
+.storyCard3 { left: 66.9%; top: 46%; }
+
+.storyMedia {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.storyShade {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(rgba(102, 102, 102, 0.3), rgba(0, 0, 0, 0.3));
+}
+
+.storyPlay {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  color: #fff;
+}
+
+.storyCaption {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 0 16px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  color: #fff;
+}
+
+.storyCaptionTitle {
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: clamp(20px, 1.7vw, 24px);
+  line-height: 1.25;
+  margin: 0;
+}
+
+.storyCaptionSub {
+  font-family: var(--font-body);
+  font-size: 14px;
+  line-height: 1.5;
+  opacity: 0.75;
+  margin: 0;
+}
+
+/* ─── HEMS section — same gradient continues behind it ───────────────────── */
+.hems {
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+  align-items: stretch;
+  gap: 16px;
+  padding: 16px;
+}
+
+.hemsLeft {
+  flex: 1;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 0 56px;
+  color: #fff;
+}
+
+.hemsLogo {
+  font-family: var(--font-head);
+  font-size: 64px;
+  line-height: 1;
+  margin: 0;
+}
+
+.hemsTitle {
+  font-family: var(--font-body);
+  font-weight: 500;
+  font-size: clamp(40px, 4.45vw, 64px);
+  line-height: 1;
+  margin: 4px 0 12px;
+  max-width: 500px;
+}
+
+.hemsDesc {
+  font-family: var(--font-body);
+  font-size: 20px;
+  line-height: 1.5;
+  opacity: 0.8;
+  max-width: 460px;
+  margin: 0;
+}
+
+.hemsMenu {
+  position: absolute;
+  left: 62px;
+  bottom: 56px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  opacity: 0.9;
+}
+
+.hemsMenuItem {
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: 18px;
+  line-height: 1.5;
+  color: #fff;
+  background: none;
+  border: none;
+  border-left: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 0 0 0 12px;
+  opacity: 0.75;
+  cursor: pointer;
+  text-align: left;
+  white-space: nowrap;
+  transition: opacity 0.2s ease, border-color 0.2s ease;
+}
+.hemsMenuItem:hover { opacity: 1; }
+.hemsMenuActive {
+  opacity: 1;
+  border-left-color: #fff;
+}
+
+.hemsRight {
+  position: relative;
+  flex: 0 0 49%;
+}
+
+.hemsPhoto {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 8px;
+}
+
+.hemsShade {
+  position: absolute;
+  inset: 0;
+  border-radius: 8px;
+  background: linear-gradient(rgba(0, 0, 0, 0.2), rgba(102, 102, 102, 0));
+}
+
+/* info pins on the photo */
+.hemsPin {
+  position: absolute;
+  display: flex;
+  align-items: flex-start;
+  gap: 19px;
+}
+
+.hemsPinDot {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.25);
+  backdrop-filter: blur(2px);
+  flex-shrink: 0;
+  position: relative;
+}
+.hemsPinDot::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #fff;
+}
+
+.hemsPinLabel {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 8px 16px;
+  border-radius: 8px;
+  background: rgba(121, 100, 96, 0.5);
+  backdrop-filter: blur(6px);
+  color: #fff;
+  white-space: nowrap;
+}
+
+.hemsPinTitle {
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: 16px;
+  line-height: 20px;
+}
+
+.hemsPinSub {
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 20px;
+  opacity: 0.75;
+}
+
+/* ─── FAQ section — same gradient continues behind it ────────────────────── */
+.faq {
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 150px 24px 120px;
+  color: #fff;
+}
+
+.faqHead {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  text-align: center;
+  margin-bottom: 56px;
+}
+
+.faqLabel {
+  font-family: var(--font-body);
+  font-weight: 500;
+  font-size: 20px;
+  line-height: 1.64;
+  opacity: 0.9;
+}
+
+.faqTitle {
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: clamp(32px, 3.4vw, 48px);
+  line-height: 1.1;
+  margin: 0;
+}
+
+.faqList {
+  width: 100%;
+  max-width: 1172px;
+  display: flex;
+  flex-direction: column;
+}
+
+.faqItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 32px 24px;
+  border-radius: 12px;
+  border-bottom: 1px solid rgba(230, 230, 230, 0.1);
+  background: rgba(241, 235, 228, 0);
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+.faqItem:hover { background: rgba(241, 235, 228, 0.1); }
+
+.faqQuestion {
+  font-family: var(--font-body);
+  font-weight: 500;
+  font-size: clamp(18px, 1.7vw, 24px);
+  line-height: 1.1;
+  color: #fff;
+}
+
+.faqToggle {
+  width: 48px;
+  height: 48px;
+  flex-shrink: 0;
+  border: none;
+  border-radius: 14px;
+  background: #fff;
+  color: var(--c-text-primary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.3s var(--ease-out);
+}
+.faqToggle svg { display: block; }
+
+/* ─── Proof section — white panel that slides UP over the gradient ───────── */
+.proofWrap {
+  position: relative;
+  z-index: 5; /* above the gradient redZone */
+}
+
+.proof {
+  position: relative;
+  min-height: 100vh;
+  background: #fff;
+  display: flex;
+  align-items: stretch;
+  overflow: hidden;
+}
+
+/* left column — editorial */
+.proofLeft {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 0 72px;
+  max-width: 700px;
+}
+
+.proofLabel {
+  font-family: var(--font-body);
+  font-weight: 500;
+  font-size: 20px;
+  line-height: 1.64;
+  color: var(--c-red);
+}
+
+.proofTitle {
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: clamp(38px, 3.9vw, 56px);
+  line-height: 1;
+  color: #262626;
+  margin: 12px 0;
+}
+
+.proofZip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  align-self: flex-start;
+  padding: 6px 16px 10px 8px;
+  border: 2px solid #5c5c5c;
+  border-radius: 8px;
+  background: #fff;
+}
+.proofZip svg { color: #262626; }
+
+.proofZipNum {
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: 48px;
+  line-height: 1;
+  color: #262626;
+  opacity: 0.9;
+}
+
+.proofDesc {
+  font-family: var(--font-body);
+  font-size: 20px;
+  line-height: 1.45;
+  color: #262626;
+  opacity: 0.8;
+  margin: 24px 0 0;
+  max-width: 636px;
+}
+
+/* right column — beige showcase panel */
+.proofRight {
+  flex: 0 0 49%;
+  position: relative;
+  background: #f8f5f2;
+  border-radius: 4px;
+  margin: 11px 11px 11px 0;
+}
+
+.proofPhoto {
+  position: absolute;
+  object-fit: cover;
+  border-radius: 6px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
+}
+.proofPhotoTown  { left: 0;     top: 21%;  width: 33%; aspect-ratio: 234/262; transform: translateX(-22%); }
+.proofPhotoHouse { right: 4.5%; top: 5%;   width: 33%; aspect-ratio: 234/262; }
+
+/* testimonial card stack */
+.proofCardStack {
+  position: absolute;
+  left: 11%;
+  top: 41%;
+  width: 76%;
+}
+
+.proofCardBehind {
+  position: absolute;
+  top: -14px;
+  left: 5%;
+  right: 5%;
+  height: 100%;
+  background: #8a247f;
+  border-radius: 6px;
+}
+
+.proofCard {
+  position: relative;
+  background: var(--c-red);
+  border-radius: 6px;
+  padding: 24px 20px 20px;
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  overflow: hidden;
+}
+
+.proofQuoteTitle {
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: clamp(18px, 1.7vw, 24px);
+  line-height: 1.1;
+  margin: 0;
+}
+
+.proofQuoteText {
+  font-family: var(--font-body);
+  font-size: clamp(15px, 1.25vw, 18px);
+  line-height: 1.3;
+  opacity: 0.9;
+  margin: 8px 0 0;
+  max-width: 320px;
+}
+
+.proofAuthor {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.proofAvatar {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.25);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: 15px;
+  color: #fff;
+}
+
+.proofAuthorMeta { flex: 1; min-width: 0; }
+
+.proofAuthorName {
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: 20px;
+  line-height: 1;
+}
+
+.proofAuthorRow {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  margin-top: 4px;
+}
+
+.proofAuthorTariff {
+  font-family: var(--font-body);
+  font-size: 18px;
+}
+
+.proofAuthorWhen {
+  font-family: var(--font-body);
+  font-size: 12px;
+  opacity: 0.75;
+}
+
+.proofDots {
+  position: absolute;
+  bottom: 23%;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 4px;
+}
+.proofDot {
+  width: 21px;
+  height: 4px;
+  border-radius: 2px;
+  background: #c5c5c5;
+}
+.proofDotActive { background: var(--c-red); }
+
+/* bottom stats bar */
+.proofStats {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  margin: 0 0 0 0;
+  background: #f9f6f4;
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  padding: 20px 32px;
+  border-radius: 4px;
+}
+
+.proofStat {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-right: 24px;
+}
+.proofStat + .proofStat { border-left: 1px solid rgba(38,38,38,0.1); padding-left: 24px; }
+
+.proofStatNum {
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: 40px;
+  line-height: 1;
+  color: #262626;
+  white-space: nowrap;
+}
+
+.proofStatLabel {
+  font-family: var(--font-body);
+  font-size: 18px;
+  line-height: 1;
+  color: #262626;
+  opacity: 0.75;
+}
+
+.proofStatsBtn {
+  margin-left: auto;
+  flex-shrink: 0;
+  height: 48px;
+  padding: 0 32px;
+  border: none;
+  border-radius: 14px;
+  background: var(--c-red);
+  color: #fff;
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: 18px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.proofStatsBtn:hover { background: #cc1709; }

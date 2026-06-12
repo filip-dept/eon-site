@@ -3,9 +3,9 @@
 import { forwardRef } from 'react';
 import styles from './hero.module.css';
 
-/* First chip is the NEW journey-starter requested on top of the Figma set */
+/* First chip is the journey-starter — styled like the rest, still clickable */
 const CHIPS = [
-  { id: 'strom-tarif', label: 'Strom-Tarif für mich finden', primary: true },
+  { id: 'strom-tarif', label: 'Strom-Tarif für mich finden' },
   { id: 'solar', label: 'Lohnt sich Solar mit Wärmepumpe?' },
   { id: 'kosten', label: 'Wie senke ich meine Energiekosten?' },
   { id: 'wallbox', label: 'Wallbox und passender Autostrom-Tarif' },
@@ -49,7 +49,7 @@ const ChatWidget = forwardRef<HTMLDivElement>((_, ref) => {
         {CHIPS.map((chip) => (
           <button
             key={chip.id}
-            className={`${styles.chip} ${chip.primary ? styles.chipPrimary : ''}`}
+            className={styles.chip}
             onClick={() => handleChipClick(chip.id)}
             data-chip
           >

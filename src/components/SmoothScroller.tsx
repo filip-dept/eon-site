@@ -10,6 +10,7 @@ export default function SmoothScroller({ children }: { children: React.ReactNode
   useEffect(() => {
     const lenis = new Lenis({ lerp: 0.1, smoothWheel: true });
     lenisRef.current = lenis;
+    (window as unknown as { lenis: Lenis }).lenis = lenis;
 
     lenis.on('scroll', ScrollTrigger.update);
 

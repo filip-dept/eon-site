@@ -36,7 +36,7 @@
   /* Chat module */
   --chat-width: 660px;
   --chat-radius: 24px;
-  --chat-pad: 12px;
+  --chat-pad: 16px;
   --chat-gap: 24px;
   --chat-shadow: 0px 4px 24px 0px rgba(0, 0, 0, 0.1);
 
