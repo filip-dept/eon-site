@@ -4,388 +4,177 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { useRouter } from 'next/navigation';
 import { gsap } from '@/lib/gsap';
-import { suggestPlz } from '@/lib/germanPlz';
 import styles from './journey.module.css';
 
-/* ─── Types ──────────────────────────────────────────────────────────────── */
+/* ─── Answers ────────────────────────────────────────────────────────────── */
 type Answers = {
-  priority?: string;
-  plz?: string;
-  persons?: number;
-  kwh?: number;
+  wechsel: 'eon' | 'self';
+  anbieter: string;
+  kundennummer: string;
+  zaehler: string;
+  strasse: string;
+  nr: string;
+  plz: string;
+  stadt: string;
+  datum: 'asap' | 'date';
+  anrede: 'frau' | 'herr' | 'divers';
+  vorname: string;
+  nachname: string;
+  geburtsdatum: string;
+  email: string;
+  telefon: string;
 };
 
-/* ─── Constants ──────────────────────────────────────────────────────────── */
-const PRIORITIES = [
-  {
-    id: 'preis',
-    title: 'Gute Preise & Stabilität',
-    sub: 'Klarer Preis, keine Sprünge.',
-    icon: (
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20z"/>
-        <path d="M12 6v2m0 8v2M9.5 9.5a2.5 2.5 0 0 1 5 0c0 1.5-1.5 2-2.5 2.5-.7.3-1.5.8-1.5 2h4"/>
-      </svg>
-    ),
-  },
-  {
-    id: 'oeko',
-    title: '100% Ökostrom & Nachhaltigkeit',
-    sub: 'Aus erneuerbaren Quellen, beweisbar.',
-    icon: (
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M12 22V12M12 12C12 7 17 3 21 3c0 5-4 9-9 9zM12 12C12 7 7 3 3 3c0 5 4 9 9 9z"/>
-      </svg>
-    ),
-  },
-  {
-    id: 'einfach',
-    title: 'Einfach & unkompliziert',
-    sub: 'Wenig Klicks, klare Sprache.',
-    icon: (
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"/>
-      </svg>
-    ),
-  },
-  {
-    id: 'schnell',
-    title: 'Schnell wechseln & Zeit sparen',
-    sub: 'Wir kümmern uns um den Wechsel.',
-    icon: (
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M7 16V4m0 0L3 8m4-4 4 4M17 8v12m0 0 4-4m-4 4-4-4"/>
-      </svg>
-    ),
-  },
-];
+const INITIAL_ANSWERS: Answers = {
+  wechsel: 'eon',
+  anbieter: '',
+  kundennummer: '',
+  zaehler: '',
+  strasse: '',
+  nr: '',
+  plz: '81245',
+  stadt: '',
+  datum: 'asap',
+  anrede: 'frau',
+  vorname: '',
+  nachname: '',
+  geburtsdatum: '',
+  email: '',
+  telefon: '',
+};
 
-const KWH_MIN = 1000;
-const KWH_MAX = 10000;
+const TOTAL_STEPS = 7;
 
-const KWH_PRESETS = [
-  { id: 'small', title: 'Kleine Wohnung', sub: '1 – 2 Personen · ~1.500 kWh', kwh: 1500 },
-  { id: 'avg',   title: 'Durchschnitt',   sub: '2 – 3 Personen · 3.200 kWh',  kwh: 3200 },
-  { id: 'large', title: 'Großes Haus',    sub: '4+ Personen · ~5.000 kWh',    kwh: 5000 },
-];
-
-function formatKwh(n: number) {
-  return n.toLocaleString('de-DE');
+/* per-step gate for Weiter / Enter */
+function stepValid(step: number, a: Answers): boolean {
+  switch (step) {
+    case 1:  return true;
+    case 2:  return !!a.wechsel;
+    case 3:  return a.anbieter.trim().length > 1;
+    case 4:  return a.kundennummer.trim().length > 2;
+    case 5:  return a.zaehler.trim().length > 3 && a.strasse.trim() !== '' &&
+                    a.nr.trim() !== '' && /^\d{5}$/.test(a.plz) && a.stadt.trim() !== '';
+    case 6:  return !!a.datum;
+    case 7:  return a.vorname.trim() !== '' && a.nachname.trim() !== '' &&
+                    a.geburtsdatum !== '' && /\S+@\S+\.\S+/.test(a.email);
+    default: return false;
+  }
 }
 
-/* ─── Arrow icon ─────────────────────────────────────────────────────────── */
+/* ─── Icons ──────────────────────────────────────────────────────────────── */
 const ArrowRight = () => (
   <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
     <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
   </svg>
 );
+const TickSmall = () => (
+  <svg width="13" height="13" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+    <path d="M2 6.2l2.6 2.6L10 3" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+  </svg>
+);
+const CheckRed = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+    <path d="M5 13l4 4L19 7" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/>
+  </svg>
+);
+const MicIcon = () => (
+  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10v1a7 7 0 0 0 14 0v-1M12 18v4"/>
+  </svg>
+);
+const LocationIcon = () => (
+  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <path d="M12 21c-4-4-7-7.3-7-10a7 7 0 1 1 14 0c0 2.7-3 6-7 10z"/><circle cx="12" cy="11" r="2"/>
+  </svg>
+);
+const PersonsIcon = () => (
+  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>
+  </svg>
+);
+const PlugIcon = () => (
+  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <path d="M12 2v6M8 6h8M7 12h10l-1 7H8l-1-7z"/><path d="M12 19v3"/>
+  </svg>
+);
 
-/* ─── Left categories (one per step, red indicator on the active one) ──────── */
+/* Enter hint — per the Figma frames */
+const EnterHint = () => (
+  <span className={styles.enterHint}>
+    drücke auf <em>Enter</em>
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M9 10l-5 5 5 5"/><path d="M20 4v7a4 4 0 0 1-4 4H4"/>
+    </svg>
+  </span>
+);
+
+/* ─── Left categories (one per step) ─────────────────────────────────────── */
 const CATEGORIES = [
   {
-    label: 'Prioritäten',
+    label: 'Overview',
     icon: (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M4 6h9M4 12h6M4 18h12"/>
-        <circle cx="17" cy="6" r="2"/><circle cx="14" cy="12" r="2"/><circle cx="20" cy="18" r="2"/>
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/>
       </svg>
     ),
   },
   {
-    label: 'Dein Zuhause',
+    label: 'Wechsel',
     icon: (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/><path d="M9.5 20v-6h5v6"/>
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M4 7h13l-3-3M20 17H7l3 3"/>
       </svg>
     ),
   },
   {
-    label: 'Verbrauch',
+    label: 'Anbieter',
     icon: (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M13 2 4 14h7l-1 8 10-12h-7l1-8z"/>
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M9 18h6M10 21h4M12 3a6 6 0 0 1 4 10.5c-.6.5-1 1.5-1 2.5h-6c0-1-.4-2-1-2.5A6 6 0 0 1 12 3z"/>
+      </svg>
+    ),
+  },
+  {
+    label: 'Kundennummer',
+    icon: (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="3" y="5" width="18" height="14" rx="2"/><path d="M7 10h4M7 14h7"/>
+      </svg>
+    ),
+  },
+  {
+    label: 'Zähler',
+    icon: (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M4 19h16M6 19V9m4 10V5m4 14v-8m4 8V11"/>
+      </svg>
+    ),
+  },
+  {
+    label: 'Datum',
+    icon: (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>
+      </svg>
+    ),
+  },
+  {
+    label: 'Daten',
+    icon: (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="12" cy="8" r="4"/><path d="M5 21a7 7 0 0 1 14 0"/>
       </svg>
     ),
   },
 ];
 
-/* ─── Step 1 ─────────────────────────────────────────────────────────────── */
-function Step1({ answers, setAnswers, goNext }: {
-  answers: Answers;
-  setAnswers: (a: Answers) => void;
-  goNext: () => void;
-}) {
+/* ─── Shared field ───────────────────────────────────────────────────────── */
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <>
-      <p className={styles.stepLabel}>Erstmal kalibrieren</p>
-      <h2 className={styles.stepHeadline}>
-        Was ist dir bei deinem<br />
-        Strom <em>am wichtigsten?</em>
-      </h2>
-      <div className={styles.optionGrid}>
-        {PRIORITIES.map((p) => (
-          <button
-            key={p.id}
-            className={styles.optionCard}
-            data-selected={answers.priority === p.id ? 'true' : 'false'}
-            onClick={() => {
-              setAnswers({ ...answers, priority: p.id });
-              setTimeout(goNext, 260);
-            }}
-          >
-            <span className={styles.optionIcon}>{p.icon}</span>
-            <span className={styles.optionText}>
-              <span className={styles.optionTitle}>{p.title}</span>
-              <span className={styles.optionSub}>{p.sub}</span>
-            </span>
-          </button>
-        ))}
-      </div>
-      <p className={styles.footNote}>
-        Eine Auswahl reicht — wir fragen dich noch zwei Dinge, dann steht dein Tarif.
-      </p>
-    </>
-  );
-}
-
-/* ─── Step 2 ─────────────────────────────────────────────────────────────── */
-function Step2({ answers, setAnswers, goNext }: {
-  answers: Answers;
-  setAnswers: (a: Answers) => void;
-  goNext: () => void;
-}) {
-  const persons = answers.persons ?? 2;
-  const plz = answers.plz ?? '';
-  const plzValid = /^\d{5}$/.test(plz);
-
-  const [suggestions, setSuggestions] = useState<[string, string][]>([]);
-  const [activeIdx, setActiveIdx] = useState(-1);
-  const [city, setCity] = useState('');
-  const inputRef = useRef<HTMLInputElement>(null);
-  const listRef = useRef<HTMLUListElement>(null);
-
-  function pickSuggestion(p: string, c: string) {
-    const cityShort = c.split(',')[1]?.trim() ?? c;
-    setAnswers({ ...answers, plz: p });
-    setCity(cityShort);
-    setSuggestions([]);
-    setActiveIdx(-1);
-  }
-
-  function handleChange(val: string) {
-    const digits = val.replace(/\D/g, '').slice(0, 5);
-    setAnswers({ ...answers, plz: digits });
-    setCity('');
-    setSuggestions(digits.length >= 2 ? suggestPlz(digits) : []);
-    setActiveIdx(-1);
-  }
-
-  function handleKeyDown(e: React.KeyboardEvent) {
-    if (!suggestions.length) return;
-    if (e.key === 'ArrowDown') {
-      e.preventDefault();
-      setActiveIdx((i) => Math.min(i + 1, suggestions.length - 1));
-    } else if (e.key === 'ArrowUp') {
-      e.preventDefault();
-      setActiveIdx((i) => Math.max(i - 1, 0));
-    } else if (e.key === 'Enter' && activeIdx >= 0) {
-      e.preventDefault();
-      pickSuggestion(...suggestions[activeIdx]);
-    } else if (e.key === 'Escape') {
-      setSuggestions([]);
-      setActiveIdx(-1);
-    }
-  }
-
-  /* Scroll active item into view */
-  useEffect(() => {
-    if (activeIdx < 0 || !listRef.current) return;
-    const item = listRef.current.children[activeIdx] as HTMLElement | undefined;
-    item?.scrollIntoView({ block: 'nearest' });
-  }, [activeIdx]);
-
-  return (
-    <>
-      <p className={styles.stepLabel}>Wo zuhause, mit wem</p>
-      <h2 className={styles.stepHeadline}>
-        Erzähl mir kurz<br />
-        <em>von deinem Zuhause.</em>
-      </h2>
-
-      <div className={styles.s2row}>
-        {/* PLZ */}
-        <div className={styles.s2col}>
-          <p className={styles.fieldLabel}>Postleitzahl</p>
-          <div className={styles.plzField}>
-            <div className={styles.plzRow}>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9e9d9c" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{flexShrink:0}}>
-                <path d="M12 21c-4-4-7-7.3-7-10a7 7 0 1 1 14 0c0 2.7-3 6-7 10z"/>
-                <circle cx="12" cy="11" r="2"/>
-              </svg>
-              <input
-                ref={inputRef}
-                className={styles.plzInput}
-                type="text"
-                inputMode="numeric"
-                maxLength={5}
-                placeholder="20095"
-                value={plz}
-                onChange={(e) => handleChange(e.target.value)}
-                onKeyDown={handleKeyDown}
-                autoComplete="off"
-                aria-label="Postleitzahl"
-                aria-autocomplete="list"
-                aria-expanded={suggestions.length > 0}
-              />
-              {city && <span className={styles.plzCity}>{city}</span>}
-              {plzValid && (
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#22a053" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{flexShrink:0}}>
-                  <path d="M5 13l4 4L19 7"/>
-                </svg>
-              )}
-            </div>
-
-            {suggestions.length > 0 && (
-              <ul ref={listRef} className={styles.plzDropdown} role="listbox">
-                {suggestions.map(([p, c], i) => (
-                  <li
-                    key={p}
-                    className={styles.plzOption}
-                    data-active={i === activeIdx ? 'true' : 'false'}
-                    role="option"
-                    aria-selected={i === activeIdx}
-                    onMouseDown={(e) => { e.preventDefault(); pickSuggestion(p, c); }}
-                    onMouseEnter={() => setActiveIdx(i)}
-                  >
-                    <span className={styles.plzOptionCode}>{p}</span>
-                    <span className={styles.plzOptionCity}>{c}</span>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-          <p className={styles.plzHint}>Brauchen wir nur, um den passenden Tarif zu finden — wir speichern nichts.</p>
-        </div>
-
-        {/* Persons */}
-        <div className={styles.s2col}>
-          <p className={styles.fieldLabel}>Personen im Haushalt</p>
-          <div className={styles.stepper}>
-            <button
-              className={styles.stepBtn}
-              onClick={() => setAnswers({ ...answers, persons: Math.max(1, persons - 1) })}
-              disabled={persons <= 1}
-              aria-label="Weniger Personen"
-            >
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M3 8h10"/></svg>
-            </button>
-            <span className={styles.stepperVal}>{persons}</span>
-            <button
-              className={styles.stepBtn}
-              onClick={() => setAnswers({ ...answers, persons: Math.min(10, persons + 1) })}
-              disabled={persons >= 10}
-              aria-label="Mehr Personen"
-            >
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M8 3v10M3 8h10"/></svg>
-            </button>
-            <span className={styles.stepperUnit}>Personen</span>
-          </div>
-          <div className={styles.pills}>
-            {[1, 2, 3, '4+'].map((v) => {
-              const num = v === '4+' ? 4 : Number(v);
-              const active = persons === num || (v === '4+' && persons >= 4);
-              return (
-                <button
-                  key={v}
-                  className={styles.pill}
-                  data-active={active ? 'true' : 'false'}
-                  onClick={() => setAnswers({ ...answers, persons: num })}
-                >
-                  {v}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      </div>
-
-      <button
-        className={styles.ctaBtn}
-        onClick={goNext}
-        disabled={!plzValid}
-        style={{ opacity: plzValid ? 1 : 0.45, cursor: plzValid ? 'pointer' : 'default', marginTop: 24 }}
-      >
-        Weiter <ArrowRight />
-      </button>
-    </>
-  );
-}
-
-/* ─── Step 3 ─────────────────────────────────────────────────────────────── */
-function Step3({ answers, setAnswers, onSubmit }: {
-  answers: Answers;
-  setAnswers: (a: Answers) => void;
-  onSubmit: () => void;
-}) {
-  const kwh = answers.kwh ?? 3200;
-  const persons = answers.persons ?? 2;
-
-  const fillPct = ((kwh - KWH_MIN) / (KWH_MAX - KWH_MIN)) * 100;
-
-  const activePreset = KWH_PRESETS.find((p) => p.kwh === kwh)?.id ?? null;
-
-  return (
-    <>
-      <p className={styles.stepLabel}>Und wie viel Strom</p>
-      <h2 className={styles.stepHeadline}>
-        Wie viel davon<br />
-        <em>brauchst du im Jahr?</em>
-      </h2>
-
-      <div className={styles.kwhBlock}>
-        <span className={styles.kwhNum}>{formatKwh(kwh)}</span>
-        <span className={styles.kwhUnit}>kWh</span>
-      </div>
-      <p className={styles.kwhHint}>ungefähr · bei {persons} {persons === 1 ? 'Person' : 'Personen'} im Haushalt</p>
-
-      <div className={styles.sliderWrap}>
-        <input
-          type="range"
-          className={styles.slider}
-          min={KWH_MIN}
-          max={KWH_MAX}
-          step={100}
-          value={kwh}
-          style={{ '--fill': `${fillPct}%` } as React.CSSProperties}
-          onChange={(e) => setAnswers({ ...answers, kwh: Number(e.target.value) })}
-          aria-label="Jahresverbrauch in kWh"
-        />
-        <div className={styles.sliderLabels}>
-          <span>1.000</span>
-          <span>3.200</span>
-          <span>5.000</span>
-          <span>10.000+</span>
-        </div>
-      </div>
-
-      <div className={styles.presets}>
-        {KWH_PRESETS.map((p) => (
-          <button
-            key={p.id}
-            className={styles.presetCard}
-            data-selected={activePreset === p.id ? 'true' : 'false'}
-            onClick={() => setAnswers({ ...answers, kwh: p.kwh })}
-          >
-            <p className={styles.presetTitle}>{p.title}</p>
-            <p className={styles.presetSub}>{p.sub}</p>
-          </button>
-        ))}
-      </div>
-
-      <button className={styles.ctaBtn} onClick={onSubmit}>
-        Meinen Tarif sehen <ArrowRight />
-      </button>
-    </>
+    <div className={styles.fieldCol}>
+      <p className={styles.fieldLabel}>{label}</p>
+      {children}
+    </div>
   );
 }
 
@@ -395,13 +184,11 @@ export default function JourneyModal() {
   const [mounted, setMounted] = useState(false);
   const [open, setOpen]       = useState(false);
   const [step, setStep]       = useState(1);
-  const [answers, setAnswers] = useState<Answers>({ persons: 2, kwh: 3200 });
+  const [answers, setAnswers] = useState<Answers>(INITIAL_ANSWERS);
 
   const overlayRef = useRef<HTMLDivElement>(null);
   const modalRef   = useRef<HTMLDivElement>(null);
-  /* refs for all 3 step panels */
-  const stepRefs   = useRef<(HTMLDivElement | null)[]>([null, null, null]);
-  /* guard against re-animating mid-transition */
+  const stepRefs   = useRef<(HTMLDivElement | null)[]>(Array(TOTAL_STEPS).fill(null));
   const animating  = useRef(false);
 
   useEffect(() => { setMounted(true); }, []);
@@ -429,19 +216,18 @@ export default function JourneyModal() {
   /* ── Open ── */
   const openModal = useCallback(() => {
     setStep(1);
-    setAnswers({ persons: 2, kwh: 3200 });
+    setAnswers(INITIAL_ANSWERS);
     setOpen(true);
     document.body.style.overflow = 'hidden';
   }, []);
 
-  /* ── Listen for chip event ── */
   useEffect(() => {
     const handler = () => openModal();
     document.addEventListener('eon:journey-start', handler);
     return () => document.removeEventListener('eon:journey-start', handler);
   }, [openModal]);
 
-  /* ── Enter animation (fires when open transitions true → rendered) ── */
+  /* ── Enter animation ── */
   useEffect(() => {
     if (!open) return;
     const modal   = modalRef.current;
@@ -450,7 +236,6 @@ export default function JourneyModal() {
 
     animating.current = true;
 
-    /* Reveal from the bottom edge upward (same eonReveal wipe as hero) */
     gsap.set(modal, { clipPath: 'inset(100% 0px 0px 0px round 20px 20px 0px 0px)', opacity: 1 });
     gsap.set(overlay, { opacity: 0 });
 
@@ -459,7 +244,6 @@ export default function JourneyModal() {
     tl.to(overlay, { opacity: 1, duration: 0.28, ease: 'none' }, 0)
       .to(modal, { clipPath: 'inset(0px 0px 0px 0px round 20px 20px 0px 0px)', duration: 0.7, ease: 'eonOut' }, 0);
 
-    /* Content fades up after the shell has mostly revealed */
     const firstStep = stepRefs.current[0];
     if (firstStep) {
       gsap.set(firstStep, { y: 24, opacity: 0 });
@@ -485,7 +269,6 @@ export default function JourneyModal() {
       onComplete: () => {
         gsap.set(outEl, { display: 'none', x: 0 });
         setStep(nextStep);
-        /* Let React render the new step, then animate it in */
         requestAnimationFrame(() => {
           gsap.set(inEl, { display: 'flex', x: -dx, opacity: 0 });
           gsap.to(inEl, {
@@ -501,7 +284,7 @@ export default function JourneyModal() {
   }, [step]);
 
   const goNext = useCallback(() => {
-    if (step < 3) transitionTo(step + 1, 'fwd');
+    if (step < TOTAL_STEPS) transitionTo(step + 1, 'fwd');
   }, [step, transitionTo]);
 
   const goBack = useCallback(() => {
@@ -509,56 +292,332 @@ export default function JourneyModal() {
     else closeModal();
   }, [step, transitionTo, closeModal]);
 
-  /* Jump to an already-visited category (sidebar) */
   const goToStep = useCallback((s: number) => {
     if (s === step || s > step || animating.current) return;
     transitionTo(s, 'bck');
   }, [step, transitionTo]);
 
-  const resetJourney = useCallback(() => {
-    const outEl = stepRefs.current[step - 1];
-    const inEl  = stepRefs.current[0];
-    if (!outEl || !inEl || step === 1) return;
+  /* ── Submit → tariff page, like before ── */
+  const submit = useCallback(() => {
+    const q = new URLSearchParams({ plz: answers.plz || '81245', persons: '2', kwh: '3200' });
+    router.push(`/tariff?${q.toString()}`);
+  }, [answers.plz, router]);
 
-    animating.current = true;
-    gsap.to(outEl, {
-      x: 44, opacity: 0, duration: 0.32, ease: 'eonReveal',
-      onComplete: () => {
-        gsap.set(outEl, { display: 'none', x: 0 });
-        setStep(1);
-        setAnswers({ persons: 2, kwh: 3200 });
-        requestAnimationFrame(() => {
-          gsap.set(inEl, { display: 'flex', x: -44, opacity: 0 });
-          gsap.to(inEl, { x: 0, opacity: 1, duration: 0.42, ease: 'eonOut', onComplete: () => { animating.current = false; } });
-        });
-      },
-    });
-  }, [step]);
+  /* Enter advances (typeform-style); on the last step it submits */
+  const advance = useCallback(() => {
+    if (animating.current || !stepValid(step, answers)) return;
+    if (step < TOTAL_STEPS) goNext();
+    else submit();
+  }, [step, answers, goNext, submit]);
 
   /* ── Keyboard ── */
   useEffect(() => {
     if (!open) return;
-    const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') closeModal(); };
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') closeModal();
+      if (e.key === 'Enter') { e.preventDefault(); advance(); }
+    };
     document.addEventListener('keydown', handler);
     return () => document.removeEventListener('keydown', handler);
-  }, [open, closeModal]);
+  }, [open, closeModal, advance]);
 
-  /* ── Sync step panel visibility after state-driven step changes ── */
+  /* ── Sync step panel visibility ── */
   useEffect(() => {
     stepRefs.current.forEach((el, i) => {
       if (!el) return;
-      /* Only applies to "static" display on first render of each step */
       if (i === step - 1) {
-        if (el.style.display === 'none') return; /* let GSAP handle it */
+        if (el.style.display === 'none') return;
         gsap.set(el, { display: 'flex', opacity: 1, x: 0 });
       } else {
-        /* Don't clobber if GSAP is mid-transition */
         if (!animating.current) gsap.set(el, { display: 'none' });
       }
     });
   }, [step]);
 
   if (!mounted || !open) return null;
+
+  const set = (patch: Partial<Answers>) => setAnswers((a) => ({ ...a, ...patch }));
+  /* A/B boxes: picking is enough to move on */
+  const pickAndGo = (patch: Partial<Answers>) => {
+    set(patch);
+    setTimeout(goNext, 240);
+  };
+
+  const panels: React.ReactNode[] = [
+    /* ── 1 · Overview (Figma) ── */
+    <>
+      <p className={styles.stepLabel}>Review</p>
+      <h2 className={styles.stepHeadline}>Bereit für dein neues Energie? Wir schon.</h2>
+
+      <div className={styles.ctxRow}>
+        <span className={styles.ctxChip}><LocationIcon />81245</span>
+        <span className={styles.ctxSep} />
+        <span className={styles.ctxChip}><PersonsIcon />2 Pers.</span>
+        <span className={styles.ctxSep} />
+        <span className={styles.ctxChip}><PlugIcon />3.200 kWh</span>
+        <a className={styles.ctxEdit} href="#" onClick={(e) => e.preventDefault()}>Ändern</a>
+        <span className={styles.ctxSep} />
+        <span className={styles.miniPrefLabel}>Ich lege Wert auf</span>
+        <span className={styles.miniPref}>
+          <span className={styles.miniPrefSides}><span>Flexibilität</span><span>Sicherheit</span></span>
+          <span className={styles.miniTrack}><span className={styles.miniFill} /><span className={styles.miniDot} /></span>
+        </span>
+      </div>
+
+      <p className={styles.selLabel}>Dein auswahl</p>
+      <div className={styles.tariffPreview}>
+        <img src="/tariff-hero.png" alt="" className={styles.tpPhoto} />
+        <div className={styles.tpFooter}>
+          <div className={styles.tpNameRow}>
+            <span className={styles.tpName}>E.ON SolarStrom Extra 12</span>
+            <span className={styles.tpBadge}>Unsere Empfehlung für dich</span>
+          </div>
+          <span className={styles.tpSub}>12 Mo | Solar DE</span>
+          <div className={styles.tpPriceRow}>
+            <span className={styles.tpPrice}><strong>55,80</strong> € pro Monat</span>
+            <span className={styles.tpBonus}>75 € Neukunden-Bonus <em>bis 20.04.2026</em></span>
+          </div>
+        </div>
+      </div>
+
+      <div className={styles.startRow}>
+        <button className={styles.ctaBtn} onClick={goNext}>Start <ArrowRight /></button>
+        <EnterHint />
+        <button className={styles.voiceBox} type="button">
+          <span className={styles.voiceOrb} aria-hidden="true" />
+          Start mit deine Stimme
+          <MicIcon />
+        </button>
+      </div>
+    </>,
+
+    /* ── 2 · Wechsel (Figma — A/B, click advances) ── */
+    <>
+      <p className={styles.stepLabel}>Wechsel</p>
+      <h2 className={styles.stepHeadline}>Kümmern wir uns um deinen Wechsel?</h2>
+      <p className={styles.stepSub}>Wir erledigen alle Formalitäten und kündigen deinen alten Vertrag.</p>
+
+      <div className={styles.abList}>
+        <button className={styles.abBox} data-selected={answers.wechsel === 'eon'} onClick={() => pickAndGo({ wechsel: 'eon' })}>
+          <span className={styles.abCheckbox}><TickSmall /></span>
+          <span>
+            <span className={styles.abTitle}>Ja bitte übernehmen</span>
+            <span className={styles.abSub}>Ihr alter Vertrag wird von uns gekündigt</span>
+          </span>
+        </button>
+        <button className={styles.abBox} data-selected={answers.wechsel === 'self'} onClick={() => pickAndGo({ wechsel: 'self' })}>
+          <span className={styles.abCheckbox}><TickSmall /></span>
+          <span>
+            <span className={styles.abTitle}>Ich hab schon gekündigt</span>
+            <span className={styles.abSub}>Ich kümmere mich selber drum</span>
+          </span>
+        </button>
+      </div>
+
+      <div className={styles.startRow}>
+        <button className={styles.ctaBtn} onClick={advance}>Start <ArrowRight /></button>
+        <EnterHint />
+      </div>
+    </>,
+
+    /* ── 3 · Anbieter ── */
+    <>
+      <p className={styles.stepLabel}>Anbieter</p>
+      <h2 className={styles.stepHeadline}>Bei welchem Anbieter bist du aktuell?</h2>
+      <p className={styles.stepSub}>Damit wir wissen, an wen die Kündigung geht.</p>
+
+      <div className={styles.formGrid}>
+        <Field label="Aktueller Stromanbieter">
+          <input
+            className={styles.boxInput}
+            type="text"
+            placeholder="z.B. Stadtwerke München, Yello, ..."
+            value={answers.anbieter}
+            onChange={(e) => set({ anbieter: e.target.value })}
+          />
+        </Field>
+      </div>
+
+      <div className={styles.actionsRow}>
+        <button className={styles.backLink} onClick={goBack}>Zurück</button>
+        <button className={styles.ctaBtn} onClick={advance} disabled={!stepValid(3, answers)}>
+          Weiter <ArrowRight />
+        </button>
+      </div>
+    </>,
+
+    /* ── 4 · Kundennummer ── */
+    <>
+      <p className={styles.stepLabel}>Kundennr.</p>
+      <h2 className={styles.stepHeadline}>Wie lautet deine Kundennummer?</h2>
+      <p className={styles.stepSub}>Steht auf deiner letzten Jahresabrechnung oben rechts.</p>
+
+      <div className={styles.formGrid}>
+        <Field label="Kundennummer beim alten Anbieter">
+          <input
+            className={styles.boxInput}
+            type="text"
+            placeholder="z.B. K-12345678"
+            value={answers.kundennummer}
+            onChange={(e) => set({ kundennummer: e.target.value })}
+          />
+        </Field>
+      </div>
+
+      <div className={styles.actionsRow}>
+        <button className={styles.backLink} onClick={goBack}>Zurück</button>
+        <button className={styles.ctaBtn} onClick={advance} disabled={!stepValid(4, answers)}>
+          Weiter <ArrowRight />
+        </button>
+      </div>
+    </>,
+
+    /* ── 5 · Zähler und Adresse ── */
+    <>
+      <p className={styles.stepLabel}>Zähler</p>
+      <h2 className={styles.stepHeadline}>Zähler und Adresse</h2>
+      <p className={styles.stepSub}>Damit wir wissen, wo der Strom hin soll.</p>
+
+      <div className={styles.formGrid}>
+        <Field label="Zählernummer">
+          <input
+            className={styles.boxInput}
+            type="text"
+            placeholder="z.B. 1ESY1234567890"
+            value={answers.zaehler}
+            onChange={(e) => set({ zaehler: e.target.value })}
+          />
+        </Field>
+        <div className={styles.rowStreet}>
+          <Field label="Strasse">
+            <input
+              className={styles.boxInput}
+              type="text"
+              placeholder="Musterstraße"
+              value={answers.strasse}
+              onChange={(e) => set({ strasse: e.target.value })}
+            />
+          </Field>
+          <Field label="Nr.">
+            <input
+              className={styles.boxInput}
+              type="text"
+              placeholder="12a"
+              value={answers.nr}
+              onChange={(e) => set({ nr: e.target.value })}
+            />
+          </Field>
+        </div>
+        <div className={styles.rowCity}>
+          <Field label="PLZ">
+            <input
+              className={styles.boxInput}
+              type="text"
+              inputMode="numeric"
+              maxLength={5}
+              value={answers.plz}
+              onChange={(e) => set({ plz: e.target.value.replace(/\D/g, '').slice(0, 5) })}
+            />
+          </Field>
+          <Field label="Stadt">
+            <input
+              className={styles.boxInput}
+              type="text"
+              placeholder="Hamburg"
+              value={answers.stadt}
+              onChange={(e) => set({ stadt: e.target.value })}
+            />
+          </Field>
+        </div>
+      </div>
+
+      <div className={styles.actionsRow}>
+        <button className={styles.backLink} onClick={goBack}>Zurück</button>
+        <button className={styles.ctaBtn} onClick={advance} disabled={!stepValid(5, answers)}>
+          Weiter <ArrowRight />
+        </button>
+      </div>
+    </>,
+
+    /* ── 6 · Datum (A/B — click advances) ── */
+    <>
+      <p className={styles.stepLabel}>Datum</p>
+      <h2 className={styles.stepHeadline}>Wann soll der neue Vertrag starten?</h2>
+      <p className={styles.stepSub}>Schnellstmöglich oder zu einem konkreten Datum.</p>
+
+      <div className={styles.abRow}>
+        <button className={`${styles.abBox} ${styles.abCorner}`} data-selected={answers.datum === 'asap'} onClick={() => pickAndGo({ datum: 'asap' })}>
+          <span>
+            <span className={styles.abTitle}>Schnellstmöglich</span>
+            <span className={styles.abSub}>Sobald die Kündigung greift</span>
+          </span>
+          <span className={styles.abTick}><CheckRed /></span>
+        </button>
+        <button className={`${styles.abBox} ${styles.abCorner}`} data-selected={answers.datum === 'date'} onClick={() => pickAndGo({ datum: 'date' })}>
+          <span>
+            <span className={styles.abTitle}>Zu einem Datum</span>
+            <span className={styles.abSub}>Du gibst es uns vor</span>
+          </span>
+          <span className={styles.abTick}><CheckRed /></span>
+        </button>
+      </div>
+
+      <div className={styles.actionsRow}>
+        <button className={styles.backLink} onClick={goBack}>Zurück</button>
+      </div>
+    </>,
+
+    /* ── 7 · Daten ── */
+    <>
+      <p className={styles.stepLabel}>Daten</p>
+      <h2 className={styles.stepHeadline}>Deine Daten — sicher und schnell.</h2>
+      <p className={styles.stepSub}>Wir brauchen nur die nötigsten Angaben für deinen Vertrag.</p>
+
+      <div className={styles.formGrid}>
+        <div className={styles.segmented}>
+          {([['frau', 'Frau'], ['herr', 'Herr'], ['divers', 'Divers']] as const).map(([id, label]) => (
+            <button
+              key={id}
+              className={styles.segBtn}
+              data-active={answers.anrede === id}
+              onClick={() => set({ anrede: id })}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+        <div className={styles.rowSplit}>
+          <Field label="Vorname">
+            <input className={styles.boxInput} type="text" placeholder="Anna"
+              value={answers.vorname} onChange={(e) => set({ vorname: e.target.value })} />
+          </Field>
+          <Field label="Nachname">
+            <input className={styles.boxInput} type="text" placeholder="Schmidt"
+              value={answers.nachname} onChange={(e) => set({ nachname: e.target.value })} />
+          </Field>
+        </div>
+        <Field label="Geburtsdatum">
+          <input className={styles.boxInput} type="date"
+            value={answers.geburtsdatum} onChange={(e) => set({ geburtsdatum: e.target.value })} />
+        </Field>
+        <Field label="E-Mail">
+          <input className={styles.boxInput} type="email" placeholder="anna.schmidt@example.com"
+            value={answers.email} onChange={(e) => set({ email: e.target.value })} />
+        </Field>
+        <Field label="Telefon (optional)">
+          <input className={styles.boxInput} type="tel" placeholder="+49 ..."
+            value={answers.telefon} onChange={(e) => set({ telefon: e.target.value })} />
+        </Field>
+      </div>
+
+      <div className={styles.actionsRow}>
+        <button className={styles.backLink} onClick={goBack}>Zurück</button>
+        <button className={styles.ctaBtn} onClick={advance} disabled={!stepValid(7, answers)}>
+          Vertrag abschließen <ArrowRight />
+        </button>
+      </div>
+    </>,
+  ];
 
   return createPortal(
     <>
@@ -578,6 +637,9 @@ export default function JourneyModal() {
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
             <path d="M15 5l-7 7 7 7" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
+        </button>
+        <button className={styles.skipBtn} onClick={submit} aria-label="Fragen überspringen">
+          Überspringen
         </button>
         <button className={styles.cornerBtn} data-pos="close" onClick={closeModal} aria-label="Schließen">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -610,42 +672,17 @@ export default function JourneyModal() {
           </nav>
 
           <div className={styles.contentCol}>
-            {/* Step panels (all mounted, GSAP controls visibility) */}
             <div className={styles.content}>
-              <div
-                ref={(el) => { stepRefs.current[0] = el; }}
-                className={styles.stepPanel}
-                style={{ display: step === 1 ? 'flex' : 'none' }}
-              >
-                <Step1 answers={answers} setAnswers={setAnswers} goNext={goNext} />
-              </div>
-
-              <div
-                ref={(el) => { stepRefs.current[1] = el; }}
-                className={styles.stepPanel}
-                style={{ display: step === 2 ? 'flex' : 'none' }}
-              >
-                <Step2 answers={answers} setAnswers={setAnswers} goNext={goNext} />
-              </div>
-
-              <div
-                ref={(el) => { stepRefs.current[2] = el; }}
-                className={styles.stepPanel}
-                style={{ display: step === 3 ? 'flex' : 'none' }}
-              >
-                <Step3
-                  answers={answers}
-                  setAnswers={setAnswers}
-                  onSubmit={() => {
-                    const q = new URLSearchParams({
-                      plz:     answers.plz     ?? '',
-                      persons: String(answers.persons ?? 2),
-                      kwh:     String(answers.kwh     ?? 3200),
-                    });
-                    router.push(`/tariff?${q.toString()}`);
-                  }}
-                />
-              </div>
+              {panels.map((panel, i) => (
+                <div
+                  key={i}
+                  ref={(el) => { stepRefs.current[i] = el; }}
+                  className={styles.stepPanel}
+                  style={{ display: step === i + 1 ? 'flex' : 'none' }}
+                >
+                  {panel}
+                </div>
+              ))}
             </div>
           </div>
         </div>

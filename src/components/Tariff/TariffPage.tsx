@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useEffect, useState } from 'react';
+import { useRef, useEffect, useState, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { gsap, ScrollTrigger } from '@/lib/gsap';
 import Navbar from '@/components/Navbar/Navbar';
@@ -28,6 +28,74 @@ const CheckCircleIcon = () => (
     <path d="M8 14l4 4 8-8" stroke="#ea1b0a" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
   </svg>
 );
+/* "reward program" seal — red star badge for the Neukunden-Bonus cell */
+const BonusIcon = () => (
+  <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+    <circle cx="14" cy="14" r="13" stroke="#ea1b0a" strokeWidth="1.5"/>
+    <path
+      d="M14 7.5l1.9 3.85 4.25.62-3.08 3 .73 4.23L14 17.2l-3.8 2 .73-4.23-3.08-3 4.25-.62L14 7.5z"
+      stroke="#ea1b0a" strokeWidth="1.5" strokeLinejoin="round"
+    />
+  </svg>
+);
+/* tiny tag icons for the comparison cards */
+const BalanceIcon = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M12 3v18M5 7h14M5 7l-3 6a3 3 0 0 0 6 0l-3-6zM19 7l-3 6a3 3 0 0 0 6 0l-3-6zM8 21h8"/>
+  </svg>
+);
+const BoltIcon = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M13 2 4 14h7l-1 8 10-12h-7l1-8z"/>
+  </svg>
+);
+const ShieldIcon = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6l8-3z"/>
+  </svg>
+);
+
+/* ─── Comparison cards — Figma 1093:4573 ─────────────────────────────────── */
+type CompareTag = { label: string; green?: boolean; icon?: React.ReactNode };
+interface CompareCard {
+  id: string; name: string; term: string; price: string; ct: string;
+  highlight?: boolean; tags: CompareTag[]; features: [string, string][];
+}
+const COMPARE: CompareCard[] = [
+  {
+    id: 'extra12', name: 'E.ON SolarStrom Extra 12', term: '12 Mo | Solar DE',
+    price: '55,80', ct: '29,60ct/kWh', highlight: true,
+    tags: [{ label: 'Ausgewogen', icon: <BalanceIcon /> }, { label: 'Beste Wahl für dich', green: true }],
+    features: [
+      ['12 Monaten', 'Preisgarantie'],
+      ['100% Solarstrom', 'aus der deutschen Anlagen'],
+      ['Monatlich kündbar', 'nach der Mindestlaufzeit'],
+      ['75 €', 'Neukunden-Bonus'],
+    ],
+  },
+  {
+    id: 'flex', name: 'E.ON SolarStrom Flex', term: '12 Mo | Solar DE',
+    price: '60,10', ct: '31,80ct/kWh',
+    tags: [{ label: 'Maximal Flexibel', icon: <BoltIcon /> }],
+    features: [
+      ['Keine Bindung', 'jederzeit wechselbar'],
+      ['100% Solarstrom', 'aus der deutschen Anlagen'],
+      ['Monatlich kündbar', 'nach der Mindestlaufzeit'],
+      ['40 €', 'Neukunden-Bonus'],
+    ],
+  },
+  {
+    id: 'fest24', name: 'E.ON SolarStrom Festpreis 24', term: '12 Mo | Solar DE',
+    price: '51,10', ct: '29,60ct/kWh',
+    tags: [{ label: 'Maximale Sicherheit', icon: <ShieldIcon /> }],
+    features: [
+      ['24 Monaten', 'Preisgarantie'],
+      ['100% Solarstrom', 'aus der deutschen Anlagen'],
+      ['Kündbar nach 24 Monaten', 'danach monatlich'],
+      ['110 €', 'Neukunden-Bonus'],
+    ],
+  },
+];
 const ChevronRight = () => (
   <svg width="10" height="14" viewBox="0 0 10 16" fill="none">
     <path d="M2 2l6 6-6 6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
@@ -274,7 +342,7 @@ function revealFrame(frame: HTMLElement) {
   if (ah.length) tl.to(ah, { y: 0, opacity: 1, duration: 1, ease: 'eonAppear' }, 0.2);
 }
 
-/* ─── Main page ───────────────────────────────────────────────────────────── */
+/* ─── Main page ──────────────────────────────────────────────────────────── */
 export default function TariffPage() {
   const params  = useSearchParams();
   const plz     = params.get('plz')     ?? '81245';
@@ -291,6 +359,55 @@ export default function TariffPage() {
   const [eco,  setEco]  = useState(true);   // "Besonders nachhaltig" → Zukunft family
   const [pref, setPref] = useState(94);     // Flexibilität (0) ↔ Sicherheit (100)
   const tariff = tariffFor(eco, pref);
+
+  /* "Tarif vergleichen" expands the comparison + pushes the image to the edge */
+  const [comparing, setComparing] = useState(false);
+  const compareRef = useRef<HTMLDivElement>(null);
+
+  /* Once the grey background has expanded, reveal the head text, then unmask
+     each card top→bottom (eonReveal) with a quick stagger. */
+  useEffect(() => {
+    if (!comparing) return;
+    const el = compareRef.current;
+    if (!el) return;
+    const head  = el.querySelector<HTMLElement>(`.${styles.compareHead}`);
+    const cards = Array.from(el.querySelectorAll<HTMLElement>(`.${styles.compareCard}`));
+    const CARD_HIDDEN = 'inset(0% 0% 100% 0% round 12px)';
+    const CARD_SHOWN  = 'inset(0% 0% 0% 0% round 12px)';
+
+    if (head) gsap.set(head, { y: 16, opacity: 0 });
+    if (cards.length) gsap.set(cards, { clipPath: CARD_HIDDEN, opacity: 1 });
+
+    /* start while the frame is still expanding so the whole thing reads as one
+       smooth motion; the unmask itself stays gentle */
+    const tl = gsap.timeline({ delay: 0.22 });
+    if (head) tl.to(head, { y: 0, opacity: 1, duration: 0.5, ease: 'eonOut' }, 0);
+    if (cards.length) {
+      tl.to(cards, {
+        clipPath: CARD_SHOWN,
+        duration: 0.7,
+        ease: 'eonReveal',
+        stagger: 0.06,
+        clearProps: 'clipPath',
+      }, 0.06);
+    }
+    return () => { tl.kill(); };
+  }, [comparing]);
+
+  /* Close: content fades out fast, THEN the frame retreats (CSS) */
+  const closeCompare = useCallback(() => {
+    const el = compareRef.current;
+    if (!el) { setComparing(false); return; }
+    const head  = el.querySelector<HTMLElement>(`.${styles.compareHead}`);
+    const cards = Array.from(el.querySelectorAll<HTMLElement>(`.${styles.compareCard}`));
+    gsap.to([head, ...cards].filter(Boolean) as HTMLElement[], {
+      opacity: 0,
+      duration: 0.14,
+      ease: 'power1.in',
+      overwrite: 'auto',
+      onComplete: () => setComparing(false),
+    });
+  }, []);
 
   const toggleEco = () => {
     const next = !eco;
@@ -326,6 +443,12 @@ export default function TariffPage() {
     /* +16 = trailing track padding that scrollWidth doesn't report */
     const getDist = () => track.scrollWidth + 16 - document.documentElement.clientWidth;
 
+    /* Phase 1 traverses the full horizontal distance over a SHORTER scroll
+       length (same movement, just faster) so the grey frame arrives sooner.
+       Movement uses getDist(); scroll boundaries use phase1(). */
+    const SPEED = 0.7;
+    const phase1 = () => getDist() * SPEED;
+
     /* ── Merged Stromtransparenz frame: stack rotates, then expands ── */
     const merged    = frames[frames.length - 1];
     const barsLeft  = merged.querySelector<HTMLElement>(`.${styles.barsLeft}`)!;
@@ -360,7 +483,7 @@ export default function TariffPage() {
     const pinST = ScrollTrigger.create({
       trigger: section,
       start: 'top top',
-      end: () => `+=${getDist() + ROT + MORPH}`,
+      end: () => `+=${phase1() + ROT + MORPH}`,
       pin: true,
       anticipatePin: 1,
       invalidateOnRefresh: true,
@@ -378,11 +501,11 @@ export default function TariffPage() {
         const scrolled = px > 20;
         page.classList.toggle(styles.scrolled, scrolled);
         page.classList.toggle(styles.navShow, scrolled && self.direction < 0);
-        page.classList.toggle(styles.compact, px > getDist() * 0.7);
+        page.classList.toggle(styles.compact, px > phase1() * 0.7);
       },
     });
 
-    /* Phase 1 — horizontal travel (1px of scroll = 1px of movement) */
+    /* Phase 1 — horizontal travel: full getDist() movement over phase1() scroll */
     const trackTween = gsap.to(track, {
       x: () => -getDist(),
       ease: 'none',
@@ -390,7 +513,7 @@ export default function TariffPage() {
       onUpdate: checkReveals,
       scrollTrigger: {
         start: () => pinST.start,
-        end: () => pinST.start + getDist(),
+        end: () => pinST.start + phase1(),
         scrub: 1,
         invalidateOnRefresh: true,
       },
@@ -408,14 +531,14 @@ export default function TariffPage() {
        Dock target = barsLeft content edge (frame padding-left = 40px). */
     const followDelta = () =>
       merged.offsetLeft + 40 - (edFrame.offsetLeft + edText.offsetLeft);
-    const followStart = () => Math.max(0, getDist() - followDelta());
+    const followStart = () => Math.max(0, getDist() - followDelta()) * SPEED;
 
     const followTween = gsap.to(edText, {
       x: () => followDelta(),
       ease: 'none',
       scrollTrigger: {
         start: () => pinST.start + followStart(),
-        end:   () => pinST.start + getDist(),
+        end:   () => pinST.start + phase1(),
         scrub: 1,
         invalidateOnRefresh: true,
       },
@@ -439,8 +562,8 @@ export default function TariffPage() {
     };
     const ladyTl = gsap.timeline({
       scrollTrigger: {
-        start: () => pinST.start + ladyEntry(),
-        end:   () => pinST.start + getDist(),
+        start: () => pinST.start + ladyEntry() * SPEED,
+        end:   () => pinST.start + phase1(),
         scrub: 1,
         invalidateOnRefresh: true,
       },
@@ -455,8 +578,8 @@ export default function TariffPage() {
       Math.max(0, edFrame.offsetLeft + photoBL.offsetLeft - document.documentElement.clientWidth);
     const manTl = gsap.timeline({
       scrollTrigger: {
-        start: () => pinST.start + manEntry(),
-        end:   () => pinST.start + getDist(),
+        start: () => pinST.start + manEntry() * SPEED,
+        end:   () => pinST.start + phase1(),
         scrub: 1,
         invalidateOnRefresh: true,
       },
@@ -470,8 +593,8 @@ export default function TariffPage() {
     const hubWrap = merged.querySelector<HTMLElement>(`.${styles.hubWrap}`)!;
     gsap.set(hubWrap, { y: 70, opacity: 0 });
     const hubST = ScrollTrigger.create({
-      start: () => pinST.start + getDist() - 2,
-      end:   () => pinST.start + getDist() + ROT + MORPH,
+      start: () => pinST.start + phase1() - 2,
+      end:   () => pinST.start + phase1() + ROT + MORPH,
       onEnter:     () => gsap.to(hubWrap, { y: 0, opacity: 1, duration: 1, ease: 'eonAppear', overwrite: 'auto' }),
       onLeaveBack: () => gsap.to(hubWrap, { y: 70, opacity: 0, duration: 0.45, ease: 'eonOut', overwrite: 'auto' }),
     });
@@ -505,8 +628,8 @@ export default function TariffPage() {
     }
     const rotST = ScrollTrigger.create({
       animation: rot,
-      start: () => pinST.start + getDist(),
-      end:   () => pinST.start + getDist() + ROT,
+      start: () => pinST.start + phase1(),
+      end:   () => pinST.start + phase1() + ROT,
       scrub: 1,
       invalidateOnRefresh: true,
     });
@@ -564,39 +687,64 @@ export default function TariffPage() {
     );
     const morphST = ScrollTrigger.create({
       animation: morph,
-      start: () => pinST.start + getDist() + ROT,
-      end:   () => pinST.start + getDist() + ROT + MORPH,
+      start: () => pinST.start + phase1() + ROT,
+      end:   () => pinST.start + phase1() + ROT + MORPH,
       scrub: 1,
       invalidateOnRefresh: true,
     });
 
-    /* ── Stories section: scroll continues vertically after the pin.
-       Black text on white first; the shared red-zone gradient fades in,
-       text turns white, and the story cards fly up from below the viewport
-       all the way out past the top. ── */
+    /* ── Stories: discrete animations fired at scroll positions (no scrub).
+       The text scrolls up in normal flow; crossing the middle flips the theme
+       to red. A short scroll later the cards rise into their spots (tight
+       stagger) while the stage holds sticky; another short scroll floats them
+       up and out (no opacity), and the page continues to HEMS. ── */
     const stories    = page.querySelector<HTMLElement>(`.${styles.stories}`)!;
     const zoneBg     = page.querySelector<HTMLElement>(`.${styles.redZoneBg}`)!;
     const storiesTxt = stories.querySelector<HTMLElement>(`.${styles.storiesText}`)!;
     const storyCards = Array.from(stories.querySelectorAll<HTMLElement>(`.${styles.storyCard}`));
 
     /* exit fully above the viewport (offsetTop is the card's resting place) */
-    const exitY = (card: HTMLElement) => () => -(card.offsetTop + card.offsetHeight + 60);
+    const exitY = (card: HTMLElement) => -(card.offsetTop + card.offsetHeight + 80);
 
-    const storiesTl = gsap.timeline({
-      scrollTrigger: {
-        trigger: stories,
-        start: 'top top',
-        end: 'bottom bottom',
-        scrub: 1,
-        invalidateOnRefresh: true,
+    gsap.set(storyCards, { y: '120vh' });
+
+    /* T1 — stories text crosses the middle of the screen → red bg, white text */
+    const themeST = ScrollTrigger.create({
+      trigger: stories,
+      start: 'top 45%',
+      onEnter: () => {
+        gsap.to(zoneBg,     { opacity: 1, duration: 0.7, ease: 'power2.inOut', overwrite: 'auto' });
+        gsap.to(storiesTxt, { color: '#ffffff', duration: 0.5, ease: 'power1.inOut', overwrite: 'auto' });
+      },
+      onLeaveBack: () => {
+        gsap.to(zoneBg,     { opacity: 0, duration: 0.5, ease: 'power2.inOut', overwrite: 'auto' });
+        gsap.to(storiesTxt, { color: '#262626', duration: 0.4, ease: 'power1.inOut', overwrite: 'auto' });
       },
     });
-    storiesTl
-      .to(zoneBg,     { opacity: 1, ease: 'none', duration: 0.3 }, 0.05)
-      .to(storiesTxt, { color: '#ffffff', ease: 'none', duration: 0.22 }, 0.1)
-      .to(storyCards[2], { y: exitY(storyCards[2]), ease: 'none', duration: 0.78 }, 0.2)
-      .to(storyCards[0], { y: exitY(storyCards[0]), ease: 'none', duration: 0.74 }, 0.26)
-      .to(storyCards[1], { y: exitY(storyCards[1]), ease: 'none', duration: 0.7  }, 0.3);
+
+    /* T2 — short scroll later (stage is sticky by now): cards rise into
+       their on-screen positions, each with a very short delay */
+    const cardsInST = ScrollTrigger.create({
+      trigger: stories,
+      start: 'top -10%',
+      onEnter: () => gsap.to(storyCards, {
+        y: 0, duration: 0.9, ease: 'eonAppear', stagger: 0.1, overwrite: 'auto',
+      }),
+      onLeaveBack: () => gsap.to(storyCards, {
+        y: '120vh', duration: 0.6, ease: 'power1.in', stagger: 0.06, overwrite: 'auto',
+      }),
+    });
+
+    /* T3 — another short scroll: cards float up out of the screen (no opacity
+       change), then the section releases and HEMS scrolls in */
+    const cardsOutST = ScrollTrigger.create({
+      trigger: stories,
+      start: 'top -65%',
+      onEnter: () => storyCards.forEach((c, i) =>
+        gsap.to(c, { y: () => exitY(c), duration: 0.85, ease: 'power1.in', delay: i * 0.07, overwrite: 'auto' })),
+      onLeaveBack: () => storyCards.forEach((c, i) =>
+        gsap.to(c, { y: 0, duration: 0.75, ease: 'eonOut', delay: i * 0.06, overwrite: 'auto' })),
+    });
 
     /* ── HEMS section entrance ── */
     const hems = page.querySelector<HTMLElement>(`.${styles.hems}`)!;
@@ -654,8 +802,9 @@ export default function TariffPage() {
     return () => {
       clearTimeout(settle);
       window.removeEventListener('resize', setFrameWidth);
-      storiesTl.scrollTrigger?.kill();
-      storiesTl.kill();
+      themeST.kill();
+      cardsInST.kill();
+      cardsOutST.kill();
       hemsST.kill();
       faqST.kill();
       overlapST.kill();
@@ -679,7 +828,7 @@ export default function TariffPage() {
 
       {/* ── Fixed top nav (light variant — dark content on white) ── */}
       <header className={styles.topBar}>
-        <Navbar variant="light" className={styles.nav} />
+        <Navbar variant="solid" className={styles.nav} />
       </header>
 
       {/* ── Context bar — ONE component that morphs into the floating modal ── */}
@@ -747,7 +896,7 @@ export default function TariffPage() {
         <div className={styles.track} ref={trackRef}>
 
           {/* ═══ Frame 1: Hero + Tariff card ═══ */}
-          <div className={`${styles.frame} ${styles.frameHero}`}>
+          <div className={`${styles.frame} ${styles.frameHero}`} data-comparing={comparing}>
             <div className={styles.frameImage} data-aimg>
               <img src="/tariff-hero.png" alt="E.ON Kundin" />
               <div className={styles.socialProof}>
@@ -770,6 +919,8 @@ export default function TariffPage() {
             </div>
 
             <div className={styles.panel}>
+              {/* ── Normal state: headline + recommended card ── */}
+              <div className={styles.panelNormal}>
               <div className={styles.panelHeader} data-al>
                 <h1 className={styles.panelTitle}>Dein Stromtarif,<br />in 15 Sekunden</h1>
                 <p className={styles.panelSub}>Ehrlich erklärt, was deinen Tarif besonders macht – und warum du mit E.ON richtig liegst.</p>
@@ -787,17 +938,17 @@ export default function TariffPage() {
                       <span className={styles.priceMain}>{tariff.price}</span>
                       <span className={styles.priceUnit}>€ pro Monat</span>
                     </div>
-                    <div className={styles.bonusBadge}>
-                      <svg className={styles.bonusIcon} viewBox="0 0 32 32" fill="none">
-                        <circle cx="16" cy="16" r="12" stroke="#8215b4" strokeWidth="1.5"/>
-                        <path d="M11 16l3 3 7-7" stroke="#8215b4" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
-                      </svg>
-                      <span className={styles.bonusText}>{tariff.bonus}</span>
-                      <span className={styles.bonusDate}>{tariff.bonusUntil}</span>
-                    </div>
                   </div>
                   <div className={styles.divider} />
+                  {/* 2×2 feature grid — the Neukunden-Bonus is the first cell (no purple badge) */}
                   <div className={styles.features}>
+                    <div className={styles.feature}>
+                      <BonusIcon />
+                      <div className={styles.featureText}>
+                        <span className={styles.featureName}>{tariff.bonus}</span>
+                        <span className={styles.featureDesc}>{tariff.bonusUntil}</span>
+                      </div>
+                    </div>
                     {tariff.features.map(([name, desc]) => (
                       <div key={name + desc} className={styles.feature}>
                         <CheckCircleIcon />
@@ -810,10 +961,65 @@ export default function TariffPage() {
                   </div>
                   <div className={styles.cardBtns}>
                     <button className={styles.btnPrimary}>Tarif auswählen</button>
-                    <button className={styles.btnSecondary}>Tarif vergleichen <ChevronRight /></button>
+                    <button className={styles.btnSecondary} onClick={() => setComparing(true)}>
+                      Tarif vergleichen <ChevronRight />
+                    </button>
                   </div>
                 </div>
               </div>
+              </div>{/* /panelNormal */}
+            </div>
+
+            {/* ── Comparison — expands as its own frame beside the panel (Figma 1093:4573) ── */}
+            <div className={styles.panelCompare} aria-hidden={!comparing} ref={compareRef}>
+                <button
+                  className={styles.compareCollapse}
+                  onClick={closeCompare}
+                  aria-label="Vergleich schließen"
+                >
+                  <svg width="11" height="16" viewBox="0 0 10 16" fill="none">
+                    <path d="M2 2l6 6-6 6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </button>
+
+                <div className={styles.compareHead}>
+                  <span className={styles.compareLabel}>Tarif im Vergleich</span>
+                  <h2 className={styles.compareTitle}>Drei Wege, ein Ökostrom</h2>
+                  <p className={styles.compareSub}>Gleiche strom Quelle, unterschiedliche Bindung–wähle, was zu dir passt.</p>
+                </div>
+
+                <div className={styles.compareCards}>
+                  {COMPARE.map((c) => (
+                    <div key={c.id} className={styles.compareCard} data-highlight={c.highlight ? 'true' : 'false'}>
+                      <div className={styles.compareTags}>
+                        {c.tags.map((t) => (
+                          <span key={t.label} className={styles.compareTag} data-green={t.green ? 'true' : 'false'}>
+                            {t.icon}{t.label}
+                          </span>
+                        ))}
+                      </div>
+                      <p className={styles.compareName}>{c.name}</p>
+                      <p className={styles.compareTerm}>{c.term}</p>
+                      <p className={styles.comparePrice}>
+                        <strong>{c.price}</strong> <span>€ pro Monat | {c.ct}</span>
+                      </p>
+                      <div className={styles.compareFeatures}>
+                        {c.features.map(([name, desc], i) => (
+                          <div key={name + desc} className={styles.compareFeature}>
+                            {i === c.features.length - 1 ? <BonusIcon /> : <CheckCircleIcon />}
+                            <div className={styles.featureText}>
+                              <span className={styles.featureName}>{name}</span>
+                              <span className={styles.featureDesc}>{desc}</span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                      <button className={c.highlight ? styles.compareBtnPrimary : styles.compareBtnOutline}>
+                        Tarif auswählen
+                      </button>
+                    </div>
+                  ))}
+                </div>
             </div>
           </div>
 

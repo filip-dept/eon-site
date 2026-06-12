@@ -437,10 +437,22 @@
 }
 
 .frameImage {
-  flex: 0 0 58%;
+  flex: 0 0 65%;
   position: relative;
   overflow: hidden;
   border-radius: 20px;
+  transition: flex-basis 0.6s var(--ease-out), margin-right 0.6s var(--ease-out);
+}
+/* comparison open → the image is masked out entirely (0% of the frame width
+   visible); the negative margin swallows its flex gap so the panel lands flush */
+.frameHero[data-comparing='true'] .frameImage {
+  flex-basis: 0;
+  margin-right: -16px;
+}
+.frameHero[data-comparing='true'] .socialProof {
+  opacity: 0;
+  transition: opacity 0.25s ease;
+  pointer-events: none;
 }
 
 .frameImage img {
@@ -517,7 +529,8 @@
    radial blooms orbit on independent paths/speeds over the red base */
 .panel {
   position: relative;
-  flex: 1;
+  flex: 1 1 0%;
+  min-width: 0;
   border-radius: 20px;
   background: linear-gradient(138deg, #ea1b0a 0%, #e0190f 55%, #c11054 100%);
   display: flex;
@@ -526,7 +539,10 @@
   padding: 16px 16px 16px 16px;
   gap: 16px;
   overflow: hidden;
+  transition: flex-grow 0.6s var(--ease-out), flex-basis 0.6s var(--ease-out);
 }
+/* comparison open → the gradient panel just fills the space left of the
+   comparison frame (which takes 65%) */
 
 /* content rides above the blooms */
 .panel > * {
@@ -661,7 +677,7 @@
   padding: 4px 24px 16px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 20px;
 }
 
 .priceRow {
@@ -735,17 +751,19 @@
   background: #f0ebe5;
 }
 
+/* 2×2 grid — Figma 904:10812 (the Neukunden-Bonus is the first cell) */
 .features {
-  display: flex;
-  justify-content: space-between;
-  gap: 8px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  column-gap: 8px;
+  row-gap: 14px;
 }
 
 .feature {
   display: flex;
   align-items: flex-start;
   gap: 10px;
-  flex: 1;
+  min-width: 0;
 }
 
 .featureText { display: flex; flex-direction: column; gap: 1px; }
@@ -753,7 +771,7 @@
 .featureName {
   font-family: var(--font-body);
   font-weight: 700;
-  font-size: 13px;
+  font-size: 16px;
   color: var(--c-text-primary);
   line-height: 1.5;
 }
@@ -776,7 +794,7 @@
   background: var(--c-red);
   color: #fff;
   border: none;
-  border-radius: 8px;
+  border-radius: 24px;
   font-family: var(--font-body);
   font-weight: 700;
   font-size: 17px;
@@ -791,7 +809,7 @@
   background: #fff;
   color: var(--c-text-primary);
   border: none;
-  border-radius: 8px;
+  border-radius: 24px;
   font-family: var(--font-body);
   font-weight: 700;
   font-size: 17px;
@@ -824,7 +842,7 @@
 .editorialTitle {
   font-family: var(--font-body);
   font-weight: 700;
-  font-size: clamp(48px, 3.4vw, 48px);
+  font-size: clamp(56px, 3.4vw, 48px);
   line-height: 1.16;
   color: #262626;
   margin: 0;
@@ -1338,7 +1356,8 @@
 /* ─── Stories section — vertical continuation after the pinned scroll ────── */
 .stories {
   position: relative;
-  height: 260vh;
+  /* runway: text scrolls in → theme flip → cards in → cards out → release */
+  height: 200vh;
 }
 
 .storiesStage {
@@ -1401,9 +1420,11 @@
   box-shadow: 0 18px 48px rgba(0, 0, 0, 0.22);
 }
 
-.storyCard1 { left: 9.3%;  top: 69.7%; }
-.storyCard2 { left: 38.1%; top: 89.9%; }
-.storyCard3 { left: 66.9%; top: 46%; }
+/* resting spots — a visible collage around the centred text (cards sit UNDER
+   the text, z-wise); 1 low-left, 2 lowest-centre, 3 high-right */
+.storyCard1 { left: 9.3%;  top: 46%; }
+.storyCard2 { left: 38.1%; top: 60%; }
+.storyCard3 { left: 66.9%; top: 20%; }
 
 .storyMedia {
   position: absolute;
@@ -1946,3 +1967,177 @@
   transition: background 0.2s;
 }
 .proofStatsBtn:hover { background: #cc1709; }
+
+/* ═══ Tarif vergleichen — expanding comparison (Figma 1093:4573) ═══════════ */
+
+/* the panel's normal content (headline + recommended card) stays put — the
+   panel itself just narrows and docks left while comparing */
+.panelNormal {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+/* comparison — a sibling "frame" that grows in to 65% beside the panel */
+.panelCompare {
+  position: relative;
+  flex: 0 0 0%;
+  min-width: 0;
+  margin-left: -16px;            /* swallow the flex gap while collapsed */
+  border-radius: 20px;
+  background: #faf7f5;
+  padding: 40px 0 24px;          /* horizontal padding collapses with it */
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  visibility: hidden;
+  transition:
+    flex-basis 0.6s var(--ease-out),
+    margin-left 0.6s var(--ease-out),
+    padding 0.6s var(--ease-out),
+    visibility 0.6s;
+}
+/* grey background expands first; the head + cards are revealed by GSAP after */
+.frameHero[data-comparing='true'] .panelCompare {
+  flex-basis: 65%;
+  margin-left: 0;
+  padding: 40px 32px 24px 60px;
+  visibility: visible;
+}
+
+.compareCollapse {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: #fff;
+  border: 1px solid #ece9e7;
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--c-text-primary);
+  cursor: pointer;
+  z-index: 2;
+  transition: background 0.15s ease;
+}
+.compareCollapse:hover { background: #f3efec; }
+
+.compareHead {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-width: 560px;
+}
+.compareLabel {
+  font-family: var(--font-body);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--c-text-primary);
+}
+.compareTitle {
+  font-family: var(--font-body);
+  font-weight: 800;
+  font-size: clamp(28px, 3vw, 40px);
+  line-height: 1.12;
+  color: var(--c-text-primary);
+  margin: 0;
+}
+.compareSub {
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.5;
+  color: var(--c-text-secondary);
+  margin: 0;
+  max-width: 380px;
+}
+
+/* three cards anchored to the bottom of the panel */
+.compareCards {
+  margin-top: auto;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  align-items: stretch;
+}
+.compareCard {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  background: #fff;
+  border: 1px solid #ece9e7;
+  border-radius: 12px;
+  padding: 16px 16px 18px;
+}
+.compareCard[data-highlight='true'] {
+  border-top: 3px solid var(--c-red);
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.07);
+}
+
+.compareTags { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 2px; }
+.compareTag {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: #f1eeec;
+  border-radius: 6px;
+  padding: 4px 9px;
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--c-text-secondary);
+}
+.compareTag[data-green='true'] { background: #dcefe0; color: #1d6b3a; }
+
+.compareName {
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: 17px;
+  color: var(--c-text-primary);
+  margin: 0;
+}
+.compareTerm {
+  font-family: var(--font-body);
+  font-size: 13px;
+  color: var(--c-text-secondary);
+  margin: -6px 0 0;
+}
+.comparePrice {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin: 2px 0 4px;
+}
+.comparePrice strong { font-size: 24px; font-weight: 800; color: var(--c-text-primary); }
+.comparePrice span { font-size: 12px; color: var(--c-text-secondary); }
+
+.compareFeatures { display: flex; flex-direction: column; gap: 10px; margin-bottom: 4px; }
+.compareFeature { display: flex; align-items: flex-start; gap: 10px; }
+.compareFeature svg { width: 20px; height: 20px; flex-shrink: 0; }
+
+.compareBtnPrimary,
+.compareBtnOutline {
+  margin-top: auto;
+  height: 44px;
+  border-radius: 22px;
+  border: 1.5px solid var(--c-red);
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: 15px;
+  cursor: pointer;
+  transition: background 0.18s ease, color 0.18s ease;
+}
+.compareBtnPrimary { background: var(--c-red); color: #fff; }
+.compareBtnPrimary:hover { background: #cc1709; }
+.compareBtnOutline { background: #fff; color: var(--c-red); }
+.compareBtnOutline:hover { background: #fdf1ef; }
+
+@media (max-width: 980px) {
+  .frameHero[data-comparing='true'] .panelCompare { padding: 32px 20px 20px 52px; }
+  .compareCards { gap: 10px; }
+}

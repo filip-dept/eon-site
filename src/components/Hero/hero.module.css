@@ -1,187 +1,95 @@
-/* ─── Hero (taller than the first viewport — the 1:1.35 frame spills below
-       the fold and the page scrolls past it naturally, zoox-style) ────────── */
+/* ─── Hero — full-bleed video, overlaid nav, centred copy, bottom chat ────── */
 .hero {
   position: relative;
-  overflow: visible;
+  width: 100%;
+  height: 100vh;
+  overflow: hidden;
   background: var(--hero-gradient);
 }
 
-.stage {
-  display: flex;
-  flex-direction: column;
-  background: var(--hero-gradient);
-  overflow: visible; /* media is clipped by the SVG mask, not here, so chat/indicator can straddle freely */
+/* video fills the hero; the wrapper clips the entrance unmask wipe */
+.videoWrap {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  z-index: 0;
+  will-change: clip-path;
 }
 
-/* ─── Navbar ─────────────────────────────────────────────────────────────── */
+.video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transform-origin: center center;
+  will-change: transform;
+}
+
+/* subtle scrim keeps white nav/text/chat legible over a bright video */
+.scrim {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  background:
+    linear-gradient(to bottom, rgba(0, 0, 0, 0.28) 0%, rgba(0, 0, 0, 0) 22%),
+    linear-gradient(to top,    rgba(0, 0, 0, 0.30) 0%, rgba(0, 0, 0, 0) 28%);
+}
+
+/* ─── Navbar — pinned across the top ─────────────────────────────────────── */
 .nav {
-  flex-shrink: 0;
-  height: var(--nav-height);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 var(--nav-pad-x);
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  padding: 16px var(--nav-pad-x);
   z-index: 5;
 }
 
-.navLeft {
-  display: flex;
-  align-items: center;
-  gap: 48px;
-}
-
-.navLogo {
-  display: block;
-  width: 95px;
-  height: 28px;
-  will-change: transform, opacity;
-}
-
-.navLogo img { display: block; width: 95px; height: 28px; }
-
-.navLinks {
-  display: flex;
-  gap: 16px;
-  list-style: none;
-}
-
-.navLink {
-  font-family: var(--font-body);
-  font-size: var(--fs-nav);
-  color: var(--c-white);
-  padding: 22px 8px;
-  white-space: nowrap;
-  opacity: 0.95;
-  transition: opacity 0.2s ease;
-  will-change: transform, opacity;
-}
-.navLink:hover { opacity: 1; }
-
-.navIcons {
-  display: flex;
-  align-items: center;
-}
-
-.navIconBtn {
-  width: 48px;
-  height: 48px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: var(--c-white);
-  will-change: transform, opacity;
-}
-
-.navIconBtn img { width: 20px; height: 20px; display: block; }
-
-.navAccount {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  height: 48px;
-  padding: 0 16px;
-  font-family: var(--font-body);
-  font-size: var(--fs-nav);
-  color: var(--c-white);
-  white-space: nowrap;
-  cursor: pointer;
-  will-change: transform, opacity;
-}
-.navAccount img { width: 16px; height: 20px; display: block; }
-
-/* ─── Hero body (text + media + chat + indicator) ───────────────────────── */
-.body {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  /* bottom padding only becomes visible once the user scrolls past the frame */
-  padding: 0 var(--hero-pad) var(--hero-pad);
-}
-
-/* Text block */
-.textWrap {
-  flex-shrink: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-  padding: 30px 0;
+/* ─── Centred hero copy ──────────────────────────────────────────────────── */
+.center {
+  position: absolute;
+  left: 50%;
+  top: 44%;
+  transform: translate(-50%, -50%);
   z-index: 3;
-  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  max-width: calc(100% - 48px);
+  text-align: center;
 }
 
 .headline {
   font-family: var(--font-head);
   font-weight: 400;
-  font-size: clamp(40px, 6.2vw, 72px);
-  line-height: 1.05;
+  font-size: clamp(40px, 6.4vw, 88px);
+  line-height: 1.02;
   color: var(--c-white);
   white-space: nowrap;
+  margin: 0;
   will-change: transform, opacity;
 }
 
 .subhead {
   font-family: var(--font-body);
   font-weight: 400;
-  font-size: clamp(17px, 2.2vw, 28px);
+  font-size: clamp(17px, 2.2vw, 30px);
   line-height: 1.4;
   color: var(--c-white);
   text-align: center;
+  margin: 0;
   will-change: transform, opacity;
 }
 
-/* ─── Media frame (rounded rect, full width × one viewport tall) ────────── */
-.mediaFrame {
-  position: relative;
-  width: 100%;
-  height: 100vh;
-  overflow: visible; /* rounded corners come from the mask; chat/indicator must not be clipped */
-  z-index: 1;
-  /* the only in-flow child is the scroll indicator — anchor it bottom-center
-     so its sticky offset releases exactly at the bottom of the frame */
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-end;
-  align-items: center;
-}
-
-.mediaSvg {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  display: block;
-  /* Outer rounded corners come from here (reliable), not the SVG mask */
-  border-radius: var(--media-radius);
-  overflow: hidden;
-}
-
-/* foreignObject clips its content, so the video can zoom inside it without
-   escaping the masked frame */
-.mediaBox {
-  overflow: hidden;
-}
-
-.mediaVideo {
-  display: block;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;       /* fill the 1:1.35 frame — clipped + centered */
-  transform-origin: center center;
-  will-change: transform;
-}
-
-/* ─── Chat card (straddles media top edge) ──────────────────────────────── */
+/* ─── Chat card — floats over the video, bottom-centre ───────────────────── */
 .chatWrap {
   position: absolute;
-  top: 10px;         /* 20px gap above card + 20px CHAT_GAP in mask = 20px on all sides */
   left: 50%;
+  bottom: clamp(20px, 4vh, 44px);
   transform: translateX(-50%);
-  width: min(var(--chat-width), calc(100% - 56px));
+  width: min(720px, calc(100% - 48px));
   z-index: 4;
   will-change: transform, opacity;
 }
@@ -283,48 +191,3 @@
   font-weight: 500;
 }
 .chipPrimary:hover { background: #fbdedb; }
-
-/* ─── Scroll indicator — two bare chevrons pulsing downward, sticky near the
-       bottom of the screen until the bottom of the media frame scrolls past ── */
-.scrollIndicator {
-  position: sticky;
-  bottom: 28px;
-  gap: 8px;
-  width: var(--scroll-size);
-  height: var(--scroll-size);
-  z-index: 6;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 0;
-  cursor: pointer;
-  background: none;
-  border: none;
-  will-change: transform, opacity;
-}
-
-.scrollChevron {
-  width: 30px;
-  height: 30px;
-  display: block;
-  color: #fff;
-  filter: drop-shadow(0 1px 6px rgba(0, 0, 0, 0.3));
-  animation: chevronPulse 1.8s ease-in-out infinite;
-  opacity: 0;
-}
-/* the two chevrons overlap into one tight glyph and pulse closely staggered */
-.scrollChevron + .scrollChevron {
-  margin-top: -19px;
-  animation-delay: 0.22s;
-}
-
-@keyframes chevronPulse {
-  0%       { opacity: 0; transform: translateY(-7px); }
-  40%      { opacity: 1; }
-  75%, 100% { opacity: 0; transform: translateY(7px); }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .scrollChevron { animation: none; opacity: 1; }
-}

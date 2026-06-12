@@ -1,18 +1,27 @@
-/* ─── Shared top navigation — brand (red bg) / light (white bg) variants ─── */
+/* ─── Shared top navigation — transparent / solid (white pill) variants ──── */
 .nav {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  transition: background 0.3s ease, box-shadow 0.3s ease, color 0.3s ease;
 }
 
 /* variant colors cascade to every item via currentColor */
-.brand { color: #fff; }
-.light { color: var(--c-text-primary, #262626); }
+.transparent { color: #fff; }
+
+/* white fill, rounded corners, soft shadow — for light pages */
+.solid {
+  color: var(--c-text-primary, #262626);
+  background: #fff;
+  border-radius: 18px;
+  box-shadow: 0 10px 34px rgba(0, 0, 0, 0.08);
+  padding: 4px 8px 4px 24px;
+}
 
 .left {
   display: flex;
   align-items: center;
-  gap: 48px;
+  gap: 40px;
 }
 
 .logo { display: block; width: 96px; height: 28px; }

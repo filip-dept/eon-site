@@ -48,6 +48,25 @@
 .cornerBtn[data-pos='back']  { left: clamp(20px, 4vw, 62px); }
 .cornerBtn[data-pos='close'] { right: clamp(20px, 4vw, 32px); }
 
+/* Skip — text button just left of the close button */
+.skipBtn {
+  position: absolute;
+  top: 34px;
+  right: calc(clamp(20px, 4vw, 32px) + 60px);
+  height: 48px;
+  padding: 0 16px;
+  border: none;
+  background: none;
+  font-family: var(--font-body);
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--c-text-secondary);
+  cursor: pointer;
+  z-index: 6;
+  transition: color 0.15s ease;
+}
+.skipBtn:hover { color: var(--c-text-primary); }
+
 /* ─── Body — left categories + centred content ────────────────────────────── */
 .modalBody {
   flex: 1;
@@ -591,4 +610,281 @@
   .presets { flex-direction: column; }
   .cornerBtn[data-pos='back']  { left: 16px; }
   .cornerBtn[data-pos='close'] { right: 16px; }
+  .skipBtn { right: calc(16px + 56px); padding: 0 10px; }
+}
+
+/* ═══ Wizard v2 — Figma steps (Overview/Wechsel) + screenshot steps ════════ */
+
+/* the CTA can be disabled (grey) until the step validates */
+.ctaBtn:disabled {
+  background: #e9e7e6;
+  color: #a3a2a1;
+  cursor: default;
+  transform: none;
+  box-shadow: none;
+}
+.ctaBtn:disabled svg { transform: none; }
+
+/* step sub-line under the headline */
+.stepSub {
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.5;
+  color: var(--c-text-secondary);
+  margin: -16px 0 28px;
+}
+
+/* ── Overview: context chips row + mini preference slider ── */
+.ctxRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 32px;
+}
+.ctxChip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-body);
+  font-size: 14px;
+  color: rgba(38, 38, 38, 0.8);
+  white-space: nowrap;
+}
+.ctxSep { width: 1px; height: 20px; background: #e0dedd; }
+.ctxEdit {
+  font-family: var(--font-body);
+  font-size: 14px;
+  color: var(--c-red);
+  text-decoration: underline;
+  white-space: nowrap;
+}
+.miniPrefLabel {
+  font-family: var(--font-body);
+  font-size: 13px;
+  color: var(--c-text-secondary);
+  white-space: nowrap;
+}
+.miniPref { display: flex; flex-direction: column; gap: 5px; width: 150px; }
+.miniPrefSides {
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--font-body);
+  font-size: 12px;
+  color: rgba(38, 38, 38, 0.55);
+}
+.miniTrack { position: relative; height: 2px; background: #e6e4e3; border-radius: 1px; }
+.miniFill  { position: absolute; left: 0; top: 0; height: 2px; width: 55%; background: #0075c2; border-radius: 1px; }
+.miniDot {
+  position: absolute;
+  left: 55%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: #0075c2;
+  border: 2px solid #fff;
+  box-shadow: 0 0 0 1px #0075c2;
+}
+
+/* ── Overview: tariff preview card ── */
+.selLabel {
+  font-family: var(--font-body);
+  font-size: 14px;
+  color: var(--c-text-secondary);
+  margin-bottom: 10px;
+}
+.tariffPreview {
+  max-width: 640px;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid #ece9e7;
+  background: #fff;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
+}
+.tpPhoto { display: block; width: 100%; height: 200px; object-fit: cover; }
+.tpFooter { display: flex; flex-direction: column; gap: 4px; padding: 14px 18px 16px; }
+.tpNameRow { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.tpName {
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: 17px;
+  color: var(--c-text-primary);
+}
+.tpBadge {
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 500;
+  color: #1d6b3a;
+  background: #e3f4e6;
+  border-radius: 999px;
+  padding: 4px 10px;
+  white-space: nowrap;
+}
+.tpSub { font-family: var(--font-body); font-size: 13px; color: var(--c-text-secondary); }
+.tpPriceRow { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-top: 4px; }
+.tpPrice { font-family: var(--font-body); font-size: 13px; color: var(--c-text-secondary); }
+.tpPrice strong { font-size: 19px; font-weight: 800; color: var(--c-text-primary); margin-right: 2px; }
+.tpBonus { font-family: var(--font-body); font-size: 13px; font-weight: 600; color: #8215b4; }
+.tpBonus em { font-style: normal; font-weight: 400; color: #b07cc7; }
+
+/* ── Start row: red button + Enter hint + voice box ── */
+.startRow {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  flex-wrap: wrap;
+  margin-top: 28px;
+}
+.startRow .ctaBtn { margin-top: 0; align-self: auto; }
+.enterHint {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--font-body);
+  font-size: 14px;
+  color: var(--c-text-secondary);
+}
+.enterHint em { font-style: normal; font-weight: 700; color: var(--c-red); }
+.enterHint svg { color: var(--c-red); }
+.voiceBox {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 16px;
+  border: 1px solid #e0dedd;
+  border-radius: 10px;
+  background: #fff;
+  font-family: var(--font-body);
+  font-size: 14px;
+  color: var(--c-text-secondary);
+  cursor: pointer;
+}
+.voiceOrb {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #ffb199, #ea1b0a 60%, #c11054);
+}
+
+/* ── A/B option boxes ── */
+.abList { display: flex; flex-direction: column; gap: 14px; max-width: 640px; }
+.abRow  { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; max-width: 640px; }
+.abBox {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  text-align: left;
+  background: #fff;
+  border: 1.5px solid #e0dedd;
+  border-radius: 12px;
+  padding: 18px 20px;
+  cursor: pointer;
+  font-family: var(--font-body);
+  transition: border-color 0.18s ease, box-shadow 0.18s ease, transform 0.12s ease;
+}
+.abBox:hover { border-color: #c4c3c2; transform: translateY(-1px); }
+.abBox[data-selected='true'] { border-color: var(--c-red); box-shadow: 0 0 0 1.5px rgba(234, 27, 10, 0.12); }
+
+.abCheckbox {
+  width: 22px;
+  height: 22px;
+  border-radius: 5px;
+  border: 1.5px solid #b5b4b3;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 1px;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+.abCheckbox svg { opacity: 0; transition: opacity 0.15s ease; }
+.abBox[data-selected='true'] .abCheckbox { background: #0075c2; border-color: #0075c2; }
+.abBox[data-selected='true'] .abCheckbox svg { opacity: 1; }
+
+.abTitle { display: block; font-weight: 700; font-size: 16px; color: var(--c-text-primary); }
+.abSub   { display: block; font-size: 13px; color: var(--c-text-secondary); margin-top: 3px; }
+
+/* corner-check variant (Datum) — red check at the right, no checkbox square */
+.abCorner { padding-right: 52px; }
+.abTick {
+  position: absolute;
+  right: 18px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--c-red);
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+.abBox[data-selected='true'] .abTick { opacity: 1; }
+
+/* ── Boxed form fields ── */
+.formGrid { display: flex; flex-direction: column; gap: 18px; max-width: 640px; }
+.fieldCol { display: flex; flex-direction: column; min-width: 0; }
+.boxInput {
+  width: 100%;
+  border: 1px solid #dcdad8;
+  border-radius: 8px;
+  padding: 13px 16px;
+  font-family: var(--font-body);
+  font-size: 15px;
+  color: var(--c-text-primary);
+  background: #fff;
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.boxInput::placeholder { color: #b5b4b3; }
+.boxInput:focus { border-color: var(--c-text-primary); box-shadow: 0 0 0 1px var(--c-text-primary); }
+
+.rowStreet { display: grid; grid-template-columns: 1fr 130px; gap: 14px; }
+.rowCity   { display: grid; grid-template-columns: 170px 1fr; gap: 14px; }
+.rowSplit  { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+
+/* ── Anrede segmented control ── */
+.segmented { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+.segBtn {
+  border: 1.5px solid #e0dedd;
+  border-radius: 8px;
+  padding: 12px;
+  background: #fff;
+  font-family: var(--font-body);
+  font-size: 15px;
+  color: var(--c-text-primary);
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
+}
+.segBtn:hover { border-color: #c4c3c2; }
+.segBtn[data-active='true'] {
+  border-color: var(--c-red);
+  background: #fdf1ef;
+  color: var(--c-red);
+  font-weight: 600;
+}
+
+/* ── Bottom actions: Zurück + Weiter ── */
+.actionsRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  max-width: 640px;
+  margin-top: 30px;
+}
+.actionsRow .ctaBtn { margin-top: 0; align-self: auto; }
+.backLink {
+  background: none;
+  border: none;
+  padding: 8px 0;
+  font-family: var(--font-body);
+  font-size: 15px;
+  color: var(--c-text-secondary);
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+.backLink:hover { color: var(--c-text-primary); }
+
+@media (max-width: 760px) {
+  .abRow, .rowSplit { grid-template-columns: 1fr; }
 }

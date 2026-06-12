@@ -3,7 +3,9 @@
 import { forwardRef, type CSSProperties } from 'react';
 import styles from './navbar.module.css';
 
-export type NavbarVariant = 'brand' | 'light';
+export type NavbarVariant = 'transparent' | 'solid';
+
+const LINKS = ['Strom', 'Erdgas', 'Solar', 'E-Mobilität', 'Energiemanagement', 'Wärmepumpe'];
 
 /* icon shape comes from the SVG file via mask; color from currentColor */
 function Icon({ src, w = 20, h = 20 }: { src: string; w?: number; h?: number }) {
@@ -17,7 +19,7 @@ function Icon({ src, w = 20, h = 20 }: { src: string; w?: number; h?: number }) 
 }
 
 interface NavbarProps {
-  /** brand = white content for red backgrounds, light = dark content for white backgrounds */
+  /** transparent = white content over media; solid = white pill for light pages */
   variant: NavbarVariant;
   className?: string;
 }
@@ -26,23 +28,24 @@ const Navbar = forwardRef<HTMLElement, NavbarProps>(function Navbar(
   { variant, className },
   ref
 ) {
+  const solid = variant === 'solid';
   return (
     <nav
       ref={ref}
-      className={`${styles.nav} ${variant === 'brand' ? styles.brand : styles.light} ${className ?? ''}`}
+      className={`${styles.nav} ${solid ? styles.solid : styles.transparent} ${className ?? ''}`}
       aria-label="Hauptnavigation"
     >
       <div className={styles.left}>
         <a href="/" className={styles.logo} aria-label="E.ON Startseite" data-nav-item>
           <img
-            src={variant === 'brand' ? '/icons/logo.svg' : '/icons/logo-red.svg'}
+            src={solid ? '/icons/logo-red.svg' : '/icons/logo.svg'}
             alt="E.ON"
             width="96"
             height="28"
           />
         </a>
         <ul className={styles.links}>
-          {['Privatkunden', 'Geschäftskunden', 'Über Uns'].map((label) => (
+          {LINKS.map((label) => (
             <li key={label}>
               <a href="#" className={styles.link} data-nav-item>{label}</a>
             </li>
