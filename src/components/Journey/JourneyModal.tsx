@@ -200,7 +200,7 @@ export default function JourneyModal() {
 
     gsap.to(overlay, { opacity: 0, duration: 0.25, ease: 'none' });
     gsap.to(modal, {
-      clipPath: 'inset(100% 0px 0px 0px round 20px 20px 0px 0px)',
+      clipPath: 'inset(100% 0px 0px 0px)',
       duration: 0.45,
       ease: 'eonOut',
       onComplete: () => {
@@ -234,13 +234,13 @@ export default function JourneyModal() {
 
     animating.current = true;
 
-    gsap.set(modal, { clipPath: 'inset(100% 0px 0px 0px round 20px 20px 0px 0px)', opacity: 1 });
+    gsap.set(modal, { clipPath: 'inset(100% 0px 0px 0px)', opacity: 1 });
     gsap.set(overlay, { opacity: 0 });
 
     const tl = gsap.timeline({ onComplete: () => { animating.current = false; } });
 
     tl.to(overlay, { opacity: 1, duration: 0.28, ease: 'none' }, 0)
-      .to(modal, { clipPath: 'inset(0px 0px 0px 0px round 20px 20px 0px 0px)', duration: 0.7, ease: 'eonOut' }, 0);
+      .to(modal, { clipPath: 'inset(0px 0px 0px 0px)', duration: 0.7, ease: 'eonOut' }, 0);
 
     const firstStep = stepRefs.current[0];
     if (firstStep) {

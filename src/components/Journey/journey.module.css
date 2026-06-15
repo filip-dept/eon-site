@@ -11,15 +11,12 @@
 /* ─── Modal shell — full-bleed (100vw, no side/bottom padding, top stays) ──── */
 .modal {
   position: fixed;
-  top: 80px;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  inset: 0;                        /* full screen */
   background:
     radial-gradient(38% 46% at 86% 4%, rgba(234, 27, 10, 0.10), transparent 72%),
     radial-gradient(46% 42% at 46% 102%, rgba(234, 27, 10, 0.08), transparent 70%),
     #ffffff;
-  border-radius: 20px 20px 0 0;   /* rounded top corners (rises like a sheet) */
+  border-radius: 0;
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -157,7 +154,7 @@
   padding: 88px 24px 40px; /* top clears the corner buttons; top spacing preserved */
   display: flex;
   flex-direction: column;
-  max-width: 600px;
+  max-width: 1000px;
 }
 
 /* ─── Step header ─────────────────────────────────────────────────────────── */
@@ -174,7 +171,7 @@
 .stepHeadline {
   font-family: var(--font-body);
   font-weight: 700;
-  font-size: clamp(40px, 3.4vw, 40px); /* Headings/2: 40 / 48 */
+  font-size: clamp(56px, 3.4vw, 40px); /* Headings/2: 40 / 48 */
   line-height: 1.2;
   color: var(--c-text-primary);
   margin-bottom: 28px;
@@ -185,87 +182,65 @@
 }
 
 /* ─── Step 1 — Option cards ───────────────────────────────────────────────── */
+/* inspirational glass cards in a 2-column grid; the 5th spans full width */
 .optionGrid {
   display: grid;
-  grid-template-columns: 1fr;
-  grid-auto-rows: min-content;
-  align-items: start;
-  gap: 12px;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
   margin-bottom: auto;
 }
 
+/* ── Glass answer card — transparent, frosted, icon on top, text below ── */
 .optionCard {
-  background: rgba(255, 255, 255, 0.72);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  border: 1.5px solid rgba(38, 38, 38, 0.07);
-  border-radius: 16px;
-  padding: 18px 22px;
+  background: rgba(255, 255, 255, 0.14);
+  backdrop-filter: blur(18px) saturate(150%);
+  -webkit-backdrop-filter: blur(18px) saturate(150%);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  border-radius: 18px;
+  padding: 22px 22px 20px;
   display: flex;
-  align-items: center;
-  gap: 16px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 18px;
   cursor: pointer;
   text-align: left;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
-  transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.18s var(--ease-out), background 0.2s ease;
+  box-shadow: 0 10px 30px rgba(120, 20, 40, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.55);
+  transition: transform 0.22s var(--ease-out), box-shadow 0.22s ease, border-color 0.22s ease, background 0.22s ease;
   position: relative;
 }
 .optionCard:hover {
-  border-color: rgba(234, 27, 10, 0.45);
-  background: rgba(255, 255, 255, 0.92);
-  transform: translateY(-2px);
-  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.10);
+  transform: translateY(-3px);
+  background: rgba(255, 255, 255, 0.24);
+  border-color: rgba(255, 255, 255, 0.75);
+  box-shadow: 0 18px 42px rgba(120, 20, 40, 0.14), inset 0 1px 0 rgba(255, 255, 255, 0.6);
 }
 .optionCard[data-selected='true'] {
-  border-color: var(--c-red);
-  background: #fff;
-  box-shadow: 0 0 0 2px rgba(234, 27, 10, 0.16), 0 12px 30px rgba(234, 27, 10, 0.12);
+  border-color: rgba(234, 27, 10, 0.6);
+  background: rgba(255, 255, 255, 0.34);
+  box-shadow: 0 0 0 2px rgba(234, 27, 10, 0.22), 0 18px 42px rgba(234, 27, 10, 0.16);
 }
 
-/* chevron affordance on the right — slides in on hover / when selected */
-.optionCard::after {
-  content: '';
-  width: 9px;
-  height: 9px;
-  margin-left: auto;
-  border-right: 2px solid #b9b7b6;
-  border-top: 2px solid #b9b7b6;
-  transform: rotate(45deg);
-  opacity: 0;
-  transition: opacity 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
-  flex-shrink: 0;
-}
-.optionCard:hover::after { opacity: 1; transform: rotate(45deg) translate(2px, -2px); }
-.optionCard[data-selected='true']::after { opacity: 1; border-color: var(--c-red); }
-
+/* orange tile — echoes the AI sphere */
 .optionIcon {
   width: 44px;
   height: 44px;
-  border-radius: 50%;
-  border: 1.5px solid #e5e4e4;
-  background: #f8f7f6;
   display: flex;
-  align-items: center;
-  justify-content: center;
+  align-items: flex-start;
+  justify-content: flex-start;
   flex-shrink: 0;
-  color: var(--c-text-secondary);
-  transition: border-color 0.2s, background 0.2s, color 0.2s, transform 0.2s var(--ease-out);
+  color: var(--c-red);            /* brand-red glyph, no tile */
+  transition: transform 0.22s var(--ease-out);
 }
-.optionCard:hover .optionIcon { transform: scale(1.06); }
-.optionCard[data-selected='true'] .optionIcon {
-  border-color: rgba(234, 27, 10, 0.3);
-  background: #fdf0ee;
-  color: var(--c-red);
-}
-.optionIcon svg { width: 20px; height: 20px; }
+.optionCard:hover .optionIcon { transform: scale(1.08) rotate(-4deg); transform-origin: left center; }
+.optionIcon svg { width: 30px; height: 30px; }
 
-.optionText { display: flex; flex-direction: column; gap: 4px; flex: 1; }
+.optionText { display: flex; flex-direction: column; gap: 6px; width: 100%; }
 
 .optionTitle {
   font-family: var(--font-body);
   font-weight: 700;
-  font-size: 16px;
-  line-height: 1.3;
+  font-size: 17px;
+  line-height: 1.25;
   color: var(--c-text-primary);
 }
 
@@ -273,7 +248,7 @@
   font-family: var(--font-body);
   font-size: 13px;
   color: var(--c-text-secondary);
-  line-height: 1.45;
+  line-height: 1.5;
 }
 
 .footNote {
@@ -288,7 +263,7 @@
 .s2row {
   display: flex;
   flex-direction: column;
-  gap: 32px;
+  gap: 44px;
   align-items: stretch;
   margin-bottom: auto;
   flex: 1;
@@ -390,13 +365,13 @@
   background: transparent;
   font-family: var(--font-body);
   font-weight: 800;
-  font-size: 36px;
+  font-size: clamp(52px, 7vw, 80px);   /* match the kWh number on Q3 */
   line-height: 1;
   color: var(--c-text-primary);
   width: 100%;
   min-width: 0;
 }
-.plzInput::placeholder { color: #ccc; }
+.plzInput::placeholder { color: #d7cac5; }
 
 .plzHint {
   font-family: var(--font-body);
@@ -412,40 +387,43 @@
   margin-bottom: 16px;
 }
 
+/* same shape as the top X button (rounded square, no border, dark icon);
+   transparent at rest, fills with the X's resting beige on hover */
 .stepBtn {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  border: 1.5px solid #d5d4d3;
-  background: none;
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  border: none;
+  background: transparent;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: border-color 0.15s, background 0.15s;
+  transition: background 0.15s ease;
   flex-shrink: 0;
   color: var(--c-text-primary);
 }
-.stepBtn:hover:not(:disabled) { border-color: var(--c-text-primary); }
+.stepBtn:hover:not(:disabled) { background: #f9f6f4; }
 .stepBtn:disabled { opacity: 0.3; cursor: default; }
 
 .stepperVal {
   font-family: var(--font-body);
   font-weight: 800;
-  font-size: 48px;
+  font-size: clamp(52px, 7vw, 80px);   /* match the kWh number on Q3 */
   line-height: 1;
   color: var(--c-text-primary);
-  min-width: 40px;
+  min-width: 64px;
   text-align: center;
 }
 .stepperUnit {
+  display: none;          /* "Personen" label hidden */
   font-family: var(--font-body);
   font-size: 13px;
   color: var(--c-text-secondary);
 }
 
 .pills {
-  display: flex;
+  display: none;          /* quick-select pills hidden — stepper only */
   gap: 8px;
 }
 
@@ -555,44 +533,65 @@
 }
 
 .presets {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
   margin-bottom: 28px;
 }
 
+/* same glass treatment as the option cards, icon on top */
 .presetCard {
-  flex: 1;
-  background: #fff;
-  border: 1.5px solid #e0dedd;
-  border-radius: 10px;
-  padding: 13px 14px;
+  background: rgba(255, 255, 255, 0.14);
+  backdrop-filter: blur(18px) saturate(150%);
+  -webkit-backdrop-filter: blur(18px) saturate(150%);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  border-radius: 16px;
+  padding: 18px 16px 16px;
   text-align: left;
   cursor: pointer;
-  transition: border-color 0.15s, transform 0.12s, box-shadow 0.15s;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  box-shadow: 0 10px 30px rgba(120, 20, 40, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.55);
+  transition: transform 0.22s var(--ease-out), box-shadow 0.22s ease, border-color 0.22s ease, background 0.22s ease;
 }
 .presetCard:hover {
-  border-color: #c4c3c2;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+  transform: translateY(-3px);
+  background: rgba(255, 255, 255, 0.24);
+  border-color: rgba(255, 255, 255, 0.75);
+  box-shadow: 0 18px 42px rgba(120, 20, 40, 0.14), inset 0 1px 0 rgba(255, 255, 255, 0.6);
 }
 .presetCard[data-selected='true'] {
-  border-color: var(--c-text-primary);
-  box-shadow: 0 0 0 1px var(--c-text-primary);
+  border-color: rgba(234, 27, 10, 0.6);
+  background: rgba(255, 255, 255, 0.34);
+  box-shadow: 0 0 0 2px rgba(234, 27, 10, 0.22), 0 18px 42px rgba(234, 27, 10, 0.16);
 }
+
+.presetIcon {
+  width: 34px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  color: var(--c-red);            /* brand-red glyph, no tile */
+  transition: transform 0.22s var(--ease-out);
+}
+.presetCard:hover .presetIcon { transform: scale(1.08) rotate(-4deg); transform-origin: left center; }
+.presetIcon svg { width: 26px; height: 26px; }
 
 .presetTitle {
   font-family: var(--font-body);
   font-weight: 700;
-  font-size: 16px;
+  font-size: 15px;
   color: var(--c-text-primary);
-  margin-bottom: 4px;
+  margin: 0;
 }
 .presetSub {
   font-family: var(--font-body);
-  font-size: 14px;
+  font-size: 12.5px;
   color: var(--c-text-secondary);
-  line-height: 1.4;
+  line-height: 1.45;
+  margin: 0;
 }
 
 /* ─── CTA button ──────────────────────────────────────────────────────────── */
@@ -922,36 +921,36 @@
 .modalConv::after {
   content: '';
   position: absolute;
-  inset: -35%;
+  inset: -50%;
   z-index: 0;
   pointer-events: none;
-  filter: blur(40px);
+  filter: blur(38px);
   will-change: transform;
 }
 .modalConv::before {
   background:
-    radial-gradient(34% 40% at 20% 28%, rgba(234, 27, 10, 0.30), transparent 60%),
-    radial-gradient(30% 36% at 86% 18%, rgba(255, 99, 54, 0.22), transparent 62%),
-    radial-gradient(46% 50% at 72% 95%, rgba(130, 17, 113, 0.26), transparent 64%);
-  animation: journeyBlobA 13s ease-in-out infinite alternate;
+    radial-gradient(34% 40% at 20% 28%, rgba(234, 27, 10, 0.36), transparent 60%),
+    radial-gradient(30% 36% at 86% 18%, rgba(255, 99, 54, 0.28), transparent 62%),
+    radial-gradient(46% 50% at 72% 95%, rgba(130, 17, 113, 0.32), transparent 64%);
+  animation: journeyBlobA 8s ease-in-out infinite alternate;
 }
 .modalConv::after {
   background:
-    radial-gradient(40% 34% at 62% 22%, rgba(178, 21, 90, 0.22), transparent 60%),
-    radial-gradient(38% 44% at 10% 72%, rgba(234, 27, 10, 0.20), transparent 62%),
-    radial-gradient(34% 30% at 94% 80%, rgba(255, 120, 60, 0.18), transparent 60%);
-  animation: journeyBlobB 17s ease-in-out infinite alternate;
+    radial-gradient(40% 34% at 62% 22%, rgba(178, 21, 90, 0.28), transparent 60%),
+    radial-gradient(38% 44% at 10% 72%, rgba(234, 27, 10, 0.26), transparent 62%),
+    radial-gradient(34% 30% at 94% 80%, rgba(255, 120, 60, 0.24), transparent 60%);
+  animation: journeyBlobB 10.5s ease-in-out infinite alternate;
 }
 @keyframes journeyBlobA {
   0%   { transform: translate(0, 0) scale(1, 1) rotate(0deg); }
-  33%  { transform: translate(-7%, 5%) scale(1.2, 0.9) rotate(9deg); }
-  66%  { transform: translate(6%, -5%) scale(0.88, 1.18) rotate(-7deg); }
-  100% { transform: translate(4%, 7%) scale(1.14, 1.04) rotate(5deg); }
+  33%  { transform: translate(-14%, 10%) scale(1.32, 0.82) rotate(15deg); }
+  66%  { transform: translate(12%, -9%) scale(0.8, 1.3) rotate(-13deg); }
+  100% { transform: translate(8%, 13%) scale(1.22, 1.06) rotate(9deg); }
 }
 @keyframes journeyBlobB {
   0%   { transform: translate(0, 0) scale(1, 1) rotate(0deg); }
-  50%  { transform: translate(8%, -7%) scale(1.22, 0.86) rotate(-11deg); }
-  100% { transform: translate(-6%, 5%) scale(0.9, 1.2) rotate(8deg); }
+  50%  { transform: translate(15%, -13%) scale(1.34, 0.78) rotate(-17deg); }
+  100% { transform: translate(-11%, 10%) scale(0.82, 1.32) rotate(13deg); }
 }
 @media (prefers-reduced-motion: reduce) {
   .modalConv::before, .modalConv::after { animation: none; }
@@ -960,7 +959,13 @@
 /* content sits above the gradient */
 .modalConv .modalBody { position: relative; z-index: 1; }
 /* drop the column below the top bar; keep cards at natural size + scroll */
-.modalConv .stepPanel { padding: clamp(96px, 13vh, 150px) 24px 48px; }
+.modalConv .stepPanel {
+  padding: clamp(76px, 9vh, 124px) 24px 48px;
+  max-width: 720px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 0, 0, 0.15) transparent;
+}
 .modalConv .stepPanel > * { flex-shrink: 0; }
 
 /* top-left assistant label (Figma) */

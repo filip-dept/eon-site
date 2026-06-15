@@ -1129,8 +1129,11 @@ export default function TariffPage() {
             </div>
           </div>
 
-          {/* ═══ Frame 2: Editorial "28 cent" intro — the ONE travelling headline ═══ */}
-          <div className={`${styles.frame} ${styles.frameEditorial}`}>
+          {/* ═══ Frame 2: Editorial "28 cent" intro — the ONE travelling headline.
+                data-noclip: the photos parallax beyond the frame box, so a
+                frame-level clip-path would cut them off if you scroll mid-reveal.
+                Its content reveals via per-element data-ahero / data-aimg instead. ═══ */}
+          <div className={`${styles.frame} ${styles.frameEditorial}`} data-noclip>
             <div className={styles.editorialContent} data-ahero>
               <span className={styles.editorialLabel}>Unsere Stromtransparenz</span>
               <h2 className={styles.editorialTitle}>Was passiert mit deinen 28 Cent?</h2>

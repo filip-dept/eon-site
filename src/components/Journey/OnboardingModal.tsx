@@ -16,14 +16,17 @@ type Answers = {
 };
 
 /* ─── Constants ──────────────────────────────────────────────────────────── */
+/* abstract, tech-flavoured line icons (white on the orange tile) */
 const PRIORITIES = [
   {
     id: 'flexibel',
     title: 'Flexibilität',
     sub: 'Kurze Laufzeiten, dynamische Preise, Verbrauch aktiv steuern',
     icon: (
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/>
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="12" cy="12" r="2.6"/>
+        <circle cx="5" cy="6" r="1.5"/><circle cx="19" cy="7" r="1.5"/><circle cx="17.5" cy="18" r="1.5"/>
+        <path d="M6.3 6.9 9.8 10.6M17.6 8.4 14 10.7M16.4 16.6 13.4 13.4"/>
       </svg>
     ),
   },
@@ -32,38 +35,46 @@ const PRIORITIES = [
     title: 'Sicherheit und Preis',
     sub: 'Längere Laufzeit, Planbarkeit durch Preisgarantien',
     icon: (
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/>
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M12 3 5 5.8v5.4c0 4.4 3 7 7 7.8 4-0.8 7-3.4 7-7.8V5.8L12 3z"/>
+        <circle cx="12" cy="10.5" r="1.6"/><path d="M12 12.1v2.4"/>
       </svg>
     ),
   },
   {
     id: 'eauto',
     title: "Strom für's E-Autofahren",
-    sub: '',
+    sub: 'Günstig laden, mit eigenem Solarstrom kombinierbar',
     icon: (
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M5 17H3a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v9a2 2 0 0 1-2 2h-2"/><circle cx="7" cy="17" r="2"/><circle cx="17" cy="17" r="2"/><path d="M13 6v4h4"/>
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M12 3 19 7v8l-7 4-7-4V7l7-4z"/>
+        <path d="M12.8 8 10 12.4h3L11.2 16"/>
       </svg>
     ),
   },
   {
     id: 'waerme',
     title: 'Wärmestrom für Zuhause',
-    sub: '',
+    sub: 'Effiziente Wärme aus Strom – sauber und planbar',
     icon: (
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M8 9a4 4 0 0 1 8 0c0 3-4 6-4 6s-4-3-4-6z"/><path d="M12 21v-6"/><path d="M9 21h6"/>
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M7.5 15c0-2 1.6-2.8 1.6-4.8S7.5 7 7.5 5"/>
+        <path d="M12 15c0-2 1.6-2.8 1.6-4.8S12 7 12 5"/>
+        <path d="M16.5 15c0-2 1.6-2.8 1.6-4.8S16.5 7 16.5 5"/>
+        <path d="M5 19h14"/>
       </svg>
     ),
   },
   {
     id: 'grundversorgung',
     title: 'Grundversorgung',
-    sub: '',
+    sub: 'Einfach und zuverlässig versorgt – ganz ohne Aufwand',
     icon: (
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-        <rect x="6" y="2" width="12" height="10" rx="2"/><path d="M12 12v10"/><path d="M8 22h8"/><path d="M10 7h4"/>
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="12" cy="12" r="3"/>
+        <path d="M12 4.5v2.4M12 17.1v2.4M4.5 12h2.4M17.1 12h2.4"/>
+        <circle cx="12" cy="3.4" r="1.1"/><circle cx="12" cy="20.6" r="1.1"/>
+        <circle cx="3.4" cy="12" r="1.1"/><circle cx="20.6" cy="12" r="1.1"/>
       </svg>
     ),
   },
@@ -73,9 +84,30 @@ const KWH_MIN = 1000;
 const KWH_MAX = 10000;
 
 const KWH_PRESETS = [
-  { id: 'small', title: 'Kleine Wohnung', sub: '1 – 2 Personen · ~1.500 kWh', kwh: 1500 },
-  { id: 'avg',   title: 'Durchschnitt',   sub: '2 – 3 Personen · 3.200 kWh',  kwh: 3200 },
-  { id: 'large', title: 'Großes Haus',    sub: '4+ Personen · ~5.000 kWh',    kwh: 5000 },
+  {
+    id: 'small', title: 'Kleine Wohnung', sub: '1 – 2 Personen · ~1.500 kWh', kwh: 1500,
+    icon: (
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="7" y="7" width="10" height="12" rx="1.6"/><path d="M10.5 19v-3.5h3V19"/>
+      </svg>
+    ),
+  },
+  {
+    id: 'avg', title: 'Durchschnitt', sub: '2 – 3 Personen · 3.200 kWh', kwh: 3200,
+    icon: (
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M4 11 12 5l8 6"/><path d="M6 10v9h12v-9"/><path d="M10 19v-4h4v4"/>
+      </svg>
+    ),
+  },
+  {
+    id: 'large', title: 'Großes Haus', sub: '4+ Personen · ~5.000 kWh', kwh: 5000,
+    icon: (
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M3 10.5 12 4l9 6.5"/><path d="M5 9.5V20h14V9.5"/><path d="M9 20v-5h6v5"/><path d="M15 4h3v2.2"/>
+      </svg>
+    ),
+  },
 ];
 
 function formatKwh(n: number) {
@@ -228,10 +260,6 @@ function Step2({ answers, setAnswers, goNext }: {
           <p className={styles.fieldLabel}>Postleitzahl</p>
           <div className={styles.plzField}>
             <div className={styles.plzRow}>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9e9d9c" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{flexShrink:0}}>
-                <path d="M12 21c-4-4-7-7.3-7-10a7 7 0 1 1 14 0c0 2.7-3 6-7 10z"/>
-                <circle cx="12" cy="11" r="2"/>
-              </svg>
               <input
                 ref={inputRef}
                 className={styles.plzInput}
@@ -253,6 +281,10 @@ function Step2({ answers, setAnswers, goNext }: {
                   <path d="M5 13l4 4L19 7"/>
                 </svg>
               )}
+              <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#9e9d9c" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{flexShrink:0, marginLeft:'auto'}}>
+                <path d="M12 21c-4-4-7-7.3-7-10a7 7 0 1 1 14 0c0 2.7-3 6-7 10z"/>
+                <circle cx="12" cy="11" r="2"/>
+              </svg>
             </div>
 
             {suggestions.length > 0 && (
@@ -388,6 +420,7 @@ function Step3({ answers, setAnswers, onSubmit }: {
             data-selected={activePreset === p.id ? 'true' : 'false'}
             onClick={() => setAnswers({ ...answers, kwh: p.kwh })}
           >
+            <span className={styles.presetIcon}>{p.icon}</span>
             <p className={styles.presetTitle}>{p.title}</p>
             <p className={styles.presetSub}>{p.sub}</p>
           </button>
