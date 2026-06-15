@@ -121,6 +121,16 @@ const ArrowRight = () => (
   </svg>
 );
 
+/* Enter hint — shown beside the red CTAs */
+const EnterHint = () => (
+  <span className={styles.enterHint}>
+    drücke auf <em>Enter</em>
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M9 10l-5 5 5 5"/><path d="M20 4v7a4 4 0 0 1-4 4H4"/>
+    </svg>
+  </span>
+);
+
 /* ─── Animated conversational sphere (transparent container, just the orb) ─── */
 const ConvSphere = () => (
   <div className={styles.convSphere} aria-hidden="true">
@@ -191,10 +201,11 @@ function Step1({ answers, setAnswers, goNext }: {
 }
 
 /* ─── Step 2 ─────────────────────────────────────────────────────────────── */
-function Step2({ answers, setAnswers, goNext }: {
+function Step2({ answers, setAnswers, goNext, goBack }: {
   answers: Answers;
   setAnswers: (a: Answers) => void;
   goNext: () => void;
+  goBack: () => void;
 }) {
   const persons = answers.persons ?? 2;
   const plz = answers.plz ?? '';
@@ -351,24 +362,30 @@ function Step2({ answers, setAnswers, goNext }: {
         </div>
       </div>
 
-      <button
-        className={styles.ctaBtn}
-        data-appear
-        onClick={goNext}
-        disabled={!plzValid}
-        style={{ opacity: plzValid ? 1 : 0.45, cursor: plzValid ? 'pointer' : 'default', marginTop: 24 }}
-      >
-        Weiter <ArrowRight />
-      </button>
+      <div className={styles.actionsRow} data-appear>
+        <button className={styles.backLink} onClick={goBack}>Zurück</button>
+        <div className={styles.ctaGroup}>
+          <EnterHint />
+          <button
+            className={styles.ctaBtn}
+            onClick={goNext}
+            disabled={!plzValid}
+            style={{ opacity: plzValid ? 1 : 0.45, cursor: plzValid ? 'pointer' : 'default' }}
+          >
+            Weiter <ArrowRight />
+          </button>
+        </div>
+      </div>
     </>
   );
 }
 
 /* ─── Step 3 ─────────────────────────────────────────────────────────────── */
-function Step3({ answers, setAnswers, onSubmit }: {
+function Step3({ answers, setAnswers, onSubmit, goBack }: {
   answers: Answers;
   setAnswers: (a: Answers) => void;
   onSubmit: () => void;
+  goBack: () => void;
 }) {
   const kwh = answers.kwh ?? 3200;
   const persons = answers.persons ?? 2;
@@ -427,9 +444,15 @@ function Step3({ answers, setAnswers, onSubmit }: {
         ))}
       </div>
 
-      <button className={styles.ctaBtn} data-appear onClick={onSubmit}>
-        Meinen Tarif sehen <ArrowRight />
-      </button>
+      <div className={styles.actionsRow} data-appear>
+        <button className={styles.backLink} onClick={goBack}>Zurück</button>
+        <div className={styles.ctaGroup}>
+          <EnterHint />
+          <button className={styles.ctaBtn} onClick={onSubmit}>
+            Meinen Tarif sehen <ArrowRight />
+          </button>
+        </div>
+      </div>
     </>
   );
 }
@@ -584,13 +607,39 @@ export default function OnboardingModal() {
     if (step < 3) transitionTo(step + 1, 'fwd');
   }, [step, transitionTo]);
 
+  const goBack = useCallback(() => {
+    if (step > 1) transitionTo(step - 1, 'bck');
+    else closeModal();
+  }, [step, transitionTo, closeModal]);
+
+  /* completing step 3 routes to the tariff page with the answers */
+  const submitOnboarding = useCallback(() => {
+    const q = new URLSearchParams({
+      plz:     answers.plz     ?? '',
+      persons: String(answers.persons ?? 2),
+      kwh:     String(answers.kwh     ?? 3200),
+    });
+    router.push(`/tariff?${q.toString()}`);
+  }, [answers, router]);
+
+  /* Enter advances once the step is satisfied; the last step submits */
+  const advance = useCallback(() => {
+    if (animating.current) return;
+    if (step === 1) { if (answers.priority) goNext(); }
+    else if (step === 2) { if (/^\d{5}$/.test(answers.plz ?? '')) goNext(); }
+    else submitOnboarding();
+  }, [step, answers, goNext, submitOnboarding]);
+
   /* ── Keyboard ── */
   useEffect(() => {
     if (!open) return;
-    const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') closeModal(); };
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') closeModal();
+      if (e.key === 'Enter') { e.preventDefault(); advance(); }
+    };
     document.addEventListener('keydown', handler);
     return () => document.removeEventListener('keydown', handler);
-  }, [open, closeModal]);
+  }, [open, closeModal, advance]);
 
   /* ── Sync step panel visibility after state-driven step changes ── */
   useEffect(() => {
@@ -622,7 +671,12 @@ export default function OnboardingModal() {
         aria-modal="true"
         aria-label="E.ON Assistant"
       >
-        {/* ── Top bar — E.ON Assistant label + close ── */}
+        {/* ── Top bar — back · E.ON Assistant label · close ── */}
+        <button className={styles.cornerBtn} data-pos="back" onClick={goBack} aria-label="Zurück">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M15 5l-7 7 7 7" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+        </button>
         <span className={styles.assistantLabel}>E.ON Assistant</span>
         <button className={styles.cornerBtn} data-pos="close" onClick={closeModal} aria-label="Schließen">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -650,7 +704,7 @@ export default function OnboardingModal() {
                 style={{ display: step === 2 ? 'flex' : 'none' }}
               >
                 <ConvSphere />
-                <Step2 answers={answers} setAnswers={setAnswers} goNext={goNext} />
+                <Step2 answers={answers} setAnswers={setAnswers} goNext={goNext} goBack={goBack} />
               </div>
 
               <div
@@ -662,14 +716,8 @@ export default function OnboardingModal() {
                 <Step3
                   answers={answers}
                   setAnswers={setAnswers}
-                  onSubmit={() => {
-                    const q = new URLSearchParams({
-                      plz:     answers.plz     ?? '',
-                      persons: String(answers.persons ?? 2),
-                      kwh:     String(answers.kwh     ?? 3200),
-                    });
-                    router.push(`/tariff?${q.toString()}`);
-                  }}
+                  onSubmit={submitOnboarding}
+                  goBack={goBack}
                 />
               </div>
             </div>

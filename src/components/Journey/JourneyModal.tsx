@@ -7,7 +7,7 @@ import styles from './journey.module.css';
 
 /* ─── Answers ────────────────────────────────────────────────────────────── */
 type Answers = {
-  wechsel: 'eon' | 'self';
+  wechsel: '' | 'eon' | 'self';
   anbieter: string;
   kundennummer: string;
   zaehler: string;
@@ -15,8 +15,8 @@ type Answers = {
   nr: string;
   plz: string;
   stadt: string;
-  datum: 'asap' | 'date';
-  anrede: 'frau' | 'herr' | 'divers';
+  datum: '' | 'asap' | 'date';
+  anrede: '' | 'frau' | 'herr' | 'divers';
   vorname: string;
   nachname: string;
   geburtsdatum: string;
@@ -24,8 +24,9 @@ type Answers = {
   telefon: string;
 };
 
+/* nothing preselected — the user makes every choice */
 const INITIAL_ANSWERS: Answers = {
-  wechsel: 'eon',
+  wechsel: '',
   anbieter: '',
   kundennummer: '',
   zaehler: '',
@@ -33,8 +34,8 @@ const INITIAL_ANSWERS: Answers = {
   nr: '',
   plz: '81245',
   stadt: '',
-  datum: 'asap',
-  anrede: 'frau',
+  datum: '',
+  anrede: '',
   vorname: '',
   nachname: '',
   geburtsdatum: '',
@@ -410,11 +411,6 @@ export default function JourneyModal() {
           </span>
         </button>
       </div>
-
-      <div className={styles.startRow}>
-        <button className={styles.ctaBtn} onClick={advance}>Start <ArrowRight /></button>
-        <EnterHint />
-      </div>
     </>,
 
     /* ── 3 · Anbieter ── */
@@ -437,9 +433,12 @@ export default function JourneyModal() {
 
       <div className={styles.actionsRow}>
         <button className={styles.backLink} onClick={goBack}>Zurück</button>
-        <button className={styles.ctaBtn} onClick={advance} disabled={!stepValid(3, answers)}>
-          Weiter <ArrowRight />
-        </button>
+        <div className={styles.ctaGroup}>
+          <EnterHint />
+          <button className={styles.ctaBtn} onClick={advance} disabled={!stepValid(3, answers)}>
+            Weiter <ArrowRight />
+          </button>
+        </div>
       </div>
     </>,
 
@@ -463,9 +462,12 @@ export default function JourneyModal() {
 
       <div className={styles.actionsRow}>
         <button className={styles.backLink} onClick={goBack}>Zurück</button>
-        <button className={styles.ctaBtn} onClick={advance} disabled={!stepValid(4, answers)}>
-          Weiter <ArrowRight />
-        </button>
+        <div className={styles.ctaGroup}>
+          <EnterHint />
+          <button className={styles.ctaBtn} onClick={advance} disabled={!stepValid(4, answers)}>
+            Weiter <ArrowRight />
+          </button>
+        </div>
       </div>
     </>,
 
@@ -530,9 +532,12 @@ export default function JourneyModal() {
 
       <div className={styles.actionsRow}>
         <button className={styles.backLink} onClick={goBack}>Zurück</button>
-        <button className={styles.ctaBtn} onClick={advance} disabled={!stepValid(5, answers)}>
-          Weiter <ArrowRight />
-        </button>
+        <div className={styles.ctaGroup}>
+          <EnterHint />
+          <button className={styles.ctaBtn} onClick={advance} disabled={!stepValid(5, answers)}>
+            Weiter <ArrowRight />
+          </button>
+        </div>
       </div>
     </>,
 
@@ -609,9 +614,12 @@ export default function JourneyModal() {
 
       <div className={styles.actionsRow}>
         <button className={styles.backLink} onClick={goBack}>Zurück</button>
-        <button className={styles.ctaBtn} onClick={advance} disabled={!stepValid(7, answers)}>
-          Vertrag abschließen <ArrowRight />
-        </button>
+        <div className={styles.ctaGroup}>
+          <EnterHint />
+          <button className={styles.ctaBtn} onClick={advance} disabled={!stepValid(7, answers)}>
+            Vertrag abschließen <ArrowRight />
+          </button>
+        </div>
       </div>
     </>,
   ];

@@ -895,18 +895,24 @@ export default function TariffPage() {
       invalidateOnRefresh: true,
     });
 
-    /* re-measure once the pin spacer exists (scrollbar changes clientWidth) */
-    requestAnimationFrame(() => {
-      setFrameWidth();
-      ScrollTrigger.refresh();
-    });
-    const settle = setTimeout(() => {
-      setFrameWidth();
-      ScrollTrigger.refresh();
-    }, 500);
+    /* Re-measure as the layout settles. On a fresh client-side navigation the
+       fonts and images (e.g. the HEMS house) load AFTER the first measure and
+       shift the pin positions — which left the redZone pin / HEMS sticky stage
+       mismeasured until a manual refresh. Refresh on each of those events. */
+    const refresh = () => { setFrameWidth(); ScrollTrigger.refresh(); };
+    requestAnimationFrame(refresh);
+    const settle  = setTimeout(refresh, 500);
+    const settle2 = setTimeout(refresh, 1200);
+    document.fonts?.ready.then(refresh).catch(() => {});
+    const lateImgs = Array.from(page.querySelectorAll('img')).filter((im) => !im.complete);
+    lateImgs.forEach((im) => im.addEventListener('load', refresh, { once: true }));
+    window.addEventListener('load', refresh);
 
     return () => {
       clearTimeout(settle);
+      clearTimeout(settle2);
+      window.removeEventListener('load', refresh);
+      lateImgs.forEach((im) => im.removeEventListener('load', refresh));
       window.removeEventListener('resize', setFrameWidth);
       cardParallax.forEach((t) => { t.scrollTrigger?.kill(); t.kill(); });
       zoneBgST.kill();
@@ -1004,7 +1010,7 @@ export default function TariffPage() {
           {/* ═══ Frame 1: Hero + Tariff card ═══ */}
           <div className={`${styles.frame} ${styles.frameHero}`} data-comparing={comparing}>
             <div className={styles.frameImage} data-aimg>
-              <img src="/house.png" alt="E.ON Kundin" />
+              <img src="/newhouse.png" alt="E.ON Kundin" />
               <div className={styles.socialProof}>
                 <div className={styles.avatars}>
                   {[0,1,2].map(i => (

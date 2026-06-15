@@ -8,20 +8,58 @@
   cursor: pointer;
 }
 
-/* ─── Modal shell — full-bleed (100vw, no side/bottom padding, top stays) ──── */
+/* ─── Modal shell — full screen, warm cream base (animated gradient below) ─── */
 .modal {
   position: fixed;
   inset: 0;                        /* full screen */
-  background:
-    radial-gradient(38% 46% at 86% 4%, rgba(234, 27, 10, 0.10), transparent 72%),
-    radial-gradient(46% 42% at 46% 102%, rgba(234, 27, 10, 0.08), transparent 70%),
-    #ffffff;
+  background: #f1ede9;             /* warm cream base */
   border-radius: 0;
   overflow: hidden;
   display: flex;
   flex-direction: column;
   z-index: 201;
   will-change: clip-path;
+}
+
+/* two independently-drifting blob layers — translate, rotate and stretch/squash
+   so the warm gradient morphs. Shared by BOTH journeys. */
+.modal::before,
+.modal::after {
+  content: '';
+  position: absolute;
+  inset: -50%;
+  z-index: 0;
+  pointer-events: none;
+  filter: blur(38px);
+  will-change: transform;
+}
+.modal::before {
+  background:
+    radial-gradient(34% 40% at 20% 28%, rgba(234, 27, 10, 0.36), transparent 60%),
+    radial-gradient(30% 36% at 86% 18%, rgba(255, 99, 54, 0.28), transparent 62%),
+    radial-gradient(46% 50% at 72% 95%, rgba(130, 17, 113, 0.32), transparent 64%);
+  animation: journeyBlobA 8s ease-in-out infinite alternate;
+}
+.modal::after {
+  background:
+    radial-gradient(40% 34% at 62% 22%, rgba(178, 21, 90, 0.28), transparent 60%),
+    radial-gradient(38% 44% at 10% 72%, rgba(234, 27, 10, 0.26), transparent 62%),
+    radial-gradient(34% 30% at 94% 80%, rgba(255, 120, 60, 0.24), transparent 60%);
+  animation: journeyBlobB 10.5s ease-in-out infinite alternate;
+}
+@keyframes journeyBlobA {
+  0%   { transform: translate(0, 0) scale(1, 1) rotate(0deg); }
+  33%  { transform: translate(-14%, 10%) scale(1.32, 0.82) rotate(15deg); }
+  66%  { transform: translate(12%, -9%) scale(0.8, 1.3) rotate(-13deg); }
+  100% { transform: translate(8%, 13%) scale(1.22, 1.06) rotate(9deg); }
+}
+@keyframes journeyBlobB {
+  0%   { transform: translate(0, 0) scale(1, 1) rotate(0deg); }
+  50%  { transform: translate(15%, -13%) scale(1.34, 0.78) rotate(-17deg); }
+  100% { transform: translate(-11%, 10%) scale(0.82, 1.32) rotate(13deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .modal::before, .modal::after { animation: none; }
 }
 
 /* ─── Corner buttons (back / close) — discreet beige rounded squares ───────── */
@@ -31,7 +69,7 @@
   width: 48px;
   height: 48px;
   border-radius: 14px;            /* button-100 radius */
-  background: #f9f6f4;            /* Beige */
+  background: #efeae5;            /* Beige */
   border: none;
   display: flex;
   align-items: center;
@@ -64,8 +102,10 @@
 }
 .skipBtn:hover { color: var(--c-text-primary); }
 
-/* ─── Body — left categories + centred content ────────────────────────────── */
+/* ─── Body — left categories + centred content (above the gradient) ───────── */
 .modalBody {
+  position: relative;
+  z-index: 1;
   flex: 1;
   min-height: 0;
   display: flex;
@@ -723,7 +763,7 @@
   background: #fff;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
 }
-.tpPhoto { display: block; width: 100%; height: 300px; object-fit: cover; }
+.tpPhoto { display: block; width: 100%; height: 350px; object-fit: cover; object-position: center top; }
 .tpFooter { display: flex; flex-direction: column; gap: 4px; padding: 14px 18px 16px; }
 .tpNameRow { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .tpName {
@@ -893,6 +933,8 @@
   margin-top: 30px;
 }
 .actionsRow .ctaBtn { margin-top: 0; align-self: auto; }
+/* Enter hint sits just left of the red CTA */
+.ctaGroup { display: inline-flex; align-items: center; gap: 18px; }
 .backLink {
   background: none;
   border: none;
@@ -909,55 +951,7 @@
   .abRow, .rowSplit { grid-template-columns: 1fr; }
 }
 
-/* ═══ Conversational variant — full screen + animated gradient (Onboarding) ══ */
-.modalConv {
-  top: 0;
-  border-radius: 0;
-  background: #f1ede9;              /* warm cream base */
-}
-/* two independently-drifting blob layers — they translate, rotate and
-   stretch/squash (non-uniform scale) so the warm gradient visibly morphs */
-.modalConv::before,
-.modalConv::after {
-  content: '';
-  position: absolute;
-  inset: -50%;
-  z-index: 0;
-  pointer-events: none;
-  filter: blur(38px);
-  will-change: transform;
-}
-.modalConv::before {
-  background:
-    radial-gradient(34% 40% at 20% 28%, rgba(234, 27, 10, 0.36), transparent 60%),
-    radial-gradient(30% 36% at 86% 18%, rgba(255, 99, 54, 0.28), transparent 62%),
-    radial-gradient(46% 50% at 72% 95%, rgba(130, 17, 113, 0.32), transparent 64%);
-  animation: journeyBlobA 8s ease-in-out infinite alternate;
-}
-.modalConv::after {
-  background:
-    radial-gradient(40% 34% at 62% 22%, rgba(178, 21, 90, 0.28), transparent 60%),
-    radial-gradient(38% 44% at 10% 72%, rgba(234, 27, 10, 0.26), transparent 62%),
-    radial-gradient(34% 30% at 94% 80%, rgba(255, 120, 60, 0.24), transparent 60%);
-  animation: journeyBlobB 10.5s ease-in-out infinite alternate;
-}
-@keyframes journeyBlobA {
-  0%   { transform: translate(0, 0) scale(1, 1) rotate(0deg); }
-  33%  { transform: translate(-14%, 10%) scale(1.32, 0.82) rotate(15deg); }
-  66%  { transform: translate(12%, -9%) scale(0.8, 1.3) rotate(-13deg); }
-  100% { transform: translate(8%, 13%) scale(1.22, 1.06) rotate(9deg); }
-}
-@keyframes journeyBlobB {
-  0%   { transform: translate(0, 0) scale(1, 1) rotate(0deg); }
-  50%  { transform: translate(15%, -13%) scale(1.34, 0.78) rotate(-17deg); }
-  100% { transform: translate(-11%, 10%) scale(0.82, 1.32) rotate(13deg); }
-}
-@media (prefers-reduced-motion: reduce) {
-  .modalConv::before, .modalConv::after { animation: none; }
-}
-
-/* content sits above the gradient */
-.modalConv .modalBody { position: relative; z-index: 1; }
+/* ═══ Conversational variant — layout only (gradient now lives on .modal) ══ */
 /* drop the column below the top bar; keep cards at natural size + scroll */
 .modalConv .stepPanel {
   padding: clamp(76px, 9vh, 124px) 24px 48px;
@@ -980,6 +974,10 @@
   opacity: 0.8;
   z-index: 6;
 }
+/* conversational modal has a back button top-left, so the label sits beside it
+   and the back button aligns to the same left edge */
+.modalConv .cornerBtn[data-pos='back'] { left: clamp(20px, 4vw, 40px); }
+.modalConv .assistantLabel { left: calc(clamp(20px, 4vw, 40px) + 64px); }
 
 /* ── Conversational sphere — animated, transparent container ── */
 .convSphere {
