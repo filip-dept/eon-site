@@ -141,7 +141,7 @@
 }
 .content {
   flex: 1 1 auto;
-  max-width: 800px;
+  max-width: 900px;
   position: relative;
   min-height: 0;
   overflow: hidden;
@@ -723,7 +723,7 @@
   background: #fff;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
 }
-.tpPhoto { display: block; width: 100%; height: 200px; object-fit: cover; }
+.tpPhoto { display: block; width: 100%; height: 300px; object-fit: cover; }
 .tpFooter { display: flex; flex-direction: column; gap: 4px; padding: 14px 18px 16px; }
 .tpNameRow { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .tpName {
