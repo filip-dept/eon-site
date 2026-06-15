@@ -871,7 +871,7 @@
 .frameEditorial .editorialContent {
   position: absolute;
   left: 15%;
-  top: 42%;
+  top: 35%;
   will-change: transform, opacity;
   z-index: 2; /* stays above the photos while it travels */
 }
@@ -907,6 +907,7 @@
   object-fit: cover;
   transform-origin: center center;
   will-change: transform;
+  overflow: visible;
 }
 
 /* ─── Frame 3: Stacked bars ──────────────────────────────────────────────── */
@@ -916,13 +917,14 @@
 }
 
 .barsLeft {
-  flex: 0 0 49.5%;
+  flex: 0 0 30%;
   position: relative;
   display: flex;
   flex-direction: column;
   justify-content: center;
   padding: 0 24px 0 40px;
   min-width: 0;
+  overflow: visible;
 }
 
 .hubWrap {
@@ -931,6 +933,7 @@
   bottom: 0;
   width: 360px;
   height: 190px;
+  overflow: visible;
 }
 
 .hubPhoto {
@@ -1343,21 +1346,32 @@
    height, so appending a section deepens the bottom without shifting the
    sections above it. */
 .redZoneBg {
+  /* Clipped to the red zone (no bleed onto the white sections). The gradient
+     runs HORIZONTALLY, so scrolling vertically never changes its appearance —
+     ONE constant red→purple background across stories → HEMS → FAQ. Faded in
+     by ScrollTrigger as the zone enters. */
   position: absolute;
   inset: 0;
   opacity: 0;
-  background: linear-gradient(165deg,
-    #ea1b0a 0vh,
-    #ea1b0a 230vh,
-    #c11054 360vh,
-    #941481 480vh);
+  pointer-events: none;
+  background: linear-gradient(95deg, #ea1b0a 0%, #c11054 55%, #941481 100%);
 }
 
-/* ─── Stories section — vertical continuation after the pinned scroll ────── */
+/* ─── Stories text frame — scrolls normally, nothing sticky ──────────────── */
+.storiesIntro {
+  position: relative;
+  min-height: 62vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 56px 16px;
+}
+
+/* ─── Stories images frame — pins briefly so the cards can bounce in/out ──── */
 .stories {
   position: relative;
-  /* runway: text scrolls in → theme flip → cards in → cards out → release */
-  height: 200vh;
+  /* runway: frame appears → cards bounce in → hold → bounce out → release */
+  height: 170vh;
 }
 
 .storiesStage {
@@ -1367,12 +1381,10 @@
   overflow: hidden;
 }
 
-/* black at rest, tweened to white as the gradient fades in */
+/* dark on the initial white background; flips to white once the gradient
+   switches in (after the text passes the middle of the viewport) */
 .storiesText {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -60%);
+  position: relative;
   width: min(640px, 88vw);
   display: flex;
   flex-direction: column;
@@ -1408,14 +1420,15 @@
   color: inherit;
 }
 
-/* story cards — start below the viewport, fly up with scroll */
+/* story cards — primed below + shrunk for the bouncy entrance */
 .storyCard {
   position: absolute;
   width: clamp(250px, 23.75vw, 342px);
   aspect-ratio: 342 / 475;
   border-radius: 8px;
   overflow: hidden;
-  transform: translateY(120vh);
+  transform: translateY(55vh) scale(0.85);
+  opacity: 0;
   z-index: 1;
   box-shadow: 0 18px 48px rgba(0, 0, 0, 0.22);
 }

@@ -698,72 +698,74 @@ export default function TariffPage() {
       invalidateOnRefresh: true,
     });
 
-    /* ── Stories: discrete animations fired at scroll positions (no scrub).
-       The text scrolls up in normal flow; crossing the middle flips the theme
-       to red. A short scroll later the cards rise into their spots (tight
-       stagger) while the stage holds sticky; another short scroll floats them
-       up and out (no opacity), and the page continues to HEMS. ── */
+    /* ── Stories: the text frame scrolls normally above; the images frame pins
+       briefly so the cards can bounce into their collage, hold, then bounce up
+       and out as HEMS arrives. The whole red zone keeps ONE constant background
+       (no scroll-driven flip). ── */
     const stories    = page.querySelector<HTMLElement>(`.${styles.stories}`)!;
-    const zoneBg     = page.querySelector<HTMLElement>(`.${styles.redZoneBg}`)!;
-    const storiesTxt = stories.querySelector<HTMLElement>(`.${styles.storiesText}`)!;
     const storyCards = Array.from(stories.querySelectorAll<HTMLElement>(`.${styles.storyCard}`));
 
     /* exit fully above the viewport (offsetTop is the card's resting place) */
-    const exitY = (card: HTMLElement) => -(card.offsetTop + card.offsetHeight + 80);
+    const exitY = (card: HTMLElement) => -(card.offsetTop + card.offsetHeight + 120);
 
-    gsap.set(storyCards, { y: '120vh' });
+    /* hidden start: below + slightly shrunk, primed for the bouncy entrance */
+    gsap.set(storyCards, { y: '55vh', opacity: 0, scale: 0.85 });
 
-    /* T1 — stories text crosses the middle of the screen → red bg, white text */
-    const themeST = ScrollTrigger.create({
-      trigger: stories,
-      start: 'top 45%',
-      onEnter: () => {
-        gsap.to(zoneBg,     { opacity: 1, duration: 0.7, ease: 'power2.inOut', overwrite: 'auto' });
-        gsap.to(storiesTxt, { color: '#ffffff', duration: 0.5, ease: 'power1.inOut', overwrite: 'auto' });
-      },
-      onLeaveBack: () => {
-        gsap.to(zoneBg,     { opacity: 0, duration: 0.5, ease: 'power2.inOut', overwrite: 'auto' });
-        gsap.to(storiesTxt, { color: '#262626', duration: 0.4, ease: 'power1.inOut', overwrite: 'auto' });
-      },
-    });
-
-    /* T2 — short scroll later (stage is sticky by now): cards rise into
-       their on-screen positions, each with a very short delay */
+    /* T1 — shortly after the frame appears, the cards bounce into place */
     const cardsInST = ScrollTrigger.create({
       trigger: stories,
-      start: 'top -10%',
+      start: 'top 60%',
       onEnter: () => gsap.to(storyCards, {
-        y: 0, duration: 0.9, ease: 'eonAppear', stagger: 0.1, overwrite: 'auto',
+        y: 0, opacity: 1, scale: 1,
+        duration: 0.95, ease: 'back.out(1.7)', stagger: 0.1, overwrite: 'auto',
       }),
       onLeaveBack: () => gsap.to(storyCards, {
-        y: '120vh', duration: 0.6, ease: 'power1.in', stagger: 0.06, overwrite: 'auto',
+        y: '55vh', opacity: 0, scale: 0.85,
+        duration: 0.5, ease: 'power2.in', stagger: 0.06, overwrite: 'auto',
       }),
     });
 
-    /* T3 — another short scroll: cards float up out of the screen (no opacity
-       change), then the section releases and HEMS scrolls in */
+    /* T2 — a couple scrolls later the cards bounce up and out (wind-up then
+       launch) while the house unmasks below */
     const cardsOutST = ScrollTrigger.create({
       trigger: stories,
-      start: 'top -65%',
+      start: 'top -55%',
       onEnter: () => storyCards.forEach((c, i) =>
-        gsap.to(c, { y: () => exitY(c), duration: 0.85, ease: 'power1.in', delay: i * 0.07, overwrite: 'auto' })),
+        gsap.to(c, { y: () => exitY(c), duration: 1, ease: 'back.in(1.4)', delay: i * 0.08, overwrite: 'auto' })),
       onLeaveBack: () => storyCards.forEach((c, i) =>
-        gsap.to(c, { y: 0, duration: 0.75, ease: 'eonOut', delay: i * 0.06, overwrite: 'auto' })),
+        gsap.to(c, { y: 0, scale: 1, opacity: 1, duration: 0.8, ease: 'back.out(1.5)', delay: i * 0.06, overwrite: 'auto' })),
     });
 
     /* ── HEMS section entrance ── */
     const hems = page.querySelector<HTMLElement>(`.${styles.hems}`)!;
+    /* pre-clip the house to its top-right corner so it never flashes in before
+       the reveal fires */
+    const hemsPhotoEl = hems.querySelector<HTMLElement>(`.${styles.hemsPhoto}`);
+    const hemsShadeEl = hems.querySelector<HTMLElement>(`.${styles.hemsShade}`);
+    gsap.set([hemsPhotoEl, hemsShadeEl].filter(Boolean) as HTMLElement[],
+      { clipPath: 'inset(0% 0% 100% 100% round 8px)' });
+    if (hemsPhotoEl) gsap.set(hemsPhotoEl, { scale: 1.3 });
     const hemsST = ScrollTrigger.create({
       trigger: hems,
-      start: 'top 65%',
+      start: 'top 80%',
       once: true,
       onEnter: () => {
         gsap.fromTo(hems.querySelector(`.${styles.hemsLeft}`),
           { x: -48, opacity: 0 }, { x: 0, opacity: 1, duration: 0.9, ease: 'expo.out' });
-        gsap.fromTo(hems.querySelector(`.${styles.hemsRight}`),
-          { y: 60, opacity: 0 }, { y: 0, opacity: 1, duration: 0.9, ease: 'expo.out', delay: 0.12 });
+
+        /* the house unmasks from the top-right corner (eonReveal wipe + image
+           zoom) — same media reveal we use on the horizontal frames */
+        const photo = hems.querySelector<HTMLElement>(`.${styles.hemsPhoto}`);
+        const shade = hems.querySelector<HTMLElement>(`.${styles.hemsShade}`);
+        const HR_HIDDEN = 'inset(0% 0% 100% 100% round 8px)';  /* only top-right corner */
+        const HR_SHOWN  = 'inset(0% 0% 0% 0% round 8px)';
+        gsap.fromTo([photo, shade].filter(Boolean) as HTMLElement[],
+          { clipPath: HR_HIDDEN },
+          { clipPath: HR_SHOWN, duration: 1.6, ease: 'eonReveal', clearProps: 'clipPath' });
+        if (photo) gsap.fromTo(photo, { scale: 1.3 }, { scale: 1, duration: 1.6, ease: 'eonReveal' });
+
         gsap.fromTo(hems.querySelectorAll(`.${styles.hemsPin}`),
-          { opacity: 0, scale: 0.85 }, { opacity: 1, scale: 1, duration: 0.5, ease: 'back.out(1.6)', stagger: 0.1, delay: 0.55 });
+          { opacity: 0, scale: 0.85 }, { opacity: 1, scale: 1, duration: 0.5, ease: 'back.out(1.6)', stagger: 0.1, delay: 0.85 });
       },
     });
 
@@ -781,9 +783,28 @@ export default function TariffPage() {
       },
     });
 
+    /* ── Background switch: white until the stories text passes the middle of
+       the viewport, then the constant red→purple gradient fades in (and the
+       text flips to white). It stays on for the rest of the journey. ── */
+    const redZone     = page.querySelector<HTMLElement>(`.${styles.redZone}`)!;
+    const zoneBg      = page.querySelector<HTMLElement>(`.${styles.redZoneBg}`)!;
+    const storiesText = page.querySelector<HTMLElement>(`.${styles.storiesText}`)!;
+    const zoneBgST = ScrollTrigger.create({
+      trigger: storiesText,
+      start: 'center 50%',   /* text centre crosses the middle of the viewport */
+      end: 'max',
+      onEnter: () => {
+        gsap.to(zoneBg,      { opacity: 1, duration: 0.5, ease: 'power1.out', overwrite: 'auto' });
+        gsap.to(storiesText, { color: '#ffffff', duration: 0.4, ease: 'power1.inOut', overwrite: 'auto' });
+      },
+      onLeaveBack: () => {
+        gsap.to(zoneBg,      { opacity: 0, duration: 0.4, ease: 'power1.in', overwrite: 'auto' });
+        gsap.to(storiesText, { color: '#262626', duration: 0.3, ease: 'power1.inOut', overwrite: 'auto' });
+      },
+    });
+
     /* ── Proof panel overlap: pin the gradient zone still while the white
        panel scrolls up over it (it sits at a higher z-index). ── */
-    const redZone   = page.querySelector<HTMLElement>(`.${styles.redZone}`)!;
     const proofWrap = page.querySelector<HTMLElement>(`.${styles.proofWrap}`)!;
     const overlapST = ScrollTrigger.create({
       trigger: proofWrap,
@@ -807,9 +828,9 @@ export default function TariffPage() {
     return () => {
       clearTimeout(settle);
       window.removeEventListener('resize', setFrameWidth);
-      themeST.kill();
       cardsInST.kill();
       cardsOutST.kill();
+      zoneBgST.kill();
       hemsST.kill();
       faqST.kill();
       overlapST.kill();
@@ -1172,16 +1193,20 @@ export default function TariffPage() {
       <div className={styles.redZone}>
         <div className={styles.redZoneBg} />
 
-      {/* ═══ Stories — vertical continuation after the pin ═══ */}
+      {/* ═══ Stories text — scrolls normally, nothing sticky ═══ */}
+      <section className={styles.storiesIntro}>
+        <div className={styles.storiesText}>
+          <span className={styles.storiesLabel}>Passend zu deinem Tarif</span>
+          <h2 className={styles.storiesTitle}>Was hinter deinem Tarif steckt.</h2>
+          <p className={styles.storiesDesc}>
+            Kurze Stories, die zeigen, was deinen Günstig-Tarif ausmacht – Ökostrom, fairer Preis, persönlicher Service.
+          </p>
+        </div>
+      </section>
+
+      {/* ═══ Stories images — frame pins briefly; cards bounce in, then up & out ═══ */}
       <section className={styles.stories}>
         <div className={styles.storiesStage}>
-          <div className={styles.storiesText}>
-            <span className={styles.storiesLabel}>Passend zu deinem Tarif</span>
-            <h2 className={styles.storiesTitle}>Was hinter deinem Tarif steckt.</h2>
-            <p className={styles.storiesDesc}>
-              Kurze Stories, die zeigen, was deinen Günstig-Tarif ausmacht – Ökostrom, fairer Preis, persönlicher Service.
-            </p>
-          </div>
           {[
             { cls: styles.storyCard1, img: '/tariff-man.png',       title: 'Was heißt hier Ökostrom?', sub: 'Kein Marketing – ein Nachweis.' },
             { cls: styles.storyCard2, img: '/tariff-hero.png',      title: 'Dein Preis, fair erklärt', sub: 'Wir zeigen dir jeden Cent davon.' },
