@@ -771,26 +771,28 @@ export default function TariffPage() {
       invalidateOnRefresh: true,
     });
 
-    /* ── Stories: the text frame scrolls normally above; the cards form a
-       collage that parallaxes as you scroll — each card drifts vertically at
-       its OWN speed (layered depth), no triggered animation. The cards sit at
-       their resting positions when the section is centred. ── */
+    /* ── Stories: the text frame scrolls normally above; the cards start near
+       the top of the frame and parallax DOWN — each moves a little slower than
+       the page (different speeds), so they drift apart with layered depth. ── */
     const stories    = page.querySelector<HTMLElement>(`.${styles.stories}`)!;
     const storyCards = Array.from(stories.querySelectorAll<HTMLElement>(`.${styles.storyCard}`));
 
-    /* per-card amplitude (vh) — different magnitudes ⇒ different scroll speeds */
-    const PARALLAX = [22, 50, 34];
+    /* per-card scroll speed, all < 1.0 ⇒ each lags the page by (1 - speed) */
+    const SPEEDS = [0.75, 0.85, 0.63];
+    /* the parallax only begins once the section is in view (start 'top center');
+       before that the cards ride in at their designed collage positions */
     const cardParallax = storyCards.map((card, i) => {
-      const amp = PARALLAX[i % PARALLAX.length];
+      const speed = SPEEDS[i % SPEEDS.length];
       return gsap.fromTo(
         card,
-        { y: () => window.innerHeight * (amp / 100) },
+        { y: 0 },
         {
-          y: () => -window.innerHeight * (amp / 100),
+          /* total lag over the active window = (1 - speed) × its scroll distance */
+          y: () => (1 - speed) * (stories.offsetHeight + window.innerHeight * 0.5),
           ease: 'none',
           scrollTrigger: {
             trigger: stories,
-            start: 'top bottom',
+            start: 'top center',
             end: 'bottom top',
             scrub: true,
             invalidateOnRefresh: true,
@@ -981,7 +983,7 @@ export default function TariffPage() {
               <span className={styles.floatTariffName}>{tariff.name}</span>
               <span className={styles.floatTariffPrice}>{tariff.price} € pro Monat</span>
             </div>
-            <button className={styles.cartBtn} aria-label="Zum Warenkorb"><CartIcon /></button>
+            <button className={styles.cartBtn} aria-label="Zum Warenkorb" onClick={startCheckout}><CartIcon /></button>
           </div>
         </div>
       </div>
@@ -1308,7 +1310,7 @@ export default function TariffPage() {
         <div className={styles.hemsStage}>
           <div className={styles.hemsLeft}>
             <div ref={hemsTextRef}>
-              <p className={styles.hemsLogo}>HEMS</p>
+              <p className={styles.hemsLogo}>{hemsCat.menu}</p>
               <h2 className={styles.hemsTitle}>{hemsCat.title}</h2>
               <p className={styles.hemsDesc}>{hemsCat.desc}</p>
             </div>

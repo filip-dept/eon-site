@@ -107,65 +107,26 @@ const EnterHint = () => (
   </span>
 );
 
-/* ─── Left categories (one per step) ─────────────────────────────────────── */
-const CATEGORIES = [
-  {
-    label: 'Overview',
-    icon: (
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/>
-      </svg>
-    ),
-  },
-  {
-    label: 'Wechsel',
-    icon: (
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M4 7h13l-3-3M20 17H7l3 3"/>
-      </svg>
-    ),
-  },
-  {
-    label: 'Anbieter',
-    icon: (
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M9 18h6M10 21h4M12 3a6 6 0 0 1 4 10.5c-.6.5-1 1.5-1 2.5h-6c0-1-.4-2-1-2.5A6 6 0 0 1 12 3z"/>
-      </svg>
-    ),
-  },
-  {
-    label: 'Kundennummer',
-    icon: (
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
-        <rect x="3" y="5" width="18" height="14" rx="2"/><path d="M7 10h4M7 14h7"/>
-      </svg>
-    ),
-  },
-  {
-    label: 'Zähler',
-    icon: (
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M4 19h16M6 19V9m4 10V5m4 14v-8m4 8V11"/>
-      </svg>
-    ),
-  },
-  {
-    label: 'Datum',
-    icon: (
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
-        <rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>
-      </svg>
-    ),
-  },
-  {
-    label: 'Daten',
-    icon: (
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
-        <circle cx="12" cy="8" r="4"/><path d="M5 21a7 7 0 0 1 14 0"/>
-      </svg>
-    ),
-  },
-];
+/* ─── Animated conversational sphere (transparent container, just the orb) ─── */
+const ConvSphere = () => (
+  <div className={styles.convSphere} aria-hidden="true">
+    <span className={styles.convOrb} />
+  </div>
+);
+
+/* ─── Blurred-typewriter headline — splits into words for a staggered reveal ── */
+function Typewriter({ children }: { children: string }) {
+  const words = children.split(' ');
+  return (
+    <h2 className={styles.stepHeadline}>
+      {words.map((w, i) => (
+        <span key={i} className={styles.twWord}>
+          {w}{i < words.length - 1 ? ' ' : ''}
+        </span>
+      ))}
+    </h2>
+  );
+}
 
 /* ─── Shared field ───────────────────────────────────────────────────────── */
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
@@ -200,7 +161,7 @@ export default function JourneyModal() {
 
     gsap.to(overlay, { opacity: 0, duration: 0.25, ease: 'none' });
     gsap.to(modal, {
-      clipPath: 'inset(100% 0px 0px 0px round 20px 20px 0px 0px)',
+      clipPath: 'inset(100% 0px 0px 0px)',
       duration: 0.45,
       ease: 'eonOut',
       onComplete: () => {
@@ -234,20 +195,35 @@ export default function JourneyModal() {
 
     animating.current = true;
 
-    gsap.set(modal, { clipPath: 'inset(100% 0px 0px 0px round 20px 20px 0px 0px)', opacity: 1 });
+    gsap.set(modal, { clipPath: 'inset(100% 0px 0px 0px)', opacity: 1 });
     gsap.set(overlay, { opacity: 0 });
 
     const tl = gsap.timeline({ onComplete: () => { animating.current = false; } });
 
     tl.to(overlay, { opacity: 1, duration: 0.28, ease: 'none' }, 0)
-      .to(modal, { clipPath: 'inset(0px 0px 0px 0px round 20px 20px 0px 0px)', duration: 0.7, ease: 'eonOut' }, 0);
+      .to(modal, { clipPath: 'inset(0px 0px 0px 0px)', duration: 0.7, ease: 'eonOut' }, 0);
 
     const firstStep = stepRefs.current[0];
     if (firstStep) {
       gsap.set(firstStep, { y: 24, opacity: 0 });
       tl.to(firstStep, { y: 0, opacity: 1, duration: 0.42, ease: 'eonOut' }, 0.38);
     }
+    /* conversational reveal of the first question */
+    animateHeadline(0);
   }, [open]);
+
+  /* ── Blurred-typewriter reveal for a step's question words ── */
+  const animateHeadline = useCallback((idx: number) => {
+    const panel = stepRefs.current[idx];
+    if (!panel) return;
+    const words = panel.querySelectorAll<HTMLElement>(`.${styles.twWord}`);
+    if (!words.length) return;
+    gsap.fromTo(
+      words,
+      { opacity: 0, filter: 'blur(12px)', y: 10 },
+      { opacity: 1, filter: 'blur(0px)', y: 0, duration: 0.55, ease: 'power2.out', stagger: 0.05, delay: 0.12 }
+    );
+  }, []);
 
   /* ── Step transition ── */
   const transitionTo = useCallback((nextStep: number, dir: 'fwd' | 'bck') => {
@@ -276,6 +252,7 @@ export default function JourneyModal() {
             ease: 'eonOut',
             onComplete: () => { animating.current = false; },
           });
+          animateHeadline(nextStep - 1);
         });
       },
     });
@@ -289,11 +266,6 @@ export default function JourneyModal() {
     if (step > 1) transitionTo(step - 1, 'bck');
     else closeModal();
   }, [step, transitionTo, closeModal]);
-
-  const goToStep = useCallback((s: number) => {
-    if (s === step || s > step || animating.current) return;
-    transitionTo(s, 'bck');
-  }, [step, transitionTo]);
 
   /* ── Submit — checkout journey ends here for now (just close) ── */
   const submit = useCallback(() => {
@@ -344,7 +316,7 @@ export default function JourneyModal() {
     /* ── 1 · Overview (Figma) ── */
     <>
       <p className={styles.stepLabel}>Review</p>
-      <h2 className={styles.stepHeadline}>Bereit für dein neues Energie? Wir schon.</h2>
+      <Typewriter>Bereit für dein neues Energie? Wir schon.</Typewriter>
 
       <div className={styles.ctxRow}>
         <span className={styles.ctxChip}><LocationIcon />81245</span>
@@ -391,7 +363,7 @@ export default function JourneyModal() {
     /* ── 2 · Wechsel (Figma — A/B, click advances) ── */
     <>
       <p className={styles.stepLabel}>Wechsel</p>
-      <h2 className={styles.stepHeadline}>Kümmern wir uns um deinen Wechsel?</h2>
+      <Typewriter>Kümmern wir uns um deinen Wechsel?</Typewriter>
       <p className={styles.stepSub}>Wir erledigen alle Formalitäten und kündigen deinen alten Vertrag.</p>
 
       <div className={styles.abList}>
@@ -420,7 +392,7 @@ export default function JourneyModal() {
     /* ── 3 · Anbieter ── */
     <>
       <p className={styles.stepLabel}>Anbieter</p>
-      <h2 className={styles.stepHeadline}>Bei welchem Anbieter bist du aktuell?</h2>
+      <Typewriter>Bei welchem Anbieter bist du aktuell?</Typewriter>
       <p className={styles.stepSub}>Damit wir wissen, an wen die Kündigung geht.</p>
 
       <div className={styles.formGrid}>
@@ -446,7 +418,7 @@ export default function JourneyModal() {
     /* ── 4 · Kundennummer ── */
     <>
       <p className={styles.stepLabel}>Kundennr.</p>
-      <h2 className={styles.stepHeadline}>Wie lautet deine Kundennummer?</h2>
+      <Typewriter>Wie lautet deine Kundennummer?</Typewriter>
       <p className={styles.stepSub}>Steht auf deiner letzten Jahresabrechnung oben rechts.</p>
 
       <div className={styles.formGrid}>
@@ -472,7 +444,7 @@ export default function JourneyModal() {
     /* ── 5 · Zähler und Adresse ── */
     <>
       <p className={styles.stepLabel}>Zähler</p>
-      <h2 className={styles.stepHeadline}>Zähler und Adresse</h2>
+      <Typewriter>Zähler und Adresse</Typewriter>
       <p className={styles.stepSub}>Damit wir wissen, wo der Strom hin soll.</p>
 
       <div className={styles.formGrid}>
@@ -539,7 +511,7 @@ export default function JourneyModal() {
     /* ── 6 · Datum (A/B — click advances) ── */
     <>
       <p className={styles.stepLabel}>Datum</p>
-      <h2 className={styles.stepHeadline}>Wann soll der neue Vertrag starten?</h2>
+      <Typewriter>Wann soll der neue Vertrag starten?</Typewriter>
       <p className={styles.stepSub}>Schnellstmöglich oder zu einem konkreten Datum.</p>
 
       <div className={styles.abRow}>
@@ -567,7 +539,7 @@ export default function JourneyModal() {
     /* ── 7 · Daten ── */
     <>
       <p className={styles.stepLabel}>Daten</p>
-      <h2 className={styles.stepHeadline}>Deine Daten — sicher und schnell.</h2>
+      <Typewriter>Deine Daten — sicher und schnell.</Typewriter>
       <p className={styles.stepSub}>Wir brauchen nur die nötigsten Angaben für deinen Vertrag.</p>
 
       <div className={styles.formGrid}>
@@ -629,12 +601,8 @@ export default function JourneyModal() {
         aria-modal="true"
         aria-label="Tarif-Assistent"
       >
-        {/* ── Corner buttons (back / close) ── */}
-        <button className={styles.cornerBtn} data-pos="back" onClick={goBack} aria-label="Zurück">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <path d="M15 5l-7 7 7 7" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"/>
-          </svg>
-        </button>
+        {/* ── Top bar — E.ON Assistant label · skip · close ── */}
+        <span className={styles.assistantLabel}>E.ON Assistant</span>
         <button className={styles.skipBtn} onClick={submit} aria-label="Fragen überspringen">
           Überspringen
         </button>
@@ -644,30 +612,8 @@ export default function JourneyModal() {
           </svg>
         </button>
 
-        {/* ── Body: left categories + centered content ── */}
+        {/* ── Body: centred conversational column (no side navigation) ── */}
         <div className={styles.modalBody}>
-          <nav className={styles.sidebar} aria-label="Fortschritt">
-            {CATEGORIES.map((c, i) => {
-              const s = i + 1;
-              const state = s === step ? 'active' : s < step ? 'done' : 'todo';
-              return (
-                <button
-                  key={c.label}
-                  type="button"
-                  className={styles.sideItem}
-                  data-state={state}
-                  onClick={() => goToStep(s)}
-                  disabled={s > step}
-                  aria-current={s === step ? 'step' : undefined}
-                >
-                  <span className={styles.sideIndicator} aria-hidden="true" />
-                  <span className={styles.sideIcon}>{c.icon}</span>
-                  <span className={styles.sideLabel}>{c.label}</span>
-                </button>
-              );
-            })}
-          </nav>
-
           <div className={styles.contentCol}>
             <div className={styles.content}>
               {panels.map((panel, i) => (
@@ -677,6 +623,7 @@ export default function JourneyModal() {
                   className={styles.stepPanel}
                   style={{ display: step === i + 1 ? 'flex' : 'none' }}
                 >
+                  <ConvSphere />
                   {panel}
                 </div>
               ))}

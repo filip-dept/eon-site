@@ -409,7 +409,7 @@
 /* ─── Pinned horizontal section ──────────────────────────────────────────── */
 .scrollSection {
   height: 100vh;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .track {
@@ -434,6 +434,7 @@
   gap: 16px;
   padding-top: 150px;
   border-radius: 0;
+  overflow: visible;
 }
 
 .frameImage {
@@ -632,7 +633,6 @@
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  margin-right: 12px;
 }
 
 .cardNav {
@@ -842,7 +842,7 @@
 .editorialTitle {
   font-family: var(--font-body);
   font-weight: 700;
-  font-size: clamp(56px, 3.4vw, 48px);
+  font-size: clamp(64px, 3.4vw, 48px);
   line-height: 1.16;
   color: #262626;
   margin: 0;
@@ -914,10 +914,11 @@
 .frameBars {
   display: flex;
   gap: 8px;
+  overflow: visible;
 }
 
 .barsLeft {
-  flex: 0 0 30%;
+  flex: 0 0 40%;
   position: relative;
   display: flex;
   flex-direction: column;
@@ -1021,7 +1022,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .stackedBars {
@@ -1370,12 +1371,12 @@
 /* ─── Stories images frame — cards parallax through at different speeds ───── */
 .stories {
   position: relative;
-  height: 120vh;
+  height: 100vh;
 }
 
 .storiesStage {
   position: relative;
-  height: 120vh;
+  height: 140vh;
   overflow: hidden;
 }
 
@@ -1431,9 +1432,11 @@
 
 /* resting spots — a visible collage around the centred text (cards sit UNDER
    the text, z-wise); 1 low-left, 2 lowest-centre, 3 high-right */
-.storyCard1 { left: 9.3%;  top: 46%; }
-.storyCard2 { left: 38.1%; top: 60%; }
-.storyCard3 { left: 66.9%; top: 20%; }
+/* all start near the top edge of the frame, each at a different spot, and all
+   fit within the viewport height before the parallax drifts them down */
+.storyCard1 { left: 9.3%;  top: 6%; }
+.storyCard2 { left: 38.1%; top: 19%; }
+.storyCard3 { left: 66.9%; top: 10%; }
 
 .storyMedia {
   position: absolute;
@@ -1487,8 +1490,8 @@
 /* ─── HEMS section — sticky stage you scroll through category by category ─── */
 .hems {
   position: relative;
-  /* runway: one screen of scroll per category (5 categories) */
-  height: 340vh;
+  /* runway per category — kept short so you move through them quickly */
+  height: 230vh;
 }
 
 .hemsStage {
@@ -1574,7 +1577,6 @@
   border-radius: 8px;
   /* dark backing so the top-right unmask never flashes the white page through
      the not-yet-revealed corner */
-  background: #4a0d2b;
   overflow: hidden;
 }
 
@@ -1769,7 +1771,7 @@
   flex-direction: column;
   justify-content: center;
   padding: 0 72px;
-  max-width: 700px;
+  /* max-width: 700px; */
 }
 
 .proofLabel {
@@ -1860,12 +1862,13 @@
   position: relative;
   background: var(--c-red);
   border-radius: 6px;
-  padding: 24px 20px 20px;
+  padding: 24px 24px 24px;
   color: #fff;
   display: flex;
   flex-direction: column;
   gap: 28px;
   overflow: hidden;
+  max-width: 500px;
 }
 
 .proofQuoteTitle {
@@ -1882,7 +1885,7 @@
   line-height: 1.3;
   opacity: 0.9;
   margin: 8px 0 0;
-  max-width: 320px;
+  /* max-width: 320px; */
 }
 
 .proofAuthor {

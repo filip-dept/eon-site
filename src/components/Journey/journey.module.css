@@ -8,23 +8,52 @@
   cursor: pointer;
 }
 
-/* ─── Modal shell — full-bleed (100vw, no side/bottom padding, top stays) ──── */
+/* ─── Modal shell — full screen, warm animated gradient background ─────────── */
 .modal {
   position: fixed;
-  top: 80px;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background:
-    radial-gradient(38% 46% at 86% 4%, rgba(234, 27, 10, 0.10), transparent 72%),
-    radial-gradient(46% 42% at 46% 102%, rgba(234, 27, 10, 0.08), transparent 70%),
-    #ffffff;
-  border-radius: 20px 20px 0 0;   /* rounded top corners (rises like a sheet) */
+  inset: 0;
+  background: #f1ede9;             /* warm cream base */
+  border-radius: 0;
   overflow: hidden;
   display: flex;
   flex-direction: column;
   z-index: 201;
   will-change: clip-path;
+}
+/* slowly drifting red→purple blobs over the cream — the animated gradient */
+.modal::before {
+  content: '';
+  position: absolute;
+  inset: -25%;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(32% 38% at 18% 30%, rgba(234, 27, 10, 0.22), transparent 60%),
+    radial-gradient(30% 34% at 88% 16%, rgba(234, 27, 10, 0.14), transparent 62%),
+    radial-gradient(46% 48% at 74% 96%, rgba(130, 17, 113, 0.18), transparent 64%);
+  filter: blur(36px);
+  animation: journeyBg 18s ease-in-out infinite alternate;
+}
+@keyframes journeyBg {
+  0%   { transform: translate3d(0, 0, 0) scale(1) rotate(0deg); }
+  50%  { transform: translate3d(-2%, 3%, 0) scale(1.1) rotate(2deg); }
+  100% { transform: translate3d(3%, -2%, 0) scale(1.05) rotate(-1.5deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .modal::before { animation: none; }
+}
+
+/* ─── Top-left assistant label (Figma) ────────────────────────────────────── */
+.assistantLabel {
+  position: absolute;
+  top: 46px;
+  left: clamp(20px, 4vw, 40px);
+  font-family: var(--font-body);
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--c-text-primary);
+  opacity: 0.8;
+  z-index: 6;
 }
 
 /* ─── Corner buttons (back / close) — discreet beige rounded squares ───────── */
@@ -67,8 +96,10 @@
 }
 .skipBtn:hover { color: var(--c-text-primary); }
 
-/* ─── Body — left categories + centred content ────────────────────────────── */
+/* ─── Body — centred conversational column (sits above the gradient) ──────── */
 .modalBody {
+  position: relative;
+  z-index: 1;
   flex: 1;
   min-height: 0;
   display: flex;
@@ -154,12 +185,67 @@
 .stepPanel {
   position: absolute;
   inset: 0;
-  padding: 88px 24px 40px; /* top clears the corner buttons; top spacing preserved */
+  padding: clamp(96px, 13vh, 150px) 24px 48px; /* drops the column below the top bar */
   display: flex;
   flex-direction: column;
   overflow-y: auto;
   scrollbar-width: thin;
   scrollbar-color: #e0dedd transparent;
+}
+/* keep content at its natural size (don't let the flex column squash cards);
+   overflow scrolls instead */
+.stepPanel > * { flex-shrink: 0; }
+
+/* ─── Conversational sphere — animated, transparent container ──────────────── */
+.convSphere {
+  align-self: center;
+  width: 96px;
+  height: 96px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;       /* no box behind the orb */
+  margin-bottom: 30px;
+  flex-shrink: 0;
+}
+.convOrb {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 38% 32%, #ffc6a0 0%, #ff6336 34%, #ea1b0a 66%, #b3155a 100%);
+  box-shadow: 0 8px 30px rgba(234, 27, 10, 0.38);
+  animation: convOrbPulse 3.4s ease-in-out infinite;
+}
+/* soft halo that breathes with the orb */
+.convSphere::after {
+  content: '';
+  position: absolute;
+  width: 110px;
+  height: 110px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 99, 54, 0.35), transparent 68%);
+  filter: blur(10px);
+  animation: convOrbHalo 3.4s ease-in-out infinite;
+  pointer-events: none;
+}
+.convSphere { position: relative; }
+@keyframes convOrbPulse {
+  0%, 100% { transform: scale(1) translateY(0); }
+  50%      { transform: scale(1.07) translateY(-2px); }
+}
+@keyframes convOrbHalo {
+  0%, 100% { opacity: 0.5; transform: scale(1); }
+  50%      { opacity: 0.85; transform: scale(1.12); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .convOrb, .convSphere::after { animation: none; }
+}
+
+/* ─── Blurred-typewriter words ────────────────────────────────────────────── */
+.twWord {
+  display: inline-block;
+  white-space: pre;
+  will-change: filter, opacity, transform;
 }
 
 /* ─── Step header ─────────────────────────────────────────────────────────── */
