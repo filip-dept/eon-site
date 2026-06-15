@@ -1004,7 +1004,7 @@ export default function TariffPage() {
           {/* ═══ Frame 1: Hero + Tariff card ═══ */}
           <div className={`${styles.frame} ${styles.frameHero}`} data-comparing={comparing}>
             <div className={styles.frameImage} data-aimg>
-              <img src="/tariff-hero.png" alt="E.ON Kundin" />
+              <img src="/house.png" alt="E.ON Kundin" />
               <div className={styles.socialProof}>
                 <div className={styles.avatars}>
                   {[0,1,2].map(i => (

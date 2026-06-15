@@ -8,52 +8,23 @@
   cursor: pointer;
 }
 
-/* ─── Modal shell — full screen, warm animated gradient background ─────────── */
+/* ─── Modal shell — full-bleed (100vw, no side/bottom padding, top stays) ──── */
 .modal {
   position: fixed;
-  inset: 0;
-  background: #f1ede9;             /* warm cream base */
-  border-radius: 0;
+  top: 80px;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background:
+    radial-gradient(38% 46% at 86% 4%, rgba(234, 27, 10, 0.10), transparent 72%),
+    radial-gradient(46% 42% at 46% 102%, rgba(234, 27, 10, 0.08), transparent 70%),
+    #ffffff;
+  border-radius: 20px 20px 0 0;   /* rounded top corners (rises like a sheet) */
   overflow: hidden;
   display: flex;
   flex-direction: column;
   z-index: 201;
   will-change: clip-path;
-}
-/* slowly drifting red→purple blobs over the cream — the animated gradient */
-.modal::before {
-  content: '';
-  position: absolute;
-  inset: -25%;
-  z-index: 0;
-  pointer-events: none;
-  background:
-    radial-gradient(32% 38% at 18% 30%, rgba(234, 27, 10, 0.22), transparent 60%),
-    radial-gradient(30% 34% at 88% 16%, rgba(234, 27, 10, 0.14), transparent 62%),
-    radial-gradient(46% 48% at 74% 96%, rgba(130, 17, 113, 0.18), transparent 64%);
-  filter: blur(36px);
-  animation: journeyBg 18s ease-in-out infinite alternate;
-}
-@keyframes journeyBg {
-  0%   { transform: translate3d(0, 0, 0) scale(1) rotate(0deg); }
-  50%  { transform: translate3d(-2%, 3%, 0) scale(1.1) rotate(2deg); }
-  100% { transform: translate3d(3%, -2%, 0) scale(1.05) rotate(-1.5deg); }
-}
-@media (prefers-reduced-motion: reduce) {
-  .modal::before { animation: none; }
-}
-
-/* ─── Top-left assistant label (Figma) ────────────────────────────────────── */
-.assistantLabel {
-  position: absolute;
-  top: 46px;
-  left: clamp(20px, 4vw, 40px);
-  font-family: var(--font-body);
-  font-size: 16px;
-  font-weight: 500;
-  color: var(--c-text-primary);
-  opacity: 0.8;
-  z-index: 6;
 }
 
 /* ─── Corner buttons (back / close) — discreet beige rounded squares ───────── */
@@ -96,10 +67,8 @@
 }
 .skipBtn:hover { color: var(--c-text-primary); }
 
-/* ─── Body — centred conversational column (sits above the gradient) ──────── */
+/* ─── Body — left categories + centred content ────────────────────────────── */
 .modalBody {
-  position: relative;
-  z-index: 1;
   flex: 1;
   min-height: 0;
   display: flex;
@@ -185,67 +154,10 @@
 .stepPanel {
   position: absolute;
   inset: 0;
-  padding: clamp(96px, 13vh, 150px) 24px 48px; /* drops the column below the top bar */
+  padding: 88px 24px 40px; /* top clears the corner buttons; top spacing preserved */
   display: flex;
   flex-direction: column;
-  overflow-y: auto;
-  scrollbar-width: thin;
-  scrollbar-color: #e0dedd transparent;
-}
-/* keep content at its natural size (don't let the flex column squash cards);
-   overflow scrolls instead */
-.stepPanel > * { flex-shrink: 0; }
-
-/* ─── Conversational sphere — animated, transparent container ──────────────── */
-.convSphere {
-  align-self: center;
-  width: 96px;
-  height: 96px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: transparent;       /* no box behind the orb */
-  margin-bottom: 30px;
-  flex-shrink: 0;
-}
-.convOrb {
-  width: 72px;
-  height: 72px;
-  border-radius: 50%;
-  background: radial-gradient(circle at 38% 32%, #ffc6a0 0%, #ff6336 34%, #ea1b0a 66%, #b3155a 100%);
-  box-shadow: 0 8px 30px rgba(234, 27, 10, 0.38);
-  animation: convOrbPulse 3.4s ease-in-out infinite;
-}
-/* soft halo that breathes with the orb */
-.convSphere::after {
-  content: '';
-  position: absolute;
-  width: 110px;
-  height: 110px;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(255, 99, 54, 0.35), transparent 68%);
-  filter: blur(10px);
-  animation: convOrbHalo 3.4s ease-in-out infinite;
-  pointer-events: none;
-}
-.convSphere { position: relative; }
-@keyframes convOrbPulse {
-  0%, 100% { transform: scale(1) translateY(0); }
-  50%      { transform: scale(1.07) translateY(-2px); }
-}
-@keyframes convOrbHalo {
-  0%, 100% { opacity: 0.5; transform: scale(1); }
-  50%      { opacity: 0.85; transform: scale(1.12); }
-}
-@media (prefers-reduced-motion: reduce) {
-  .convOrb, .convSphere::after { animation: none; }
-}
-
-/* ─── Blurred-typewriter words ────────────────────────────────────────────── */
-.twWord {
-  display: inline-block;
-  white-space: pre;
-  will-change: filter, opacity, transform;
+  max-width: 600px;
 }
 
 /* ─── Step header ─────────────────────────────────────────────────────────── */
@@ -262,7 +174,7 @@
 .stepHeadline {
   font-family: var(--font-body);
   font-weight: 700;
-  font-size: clamp(28px, 3.4vw, 40px); /* Headings/2: 40 / 48 */
+  font-size: clamp(40px, 3.4vw, 40px); /* Headings/2: 40 / 48 */
   line-height: 1.2;
   color: var(--c-text-primary);
   margin-bottom: 28px;
@@ -278,36 +190,57 @@
   grid-template-columns: 1fr;
   grid-auto-rows: min-content;
   align-items: start;
-  gap: 10px;
+  gap: 12px;
   margin-bottom: auto;
 }
 
 .optionCard {
-  background: #fff;
-  border: 1.5px solid #e0dedd;
-  border-radius: 12px;
-  padding: 16px 18px;
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1.5px solid rgba(38, 38, 38, 0.07);
+  border-radius: 16px;
+  padding: 18px 22px;
   display: flex;
-  align-items: flex-start;
-  gap: 13px;
+  align-items: center;
+  gap: 16px;
   cursor: pointer;
   text-align: left;
-  transition: border-color 0.18s ease, box-shadow 0.18s ease, transform 0.12s ease;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.18s var(--ease-out), background 0.2s ease;
   position: relative;
 }
 .optionCard:hover {
-  border-color: #c4c3c2;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+  border-color: rgba(234, 27, 10, 0.45);
+  background: rgba(255, 255, 255, 0.92);
+  transform: translateY(-2px);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.10);
 }
 .optionCard[data-selected='true'] {
   border-color: var(--c-red);
-  box-shadow: 0 0 0 2px rgba(234, 27, 10, 0.1), 0 4px 16px rgba(234, 27, 10, 0.08);
+  background: #fff;
+  box-shadow: 0 0 0 2px rgba(234, 27, 10, 0.16), 0 12px 30px rgba(234, 27, 10, 0.12);
 }
 
+/* chevron affordance on the right — slides in on hover / when selected */
+.optionCard::after {
+  content: '';
+  width: 9px;
+  height: 9px;
+  margin-left: auto;
+  border-right: 2px solid #b9b7b6;
+  border-top: 2px solid #b9b7b6;
+  transform: rotate(45deg);
+  opacity: 0;
+  transition: opacity 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
+  flex-shrink: 0;
+}
+.optionCard:hover::after { opacity: 1; transform: rotate(45deg) translate(2px, -2px); }
+.optionCard[data-selected='true']::after { opacity: 1; border-color: var(--c-red); }
+
 .optionIcon {
-  width: 34px;
-  height: 34px;
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
   border: 1.5px solid #e5e4e4;
   background: #f8f7f6;
@@ -316,29 +249,31 @@
   justify-content: center;
   flex-shrink: 0;
   color: var(--c-text-secondary);
-  transition: border-color 0.18s, background 0.18s, color 0.18s;
+  transition: border-color 0.2s, background 0.2s, color 0.2s, transform 0.2s var(--ease-out);
 }
+.optionCard:hover .optionIcon { transform: scale(1.06); }
 .optionCard[data-selected='true'] .optionIcon {
   border-color: rgba(234, 27, 10, 0.3);
   background: #fdf0ee;
   color: var(--c-red);
 }
+.optionIcon svg { width: 20px; height: 20px; }
 
-.optionText { display: flex; flex-direction: column; gap: 3px; flex: 1; }
+.optionText { display: flex; flex-direction: column; gap: 4px; flex: 1; }
 
 .optionTitle {
   font-family: var(--font-body);
   font-weight: 700;
-  font-size: 14px;
+  font-size: 16px;
   line-height: 1.3;
   color: var(--c-text-primary);
 }
 
 .optionSub {
   font-family: var(--font-body);
-  font-size: 12px;
+  font-size: 13px;
   color: var(--c-text-secondary);
-  line-height: 1.4;
+  line-height: 1.45;
 }
 
 .footNote {
@@ -649,13 +584,13 @@
 .presetTitle {
   font-family: var(--font-body);
   font-weight: 700;
-  font-size: 13px;
+  font-size: 16px;
   color: var(--c-text-primary);
   margin-bottom: 4px;
 }
 .presetSub {
   font-family: var(--font-body);
-  font-size: 12px;
+  font-size: 14px;
   color: var(--c-text-secondary);
   line-height: 1.4;
 }
@@ -974,3 +909,122 @@
 @media (max-width: 760px) {
   .abRow, .rowSplit { grid-template-columns: 1fr; }
 }
+
+/* ═══ Conversational variant — full screen + animated gradient (Onboarding) ══ */
+.modalConv {
+  top: 0;
+  border-radius: 0;
+  background: #f1ede9;              /* warm cream base */
+}
+/* two independently-drifting blob layers — they translate, rotate and
+   stretch/squash (non-uniform scale) so the warm gradient visibly morphs */
+.modalConv::before,
+.modalConv::after {
+  content: '';
+  position: absolute;
+  inset: -35%;
+  z-index: 0;
+  pointer-events: none;
+  filter: blur(40px);
+  will-change: transform;
+}
+.modalConv::before {
+  background:
+    radial-gradient(34% 40% at 20% 28%, rgba(234, 27, 10, 0.30), transparent 60%),
+    radial-gradient(30% 36% at 86% 18%, rgba(255, 99, 54, 0.22), transparent 62%),
+    radial-gradient(46% 50% at 72% 95%, rgba(130, 17, 113, 0.26), transparent 64%);
+  animation: journeyBlobA 13s ease-in-out infinite alternate;
+}
+.modalConv::after {
+  background:
+    radial-gradient(40% 34% at 62% 22%, rgba(178, 21, 90, 0.22), transparent 60%),
+    radial-gradient(38% 44% at 10% 72%, rgba(234, 27, 10, 0.20), transparent 62%),
+    radial-gradient(34% 30% at 94% 80%, rgba(255, 120, 60, 0.18), transparent 60%);
+  animation: journeyBlobB 17s ease-in-out infinite alternate;
+}
+@keyframes journeyBlobA {
+  0%   { transform: translate(0, 0) scale(1, 1) rotate(0deg); }
+  33%  { transform: translate(-7%, 5%) scale(1.2, 0.9) rotate(9deg); }
+  66%  { transform: translate(6%, -5%) scale(0.88, 1.18) rotate(-7deg); }
+  100% { transform: translate(4%, 7%) scale(1.14, 1.04) rotate(5deg); }
+}
+@keyframes journeyBlobB {
+  0%   { transform: translate(0, 0) scale(1, 1) rotate(0deg); }
+  50%  { transform: translate(8%, -7%) scale(1.22, 0.86) rotate(-11deg); }
+  100% { transform: translate(-6%, 5%) scale(0.9, 1.2) rotate(8deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .modalConv::before, .modalConv::after { animation: none; }
+}
+
+/* content sits above the gradient */
+.modalConv .modalBody { position: relative; z-index: 1; }
+/* drop the column below the top bar; keep cards at natural size + scroll */
+.modalConv .stepPanel { padding: clamp(96px, 13vh, 150px) 24px 48px; }
+.modalConv .stepPanel > * { flex-shrink: 0; }
+
+/* top-left assistant label (Figma) */
+.assistantLabel {
+  position: absolute;
+  top: 46px;
+  left: clamp(20px, 4vw, 40px);
+  font-family: var(--font-body);
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--c-text-primary);
+  opacity: 0.8;
+  z-index: 6;
+}
+
+/* ── Conversational sphere — animated, transparent container ── */
+.convSphere {
+  position: relative;
+  align-self: center;
+  width: 96px;
+  height: 96px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;          /* no box behind the orb */
+  margin-bottom: 30px;
+  flex-shrink: 0;
+}
+.convOrb {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 38% 32%, #ffc6a0 0%, #ff6336 34%, #ea1b0a 66%, #b3155a 100%);
+  box-shadow: 0 8px 30px rgba(234, 27, 10, 0.38);
+  animation: convOrbPulse 3.4s ease-in-out infinite;
+}
+.convSphere::after {
+  content: '';
+  position: absolute;
+  width: 110px;
+  height: 110px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 99, 54, 0.35), transparent 68%);
+  filter: blur(10px);
+  animation: convOrbHalo 3.4s ease-in-out infinite;
+  pointer-events: none;
+}
+@keyframes convOrbPulse {
+  0%, 100% { transform: scale(1) translateY(0); }
+  50%      { transform: scale(1.07) translateY(-2px); }
+}
+@keyframes convOrbHalo {
+  0%, 100% { opacity: 0.5; transform: scale(1); }
+  50%      { opacity: 0.85; transform: scale(1.12); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .convOrb, .convSphere::after { animation: none; }
+}
+
+/* ── Blurred-typewriter words ── */
+.twLine { display: block; }
+.twWord {
+  display: inline-block;
+  white-space: pre;
+  will-change: filter, opacity, transform;
+}
+.twWord[data-em='true'] { color: var(--c-red); }

@@ -89,34 +89,34 @@ const ArrowRight = () => (
   </svg>
 );
 
-/* ─── Left categories (one per step, red indicator on the active one) ──────── */
-const CATEGORIES = [
-  {
-    label: 'Prioritäten',
-    icon: (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M4 6h9M4 12h6M4 18h12"/>
-        <circle cx="17" cy="6" r="2"/><circle cx="14" cy="12" r="2"/><circle cx="20" cy="18" r="2"/>
-      </svg>
-    ),
-  },
-  {
-    label: 'Dein Zuhause',
-    icon: (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/><path d="M9.5 20v-6h5v6"/>
-      </svg>
-    ),
-  },
-  {
-    label: 'Verbrauch',
-    icon: (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M13 2 4 14h7l-1 8 10-12h-7l1-8z"/>
-      </svg>
-    ),
-  },
-];
+/* ─── Animated conversational sphere (transparent container, just the orb) ─── */
+const ConvSphere = () => (
+  <div className={styles.convSphere} aria-hidden="true">
+    <span className={styles.convOrb} />
+  </div>
+);
+
+/* ─── Blurred-typewriter headline — words split for a staggered reveal ─────── */
+type Seg = { text: string; em?: boolean };
+function Typewriter({ lines }: { lines: Seg[][] }) {
+  return (
+    <h2 className={styles.stepHeadline}>
+      {lines.map((line, li) => {
+        const words: { w: string; em?: boolean }[] = [];
+        line.forEach((seg) => seg.text.split(' ').forEach((w) => words.push({ w, em: seg.em })));
+        return (
+          <span key={li} className={styles.twLine}>
+            {words.map((it, i) => (
+              <span key={i} className={styles.twWord} data-em={it.em ? 'true' : undefined}>
+                {it.w}{i < words.length - 1 ? ' ' : ''}
+              </span>
+            ))}
+          </span>
+        );
+      })}
+    </h2>
+  );
+}
 
 /* ─── Step 1 ─────────────────────────────────────────────────────────────── */
 function Step1({ answers, setAnswers, goNext }: {
@@ -127,15 +127,16 @@ function Step1({ answers, setAnswers, goNext }: {
   return (
     <>
       <p className={styles.stepLabel}>Erstmal kalibrieren</p>
-      <h2 className={styles.stepHeadline}>
-        Was ist dir bei deinem<br />
-        Strom <em>am wichtigsten?</em>
-      </h2>
+      <Typewriter lines={[
+        [{ text: 'Was ist dir bei deinem' }],
+        [{ text: 'Strom' }, { text: 'am wichtigsten?', em: true }],
+      ]} />
       <div className={styles.optionGrid}>
         {PRIORITIES.map((p) => (
           <button
             key={p.id}
             className={styles.optionCard}
+            data-appear
             data-selected={answers.priority === p.id ? 'true' : 'false'}
             onClick={() => {
               setAnswers({ ...answers, priority: p.id });
@@ -150,7 +151,7 @@ function Step1({ answers, setAnswers, goNext }: {
           </button>
         ))}
       </div>
-      <p className={styles.footNote}>
+      <p className={styles.footNote} data-appear>
         Eine Auswahl reicht — wir fragen dich noch zwei Dinge, dann steht dein Tarif.
       </p>
     </>
@@ -216,14 +217,14 @@ function Step2({ answers, setAnswers, goNext }: {
   return (
     <>
       <p className={styles.stepLabel}>Wo zuhause, mit wem</p>
-      <h2 className={styles.stepHeadline}>
-        Erzähl mir kurz<br />
-        <em>von deinem Zuhause.</em>
-      </h2>
+      <Typewriter lines={[
+        [{ text: 'Erzähl mir kurz' }],
+        [{ text: 'von deinem Zuhause.', em: true }],
+      ]} />
 
       <div className={styles.s2row}>
         {/* PLZ */}
-        <div className={styles.s2col}>
+        <div className={styles.s2col} data-appear>
           <p className={styles.fieldLabel}>Postleitzahl</p>
           <div className={styles.plzField}>
             <div className={styles.plzRow}>
@@ -277,7 +278,7 @@ function Step2({ answers, setAnswers, goNext }: {
         </div>
 
         {/* Persons */}
-        <div className={styles.s2col}>
+        <div className={styles.s2col} data-appear>
           <p className={styles.fieldLabel}>Personen im Haushalt</p>
           <div className={styles.stepper}>
             <button
@@ -320,6 +321,7 @@ function Step2({ answers, setAnswers, goNext }: {
 
       <button
         className={styles.ctaBtn}
+        data-appear
         onClick={goNext}
         disabled={!plzValid}
         style={{ opacity: plzValid ? 1 : 0.45, cursor: plzValid ? 'pointer' : 'default', marginTop: 24 }}
@@ -346,18 +348,18 @@ function Step3({ answers, setAnswers, onSubmit }: {
   return (
     <>
       <p className={styles.stepLabel}>Und wie viel Strom</p>
-      <h2 className={styles.stepHeadline}>
-        Wie viel davon<br />
-        <em>brauchst du im Jahr?</em>
-      </h2>
+      <Typewriter lines={[
+        [{ text: 'Wie viel davon' }],
+        [{ text: 'brauchst du im Jahr?', em: true }],
+      ]} />
 
-      <div className={styles.kwhBlock}>
+      <div className={styles.kwhBlock} data-appear>
         <span className={styles.kwhNum}>{formatKwh(kwh)}</span>
         <span className={styles.kwhUnit}>kWh</span>
       </div>
-      <p className={styles.kwhHint}>ungefähr · bei {persons} {persons === 1 ? 'Person' : 'Personen'} im Haushalt</p>
+      <p className={styles.kwhHint} data-appear>ungefähr · bei {persons} {persons === 1 ? 'Person' : 'Personen'} im Haushalt</p>
 
-      <div className={styles.sliderWrap}>
+      <div className={styles.sliderWrap} data-appear>
         <input
           type="range"
           className={styles.slider}
@@ -382,6 +384,7 @@ function Step3({ answers, setAnswers, onSubmit }: {
           <button
             key={p.id}
             className={styles.presetCard}
+            data-appear
             data-selected={activePreset === p.id ? 'true' : 'false'}
             onClick={() => setAnswers({ ...answers, kwh: p.kwh })}
           >
@@ -391,7 +394,7 @@ function Step3({ answers, setAnswers, onSubmit }: {
         ))}
       </div>
 
-      <button className={styles.ctaBtn} onClick={onSubmit}>
+      <button className={styles.ctaBtn} data-appear onClick={onSubmit}>
         Meinen Tarif sehen <ArrowRight />
       </button>
     </>
@@ -424,7 +427,7 @@ export default function OnboardingModal() {
 
     gsap.to(overlay, { opacity: 0, duration: 0.25, ease: 'none' });
     gsap.to(modal, {
-      clipPath: 'inset(100% 0px 0px 0px round 20px 20px 0px 0px)',
+      clipPath: 'inset(100% 0px 0px 0px)',
       duration: 0.45,
       ease: 'eonOut',
       onComplete: () => {
@@ -459,14 +462,14 @@ export default function OnboardingModal() {
 
     animating.current = true;
 
-    /* Reveal from the bottom edge upward (same eonReveal wipe as hero) */
-    gsap.set(modal, { clipPath: 'inset(100% 0px 0px 0px round 20px 20px 0px 0px)', opacity: 1 });
+    /* Reveal from the bottom edge upward (full-screen, square) */
+    gsap.set(modal, { clipPath: 'inset(100% 0px 0px 0px)', opacity: 1 });
     gsap.set(overlay, { opacity: 0 });
 
     const tl = gsap.timeline({ onComplete: () => { animating.current = false; } });
 
     tl.to(overlay, { opacity: 1, duration: 0.28, ease: 'none' }, 0)
-      .to(modal, { clipPath: 'inset(0px 0px 0px 0px round 20px 20px 0px 0px)', duration: 0.7, ease: 'eonOut' }, 0);
+      .to(modal, { clipPath: 'inset(0px 0px 0px 0px)', duration: 0.7, ease: 'eonOut' }, 0);
 
     /* Content fades up after the shell has mostly revealed */
     const firstStep = stepRefs.current[0];
@@ -474,7 +477,41 @@ export default function OnboardingModal() {
       gsap.set(firstStep, { y: 24, opacity: 0 });
       tl.to(firstStep, { y: 0, opacity: 1, duration: 0.42, ease: 'eonOut' }, 0.38);
     }
+    /* conversational reveal of the first question */
+    animateStepIn(0);
   }, [open]);
+
+  /* ── Conversational reveal: blurred-typewriter question, then the answers
+     rise in staggered just after it ── */
+  const animateStepIn = useCallback((idx: number) => {
+    const panel = stepRefs.current[idx];
+    if (!panel) return;
+
+    /* question — blurred typewriter, held back a touch so it reads as "spoken" */
+    const words = panel.querySelectorAll<HTMLElement>(`.${styles.twWord}`);
+    if (words.length) {
+      gsap.fromTo(
+        words,
+        { opacity: 0, filter: 'blur(12px)', y: 10 },
+        { opacity: 1, filter: 'blur(0px)', y: 0, duration: 0.5, ease: 'power2.out', stagger: 0.045, delay: 0.45 }
+      );
+    }
+
+    /* answers — fade + rise + de-blur, after the question lands; clearProps so
+       the CSS hover transforms keep working afterwards */
+    const items = panel.querySelectorAll<HTMLElement>('[data-appear]');
+    if (items.length) {
+      gsap.fromTo(
+        items,
+        { opacity: 0, y: 18, filter: 'blur(6px)' },
+        {
+          opacity: 1, y: 0, filter: 'blur(0px)',
+          duration: 0.5, ease: 'power3.out', stagger: 0.07, delay: 0.75,
+          clearProps: 'transform,opacity,filter',
+        }
+      );
+    }
+  }, []);
 
   /* ── Step transition ── */
   const transitionTo = useCallback((nextStep: number, dir: 'fwd' | 'bck') => {
@@ -504,24 +541,14 @@ export default function OnboardingModal() {
             ease: 'eonOut',
             onComplete: () => { animating.current = false; },
           });
+          animateStepIn(nextStep - 1);
         });
       },
     });
-  }, [step]);
+  }, [step, animateStepIn]);
 
   const goNext = useCallback(() => {
     if (step < 3) transitionTo(step + 1, 'fwd');
-  }, [step, transitionTo]);
-
-  const goBack = useCallback(() => {
-    if (step > 1) transitionTo(step - 1, 'bck');
-    else closeModal();
-  }, [step, transitionTo, closeModal]);
-
-  /* Jump to an already-visited category (sidebar) */
-  const goToStep = useCallback((s: number) => {
-    if (s === step || s > step || animating.current) return;
-    transitionTo(s, 'bck');
   }, [step, transitionTo]);
 
   /* ── Keyboard ── */
@@ -557,47 +584,21 @@ export default function OnboardingModal() {
       {/* Modal */}
       <div
         ref={modalRef}
-        className={styles.modal}
+        className={`${styles.modal} ${styles.modalConv}`}
         role="dialog"
         aria-modal="true"
-        aria-label="Tarif-Assistent"
+        aria-label="E.ON Assistant"
       >
-        {/* ── Corner buttons (back / close) ── */}
-        <button className={styles.cornerBtn} data-pos="back" onClick={goBack} aria-label="Zurück">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <path d="M15 5l-7 7 7 7" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"/>
-          </svg>
-        </button>
+        {/* ── Top bar — E.ON Assistant label + close ── */}
+        <span className={styles.assistantLabel}>E.ON Assistant</span>
         <button className={styles.cornerBtn} data-pos="close" onClick={closeModal} aria-label="Schließen">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
             <path d="M5 5l14 14M19 5L5 19" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round"/>
           </svg>
         </button>
 
-        {/* ── Body: left categories + centered content ── */}
+        {/* ── Body: centred conversational column (no side navigation) ── */}
         <div className={styles.modalBody}>
-          <nav className={styles.sidebar} aria-label="Fortschritt">
-            {CATEGORIES.map((c, i) => {
-              const s = i + 1;
-              const state = s === step ? 'active' : s < step ? 'done' : 'todo';
-              return (
-                <button
-                  key={c.label}
-                  type="button"
-                  className={styles.sideItem}
-                  data-state={state}
-                  onClick={() => goToStep(s)}
-                  disabled={s > step}
-                  aria-current={s === step ? 'step' : undefined}
-                >
-                  <span className={styles.sideIndicator} aria-hidden="true" />
-                  <span className={styles.sideIcon}>{c.icon}</span>
-                  <span className={styles.sideLabel}>{c.label}</span>
-                </button>
-              );
-            })}
-          </nav>
-
           <div className={styles.contentCol}>
             {/* Step panels (all mounted, GSAP controls visibility) */}
             <div className={styles.content}>
@@ -606,6 +607,7 @@ export default function OnboardingModal() {
                 className={styles.stepPanel}
                 style={{ display: step === 1 ? 'flex' : 'none' }}
               >
+                <ConvSphere />
                 <Step1 answers={answers} setAnswers={setAnswers} goNext={goNext} />
               </div>
 
@@ -614,6 +616,7 @@ export default function OnboardingModal() {
                 className={styles.stepPanel}
                 style={{ display: step === 2 ? 'flex' : 'none' }}
               >
+                <ConvSphere />
                 <Step2 answers={answers} setAnswers={setAnswers} goNext={goNext} />
               </div>
 
@@ -622,6 +625,7 @@ export default function OnboardingModal() {
                 className={styles.stepPanel}
                 style={{ display: step === 3 ? 'flex' : 'none' }}
               >
+                <ConvSphere />
                 <Step3
                   answers={answers}
                   setAnswers={setAnswers}
