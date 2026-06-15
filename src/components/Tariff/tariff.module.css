@@ -1354,7 +1354,7 @@
   inset: 0;
   opacity: 0;
   pointer-events: none;
-  background: linear-gradient(95deg, #ea1b0a 0%, #c11054 55%, #941481 100%);
+  background: linear-gradient(90deg, #ea1b0a 0%, #c11054 55%, #941481 100%);
 }
 
 /* ─── Stories text frame — scrolls normally, nothing sticky ──────────────── */
@@ -1367,17 +1367,15 @@
   padding: 56px 16px;
 }
 
-/* ─── Stories images frame — pins briefly so the cards can bounce in/out ──── */
+/* ─── Stories images frame — cards parallax through at different speeds ───── */
 .stories {
   position: relative;
-  /* runway: frame appears → cards bounce in → hold → bounce out → release */
-  height: 170vh;
+  height: 120vh;
 }
 
 .storiesStage {
-  position: sticky;
-  top: 0;
-  height: 100vh;
+  position: relative;
+  height: 120vh;
   overflow: hidden;
 }
 
@@ -1420,15 +1418,13 @@
   color: inherit;
 }
 
-/* story cards — primed below + shrunk for the bouncy entrance */
+/* story cards — y is driven by the per-card parallax scrub */
 .storyCard {
   position: absolute;
   width: clamp(250px, 23.75vw, 342px);
   aspect-ratio: 342 / 475;
   border-radius: 8px;
   overflow: hidden;
-  transform: translateY(55vh) scale(0.85);
-  opacity: 0;
   z-index: 1;
   box-shadow: 0 18px 48px rgba(0, 0, 0, 0.22);
 }
@@ -1488,10 +1484,17 @@
   margin: 0;
 }
 
-/* ─── HEMS section — same gradient continues behind it ───────────────────── */
+/* ─── HEMS section — sticky stage you scroll through category by category ─── */
 .hems {
   position: relative;
-  min-height: 100vh;
+  /* runway: one screen of scroll per category (5 categories) */
+  height: 340vh;
+}
+
+.hemsStage {
+  position: sticky;
+  top: 0;
+  height: 100vh;
   display: flex;
   align-items: stretch;
   gap: 16px;
@@ -1568,6 +1571,11 @@
 .hemsRight {
   position: relative;
   flex: 0 0 49%;
+  border-radius: 8px;
+  /* dark backing so the top-right unmask never flashes the white page through
+     the not-yet-revealed corner */
+  background: #4a0d2b;
+  overflow: hidden;
 }
 
 .hemsPhoto {
@@ -1586,13 +1594,28 @@
   background: linear-gradient(rgba(0, 0, 0, 0.2), rgba(102, 102, 102, 0));
 }
 
-/* info pins on the photo */
+/* info pins on the photo — opacity owned by CSS so the scroll-driven
+   highlight (active) / dim states work without gsap fighting it */
 .hemsPin {
   position: absolute;
   display: flex;
   align-items: flex-start;
   gap: 19px;
+  opacity: 0;
+  transform: scale(0.92);
+  transform-origin: left center;
+  transition: opacity 0.45s ease, transform 0.45s ease;
 }
+.hemsPin[data-ready='true'] { opacity: 1; transform: scale(1); }
+.hemsPin[data-ready='true'][data-dim='true'] { opacity: 1; }
+
+/* highlighted hotspot for the active category */
+.hemsPin[data-active='true'] .hemsPinDot {
+  background: rgba(255, 255, 255, 0.9);
+  transform: scale(1.12);
+}
+.hemsPin[data-active='true'] .hemsPinDot::after { background: var(--c-red); }
+.hemsPin[data-active='true'] .hemsPinLabel { background: rgba(234, 27, 10, 0.82); }
 
 .hemsPinDot {
   width: 40px;
@@ -1602,6 +1625,7 @@
   backdrop-filter: blur(2px);
   flex-shrink: 0;
   position: relative;
+  transition: background 0.3s ease, transform 0.3s ease;
 }
 .hemsPinDot::after {
   content: '';
@@ -1625,6 +1649,7 @@
   backdrop-filter: blur(6px);
   color: #fff;
   white-space: nowrap;
+  transition: background 0.3s ease;
 }
 
 .hemsPinTitle {

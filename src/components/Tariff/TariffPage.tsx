@@ -347,6 +347,54 @@ function revealFrame(frame: HTMLElement) {
   if (ah.length) tl.to(ah, { y: 0, opacity: 1, duration: 1, ease: 'eonAppear' }, 0.2);
 }
 
+/* ─── HEMS: scroll-through categories (first one is the HEMS overview) ─────── */
+interface HemsCat {
+  key: string;
+  menu: string;
+  title: React.ReactNode;
+  desc: string;
+  pin: string | null;   /* which hotspot lights up (null = overview, none) */
+}
+const HEMS_CATS: HemsCat[] = [
+  {
+    key: 'hems', menu: 'HEMS',
+    title: <>Deine Energie.<br />Deine Freiheit</>,
+    desc: 'Intelligente Lösungen für ein nachhaltiges Zuhause – alles vernetzt, alles unter Kontrolle.',
+    pin: null,
+  },
+  {
+    key: 'solar', menu: 'Solar',
+    title: <>Sonne, die sich<br />auszahlt.</>,
+    desc: 'Erzeuge deinen eigenen Strom direkt vom Dach – und mach dich unabhängiger vom Netz.',
+    pin: 'Solar',
+  },
+  {
+    key: 'strom', menu: 'Strom',
+    title: <>Strom, der<br />zu dir passt.</>,
+    desc: '100 % Ökostrom, fair erklärt und intelligent gesteuert – passend zu deinem Verbrauch.',
+    pin: 'Strom',
+  },
+  {
+    key: 'waerme', menu: 'Wärmepumpe',
+    title: <>Wärme aus<br />der Umwelt.</>,
+    desc: 'Heize effizient und klimafreundlich – mit Strom statt Öl und Gas.',
+    pin: 'Wärmepumpe',
+  },
+  {
+    key: 'wallbox', menu: 'Wallbox',
+    title: <>Lädt, während<br />du schläfst.</>,
+    desc: 'Lade dein E-Auto bequem zuhause – schnell, sicher und am besten mit eigenem Solarstrom.',
+    pin: 'Wallbox',
+  },
+];
+
+const HEMS_PINS = [
+  { title: 'Solar',      sub: '4,2 kWp · ~3.900 kWh/Jahr', left: '36%',   top: '26.8%' },
+  { title: 'Strom',      sub: '100 % Ökostrom · 3.200 kWh', left: '13%',   top: '49.6%' },
+  { title: 'Wallbox',    sub: '11 kW · lädt mit Solar',     left: '63.8%', top: '53.5%' },
+  { title: 'Wärmepumpe', sub: 'COP 4,1 · ~60 % weniger Gas', left: '15.9%', top: '62.4%' },
+];
+
 /* ─── Main page ──────────────────────────────────────────────────────────── */
 export default function TariffPage() {
   const params  = useSearchParams();
@@ -364,6 +412,31 @@ export default function TariffPage() {
   const [eco,  setEco]  = useState(true);   // "Besonders nachhaltig" → Zukunft family
   const [pref, setPref] = useState(94);     // Flexibilität (0) ↔ Sicherheit (100)
   const tariff = tariffFor(eco, pref);
+
+  /* ── HEMS: which category is active while scrolling through the pinned stage ── */
+  const [hemsActive, setHemsActive] = useState(0);
+  const [hemsPinsReady, setHemsPinsReady] = useState(false);
+  const hemsIdxRef = useRef(0);
+  const hemsSTRef  = useRef<ReturnType<typeof ScrollTrigger.create> | null>(null);
+  const hemsTextRef = useRef<HTMLDivElement>(null);
+  const hemsCat = HEMS_CATS[hemsActive];
+
+  /* jump to a category by clicking its menu item */
+  const scrollToHemsCat = useCallback((i: number) => {
+    const st = hemsSTRef.current;
+    if (!st) return;
+    const target = st.start + (st.end - st.start) * (i / (HEMS_CATS.length - 1));
+    window.scrollTo(0, target);
+  }, []);
+
+  /* gentle content swap when the active HEMS category changes */
+  const firstHems = useRef(true);
+  useEffect(() => {
+    if (firstHems.current) { firstHems.current = false; return; }
+    if (hemsTextRef.current) {
+      gsap.fromTo(hemsTextRef.current, { y: 16, opacity: 0 }, { y: 0, opacity: 1, duration: 0.45, ease: 'eonOut' });
+    }
+  }, [hemsActive]);
 
   /* "Tarif vergleichen" expands the comparison + pushes the image to the edge */
   const [comparing, setComparing] = useState(false);
@@ -698,48 +771,39 @@ export default function TariffPage() {
       invalidateOnRefresh: true,
     });
 
-    /* ── Stories: the text frame scrolls normally above; the images frame pins
-       briefly so the cards can bounce into their collage, hold, then bounce up
-       and out as HEMS arrives. The whole red zone keeps ONE constant background
-       (no scroll-driven flip). ── */
+    /* ── Stories: the text frame scrolls normally above; the cards form a
+       collage that parallaxes as you scroll — each card drifts vertically at
+       its OWN speed (layered depth), no triggered animation. The cards sit at
+       their resting positions when the section is centred. ── */
     const stories    = page.querySelector<HTMLElement>(`.${styles.stories}`)!;
     const storyCards = Array.from(stories.querySelectorAll<HTMLElement>(`.${styles.storyCard}`));
 
-    /* exit fully above the viewport (offsetTop is the card's resting place) */
-    const exitY = (card: HTMLElement) => -(card.offsetTop + card.offsetHeight + 120);
-
-    /* hidden start: below + slightly shrunk, primed for the bouncy entrance */
-    gsap.set(storyCards, { y: '55vh', opacity: 0, scale: 0.85 });
-
-    /* T1 — shortly after the frame appears, the cards bounce into place */
-    const cardsInST = ScrollTrigger.create({
-      trigger: stories,
-      start: 'top 60%',
-      onEnter: () => gsap.to(storyCards, {
-        y: 0, opacity: 1, scale: 1,
-        duration: 0.95, ease: 'back.out(1.7)', stagger: 0.1, overwrite: 'auto',
-      }),
-      onLeaveBack: () => gsap.to(storyCards, {
-        y: '55vh', opacity: 0, scale: 0.85,
-        duration: 0.5, ease: 'power2.in', stagger: 0.06, overwrite: 'auto',
-      }),
+    /* per-card amplitude (vh) — different magnitudes ⇒ different scroll speeds */
+    const PARALLAX = [22, 50, 34];
+    const cardParallax = storyCards.map((card, i) => {
+      const amp = PARALLAX[i % PARALLAX.length];
+      return gsap.fromTo(
+        card,
+        { y: () => window.innerHeight * (amp / 100) },
+        {
+          y: () => -window.innerHeight * (amp / 100),
+          ease: 'none',
+          scrollTrigger: {
+            trigger: stories,
+            start: 'top bottom',
+            end: 'bottom top',
+            scrub: true,
+            invalidateOnRefresh: true,
+          },
+        }
+      );
     });
 
-    /* T2 — a couple scrolls later the cards bounce up and out (wind-up then
-       launch) while the house unmasks below */
-    const cardsOutST = ScrollTrigger.create({
-      trigger: stories,
-      start: 'top -55%',
-      onEnter: () => storyCards.forEach((c, i) =>
-        gsap.to(c, { y: () => exitY(c), duration: 1, ease: 'back.in(1.4)', delay: i * 0.08, overwrite: 'auto' })),
-      onLeaveBack: () => storyCards.forEach((c, i) =>
-        gsap.to(c, { y: 0, scale: 1, opacity: 1, duration: 0.8, ease: 'back.out(1.5)', delay: i * 0.06, overwrite: 'auto' })),
-    });
-
-    /* ── HEMS section entrance ── */
+    /* ── HEMS: house unmask on entry, then a sticky stage you scroll through
+       category by category ── */
     const hems = page.querySelector<HTMLElement>(`.${styles.hems}`)!;
     /* pre-clip the house to its top-right corner so it never flashes in before
-       the reveal fires */
+       the reveal fires (the dark hemsRight backing covers the gap meanwhile) */
     const hemsPhotoEl = hems.querySelector<HTMLElement>(`.${styles.hemsPhoto}`);
     const hemsShadeEl = hems.querySelector<HTMLElement>(`.${styles.hemsShade}`);
     gsap.set([hemsPhotoEl, hemsShadeEl].filter(Boolean) as HTMLElement[],
@@ -755,19 +819,33 @@ export default function TariffPage() {
 
         /* the house unmasks from the top-right corner (eonReveal wipe + image
            zoom) — same media reveal we use on the horizontal frames */
-        const photo = hems.querySelector<HTMLElement>(`.${styles.hemsPhoto}`);
-        const shade = hems.querySelector<HTMLElement>(`.${styles.hemsShade}`);
         const HR_HIDDEN = 'inset(0% 0% 100% 100% round 8px)';  /* only top-right corner */
         const HR_SHOWN  = 'inset(0% 0% 0% 0% round 8px)';
-        gsap.fromTo([photo, shade].filter(Boolean) as HTMLElement[],
+        gsap.fromTo([hemsPhotoEl, hemsShadeEl].filter(Boolean) as HTMLElement[],
           { clipPath: HR_HIDDEN },
           { clipPath: HR_SHOWN, duration: 1.6, ease: 'eonReveal', clearProps: 'clipPath' });
-        if (photo) gsap.fromTo(photo, { scale: 1.3 }, { scale: 1, duration: 1.6, ease: 'eonReveal' });
+        if (hemsPhotoEl) gsap.fromTo(hemsPhotoEl, { scale: 1.3 }, { scale: 1, duration: 1.6, ease: 'eonReveal' });
 
-        gsap.fromTo(hems.querySelectorAll(`.${styles.hemsPin}`),
-          { opacity: 0, scale: 0.85 }, { opacity: 1, scale: 1, duration: 0.5, ease: 'back.out(1.6)', stagger: 0.1, delay: 0.85 });
+        /* pins fade to their state once the house is mostly revealed (CSS owns
+           the per-pin opacity via data-ready / data-dim) */
+        setTimeout(() => setHemsPinsReady(true), 850);
       },
     });
+
+    /* sticky scroll-through: progress across the tall section selects the
+       active category (the stage itself stays pinned via CSS position:sticky) */
+    const HEMS_N = HEMS_CATS.length;
+    const hemsScrubST = ScrollTrigger.create({
+      trigger: hems,
+      start: 'top top',
+      end: 'bottom bottom',
+      invalidateOnRefresh: true,
+      onUpdate: (self) => {
+        const idx = Math.min(HEMS_N - 1, Math.round(self.progress * (HEMS_N - 1)));
+        if (idx !== hemsIdxRef.current) { hemsIdxRef.current = idx; setHemsActive(idx); }
+      },
+    });
+    hemsSTRef.current = hemsScrubST;
 
     /* ── FAQ section entrance ── */
     const faq = page.querySelector<HTMLElement>(`.${styles.faq}`)!;
@@ -828,10 +906,10 @@ export default function TariffPage() {
     return () => {
       clearTimeout(settle);
       window.removeEventListener('resize', setFrameWidth);
-      cardsInST.kill();
-      cardsOutST.kill();
+      cardParallax.forEach((t) => { t.scrollTrigger?.kill(); t.kill(); });
       zoneBgST.kill();
       hemsST.kill();
+      hemsScrubST.kill();
       faqST.kill();
       overlapST.kill();
       stateST.kill();
@@ -1225,45 +1303,48 @@ export default function TariffPage() {
         </div>
       </section>
 
-      {/* ═══ HEMS — same gradient continues behind it ═══ */}
+      {/* ═══ HEMS — sticky stage; scroll advances the category ═══ */}
       <section className={styles.hems}>
-        <div className={styles.hemsLeft}>
-          <div>
-            <p className={styles.hemsLogo}>HEMS</p>
-            <h2 className={styles.hemsTitle}>Deine Energie.<br />Deine Freiheit</h2>
-            <p className={styles.hemsDesc}>
-              Intelligente Lösungen für ein nachhaltiges Zuhause – unabhängig von morgen.
-            </p>
+        <div className={styles.hemsStage}>
+          <div className={styles.hemsLeft}>
+            <div ref={hemsTextRef}>
+              <p className={styles.hemsLogo}>HEMS</p>
+              <h2 className={styles.hemsTitle}>{hemsCat.title}</h2>
+              <p className={styles.hemsDesc}>{hemsCat.desc}</p>
+            </div>
+            <div className={styles.hemsMenu}>
+              {HEMS_CATS.map((c, i) => (
+                <button
+                  key={c.key}
+                  className={`${styles.hemsMenuItem} ${i === hemsActive ? styles.hemsMenuActive : ''}`}
+                  onClick={() => scrollToHemsCat(i)}
+                >
+                  {c.menu}
+                </button>
+              ))}
+            </div>
           </div>
-          <div className={styles.hemsMenu}>
-            {['Solar', 'Strom', 'Wärmepumpe', 'Wallbox'].map((item, i) => (
-              <button
-                key={item}
-                className={`${styles.hemsMenuItem} ${i === 0 ? styles.hemsMenuActive : ''}`}
+
+          <div className={styles.hemsRight}>
+            <img src="/hems-house.jpg" alt="Haus mit Solaranlage, Wallbox und E-Auto" className={styles.hemsPhoto} />
+            <div className={styles.hemsShade} />
+            {HEMS_PINS.map(pin => (
+              <div
+                key={pin.title}
+                className={styles.hemsPin}
+                style={{ left: pin.left, top: pin.top }}
+                data-ready={hemsPinsReady ? 'true' : 'false'}
+                data-active={hemsCat.pin === pin.title ? 'true' : 'false'}
+                data-dim={hemsCat.pin && hemsCat.pin !== pin.title ? 'true' : 'false'}
               >
-                {item}
-              </button>
+                <div className={styles.hemsPinDot} />
+                <div className={styles.hemsPinLabel}>
+                  <span className={styles.hemsPinTitle}>{pin.title}</span>
+                  <span className={styles.hemsPinSub}>{pin.sub}</span>
+                </div>
+              </div>
             ))}
           </div>
-        </div>
-
-        <div className={styles.hemsRight}>
-          <img src="/hems-house.jpg" alt="Haus mit Solaranlage, Wallbox und E-Auto" className={styles.hemsPhoto} />
-          <div className={styles.hemsShade} />
-          {[
-            { title: 'Solar',       left: '36%',   top: '26.8%' },
-            { title: 'Strom',       left: '13%',   top: '49.6%' },
-            { title: 'Wallbox',     left: '63.8%', top: '53.5%' },
-            { title: 'Wärmepumpe',  left: '15.9%', top: '62.4%' },
-          ].map(pin => (
-            <div key={pin.title} className={styles.hemsPin} style={{ left: pin.left, top: pin.top }}>
-              <div className={styles.hemsPinDot} />
-              <div className={styles.hemsPinLabel}>
-                <span className={styles.hemsPinTitle}>{pin.title}</span>
-                <span className={styles.hemsPinSub}>Information Zahlen 34 kWh</span>
-              </div>
-            </div>
-          ))}
         </div>
       </section>
 
