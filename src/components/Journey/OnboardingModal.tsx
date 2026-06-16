@@ -324,24 +324,25 @@ function Step2({ answers, setAnswers, goNext, goBack }: {
         <div className={styles.s2col} data-appear>
           <p className={styles.fieldLabel}>Personen im Haushalt</p>
           <div className={styles.stepper}>
-            <button
-              className={styles.stepBtn}
-              onClick={() => setAnswers({ ...answers, persons: Math.max(1, persons - 1) })}
-              disabled={persons <= 1}
-              aria-label="Weniger Personen"
-            >
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M3 8h10"/></svg>
-            </button>
             <span className={styles.stepperVal}>{persons}</span>
-            <button
-              className={styles.stepBtn}
-              onClick={() => setAnswers({ ...answers, persons: Math.min(10, persons + 1) })}
-              disabled={persons >= 10}
-              aria-label="Mehr Personen"
-            >
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M8 3v10M3 8h10"/></svg>
-            </button>
-            <span className={styles.stepperUnit}>Personen</span>
+            <div className={styles.stepperBtns}>
+              <button
+                className={styles.stepBtn}
+                onClick={() => setAnswers({ ...answers, persons: Math.max(1, persons - 1) })}
+                disabled={persons <= 1}
+                aria-label="Weniger Personen"
+              >
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M3 8h10"/></svg>
+              </button>
+              <button
+                className={styles.stepBtn}
+                onClick={() => setAnswers({ ...answers, persons: Math.min(10, persons + 1) })}
+                disabled={persons >= 10}
+                aria-label="Mehr Personen"
+              >
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M8 3v10M3 8h10"/></svg>
+              </button>
+            </div>
           </div>
           <div className={styles.pills}>
             {[1, 2, 3, '4+'].map((v) => {

@@ -339,7 +339,7 @@ const HEMS_CATS: HemsCat[] = [
     key: 'hems', menu: 'HEMS',
     title: <>Deine Energie.<br />Deine Freiheit</>,
     desc: 'Intelligente Lösungen für ein nachhaltiges Zuhause – alles vernetzt, alles unter Kontrolle.',
-    pin: null,
+    pin: 'HEMS',
   },
   {
     key: 'solar', menu: 'Solar',
@@ -368,11 +368,21 @@ const HEMS_CATS: HemsCat[] = [
 ];
 
 const HEMS_PINS = [
-  { title: 'Solar',      sub: '4,2 kWp · ~3.900 kWh/Jahr', left: '36%',   top: '26.8%' },
-  { title: 'Strom',      sub: '100 % Ökostrom · 3.200 kWh', left: '13%',   top: '49.6%' },
-  { title: 'Wallbox',    sub: '11 kW · lädt mit Solar',     left: '63.8%', top: '53.5%' },
-  { title: 'Wärmepumpe', sub: 'COP 4,1 · ~60 % weniger Gas', left: '15.9%', top: '62.4%' },
+  { title: 'HEMS',       sub: 'Alles vernetzt · smart gesteuert', left: '49%', top: '15%', labelSide: 'right' },
+  { title: 'Solar',      sub: '4,2 kWp · ~3.900 kWh/Jahr', left: '35%',   top: '27%',   labelSide: 'left'  },
+  { title: 'Strom',      sub: '100 % Ökostrom · 3.200 kWh', left: '37%',   top: '49.6%', labelSide: 'left'  },
+  { title: 'Wallbox',    sub: '11 kW · lädt mit Solar',     left: '63.8%', top: '53.5%', labelSide: 'right' },
+  { title: 'Wärmepumpe', sub: 'COP 4,1 · ~60 % weniger Gas', left: '17%', top: '72%',    labelSide: 'right' },
 ];
+
+/* HEMS is the hub that connects every device. As the user scrolls through the
+   stage the wires draw outward from the hub (load-bar fill) with a travelling
+   electric charge. Links are ordered to match the slide order so each wire
+   completes just as its category becomes active. */
+const HEMS_HUB = HEMS_PINS[0];
+const HEMS_LINKS = ['Solar', 'Strom', 'Wärmepumpe', 'Wallbox']
+  .map((t) => HEMS_PINS.find((p) => p.title === t)!);
+const pctNum = (s: string) => parseFloat(s);
 
 /* ─── Main page ──────────────────────────────────────────────────────────── */
 export default function TariffPage() {
@@ -402,6 +412,7 @@ export default function TariffPage() {
   const hemsIdxRef = useRef(0);
   const hemsSTRef  = useRef<ReturnType<typeof ScrollTrigger.create> | null>(null);
   const hemsTextRef = useRef<HTMLDivElement>(null);
+  const hemsLinesRef = useRef<SVGSVGElement>(null);
   const hemsCat = HEMS_CATS[hemsActive];
 
   /* jump to a category by clicking its menu item */
@@ -975,6 +986,17 @@ export default function TariffPage() {
       end: 'bottom bottom',
       invalidateOnRefresh: true,
       onUpdate: (self) => {
+        /* draw the hub→device wires progressively (load-bar fill). Each of the
+           HEMS_N-1 segments fills over one slide transition, so a wire completes
+           just as its category becomes active. */
+        const svg = hemsLinesRef.current;
+        if (svg) {
+          const groups = svg.children;
+          for (let j = 0; j < groups.length; j++) {
+            const d = Math.max(0, Math.min(1, self.progress * (HEMS_N - 1) - j));
+            (groups[j] as SVGGElement).style.setProperty('--draw', d.toFixed(4));
+          }
+        }
         const idx = Math.min(HEMS_N - 1, Math.round(self.progress * (HEMS_N - 1)));
         if (idx !== hemsIdxRef.current) { hemsIdxRef.current = idx; setHemsActive(idx); }
       },
@@ -1039,7 +1061,34 @@ export default function TariffPage() {
        fonts and images (e.g. the HEMS house) load AFTER the first measure and
        shift the pin positions — which left the redZone pin / HEMS sticky stage
        mismeasured until a manual refresh. Refresh on each of those events. */
-    const refresh = () => { setFrameWidth(); ScrollTrigger.refresh(); };
+    /* Build the hub→device wires as rounded-corner elbows in pixel space, so the
+       corners are truly circular and the ends meet the dot centres regardless of
+       the (non-square) photo aspect. pathLength=1 keeps the scroll-fill math
+       resolution-independent. Re-run whenever the layout settles / resizes. */
+    const buildHemsPaths = () => {
+      const svg = hemsLinesRef.current;
+      if (!svg) return;
+      const W = svg.clientWidth, H = svg.clientHeight;
+      if (!W || !H) return;
+      svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+      const DOT = 20, R = 18;                       /* dot radius / corner radius */
+      const hx = (pctNum(HEMS_HUB.left) / 100) * W + DOT;
+      const hy = (pctNum(HEMS_HUB.top) / 100) * H + DOT;
+      const groups = svg.children;
+      for (let i = 0; i < groups.length; i++) {
+        const link = HEMS_LINKS[i];
+        const dx = (pctNum(link.left) / 100) * W + DOT;
+        const dy = (pctNum(link.top) / 100) * H + DOT;
+        const sy = dy > hy ? 1 : -1, sx = dx > hx ? 1 : -1;
+        const rr = Math.max(0, Math.min(R, Math.abs(dy - hy) - 1, Math.abs(dx - hx) - 1));
+        /* down the central trunk from the hub, round the corner, branch out to
+           the device — a tidy circuit-trace route */
+        const d = `M ${hx} ${hy} L ${hx} ${dy - sy * rr} Q ${hx} ${dy} ${hx + sx * rr} ${dy} L ${dx} ${dy}`;
+        groups[i].querySelectorAll('path').forEach((pa) => pa.setAttribute('d', d));
+      }
+    };
+
+    const refresh = () => { setFrameWidth(); buildHemsPaths(); ScrollTrigger.refresh(); };
     requestAnimationFrame(refresh);
     const settle  = setTimeout(refresh, 500);
     const settle2 = setTimeout(refresh, 1200);
@@ -1440,7 +1489,13 @@ export default function TariffPage() {
                     <div className={styles.lineItem}>
                       <span className={styles.lineLabel}>
                         Zukunftsprojekte (Wind- und Solar-Ausbau)
-                        <span className={styles.lineInfo}><InfoIcon /></span>
+                        <span
+                          className={styles.lineInfo}
+                          tabIndex={0}
+                          role="note"
+                          data-tip="3 von deinen 28 Cent fließen direkt in den Ausbau neuer Wind- und Solar-Anlagen in Deutschland – nicht in Marge."
+                          aria-label="3 von deinen 28 Cent fließen direkt in den Ausbau neuer Wind- und Solar-Anlagen in Deutschland – nicht in Marge."
+                        ><InfoIcon /></span>
                       </span>
                       <span className={styles.lineValGreen}><span className={styles.greenChip}><HomeGreenIcon /></span> 3,00 ct</span>
                     </div>
@@ -1543,10 +1598,27 @@ export default function TariffPage() {
           <div className={styles.hemsRight}>
             <img src="/hems-house.jpg" alt="Haus mit Solaranlage, Wallbox und E-Auto" className={styles.hemsPhoto} />
             <div className={styles.hemsShade} />
+            {/* connecting wires from the HEMS hub to each device; drawn on scroll */}
+            <svg
+              className={styles.hemsLines}
+              viewBox="0 0 100 100"
+              preserveAspectRatio="none"
+              aria-hidden="true"
+              data-ready={hemsPinsReady ? 'true' : 'false'}
+              ref={hemsLinesRef}
+            >
+              {HEMS_LINKS.map(p => (
+                <g key={p.title} className={styles.hemsLink}>
+                  <path className={styles.hemsTrack}  d="" pathLength={1} />
+                  <path className={styles.hemsWire}   d="" pathLength={1} />
+                  <path className={styles.hemsCharge} d="" pathLength={1} />
+                </g>
+              ))}
+            </svg>
             {HEMS_PINS.map(pin => (
               <div
                 key={pin.title}
-                className={styles.hemsPin}
+                className={pin.labelSide === 'left' ? `${styles.hemsPin} ${styles.hemsPinLeft}` : styles.hemsPin}
                 style={{ left: pin.left, top: pin.top }}
                 data-ready={hemsPinsReady ? 'true' : 'false'}
                 data-active={hemsCat.pin === pin.title ? 'true' : 'false'}

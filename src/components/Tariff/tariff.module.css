@@ -1144,6 +1144,10 @@
 .barsPanel {
   flex: 1;
   position: relative;
+  /* sits above the travelling "28 Cent" headline (.editorialContent, z-index 2)
+     so the grey panel sliding in from the right covers it instead of the text
+     poking through. Stays inside .track, so the fixed nav/orb remain above. */
+  z-index: 3;
   background: #f8f5f2;
   border-radius: 4px;
   display: flex;
@@ -1585,8 +1589,59 @@
 }
 
 .lineInfo {
+  position: relative;
   display: inline-flex;
   color: rgba(38,38,38,0.45);
+  cursor: help;
+  outline: none;
+}
+.lineInfo:hover,
+.lineInfo:focus-visible { color: rgba(38,38,38,0.85); }
+
+/* tooltip bubble + arrow — shown on hover / keyboard focus */
+.lineInfo::after {
+  content: attr(data-tip);
+  position: absolute;
+  bottom: calc(100% + 11px);
+  left: 50%;
+  transform: translateX(-50%) translateY(4px);
+  width: max-content;
+  max-width: 260px;
+  padding: 10px 13px;
+  border-radius: 8px;
+  background: #262626;
+  color: #fff;
+  font-family: var(--font-body);
+  font-weight: 400;
+  font-size: 12px;
+  line-height: 1.45;
+  text-align: left;
+  white-space: normal;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.2);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.16s ease, transform 0.16s ease;
+  z-index: 30;
+}
+.lineInfo::before {
+  content: '';
+  position: absolute;
+  bottom: calc(100% + 5px);
+  left: 50%;
+  transform: translateX(-50%) translateY(4px);
+  border: 6px solid transparent;
+  border-top-color: #262626;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.16s ease, transform 0.16s ease;
+  z-index: 30;
+}
+.lineInfo:hover::after,
+.lineInfo:focus-visible::after,
+.lineInfo:hover::before,
+.lineInfo:focus-visible::before {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
 }
 
 .lineVal {
@@ -1851,8 +1906,9 @@
   bottom: 56px;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 16px;
   opacity: 0.9;
+  border-left: 1px solid rgba(255, 255, 255, 0.3);
 }
 
 .hemsMenuItem {
@@ -1864,7 +1920,7 @@
   background: none;
   border: none;
   border-left: 1px solid rgba(255, 255, 255, 0.1);
-  padding: 0 0 0 12px;
+  padding: 0 0 0 16px;
   opacity: 0.75;
   cursor: pointer;
   text-align: left;
@@ -1902,6 +1958,59 @@
   background: linear-gradient(rgba(0, 0, 0, 0.2), rgba(102, 102, 102, 0));
 }
 
+/* ─── HEMS connection wires — hub links every device, drawn on scroll ─────── */
+.hemsLines {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  overflow: visible;
+  /* the wires fade in only after the hotspots have appeared (extra delay
+     keeps them a beat behind the pins' own reveal) */
+  opacity: 0;
+  transition: opacity 0.5s ease 0.4s;
+}
+.hemsLines[data-ready='true'] { opacity: 1; }
+.hemsLink { --draw: 0; }
+
+.hemsTrack,
+.hemsWire,
+.hemsCharge {
+  fill: none;
+  vector-effect: non-scaling-stroke;   /* constant px width regardless of viewBox */
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+/* faint always-on track — shows the full route before it is filled */
+.hemsTrack {
+  stroke: rgba(255, 255, 255, 0.22);
+  stroke-width: 2;
+}
+/* white fill — grows from the hub along the track as --draw 0 → 1 (pathLength 1) */
+.hemsWire {
+  stroke: #fff;
+  stroke-width: 2;
+  stroke-dasharray: 1;
+  stroke-dashoffset: calc(1 - var(--draw));
+}
+/* bright charge — a short dash looping along the filled portion (electric flow) */
+.hemsCharge {
+  stroke: #fff;
+  stroke-width: 2.5;
+  stroke-dasharray: 0.05 0.95;
+  opacity: calc(var(--draw) * 0.85);
+  filter: drop-shadow(0 0 3px rgba(255, 255, 255, 0.9));
+  animation: hemsCharge 1.7s linear infinite;
+}
+@keyframes hemsCharge {
+  from { stroke-dashoffset: 0; }
+  to   { stroke-dashoffset: -1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hemsCharge { animation: none; }
+}
+
 /* info pins on the photo — opacity owned by CSS so the scroll-driven
    highlight (active) / dim states work without gsap fighting it */
 .hemsPin {
@@ -1916,6 +2025,16 @@
 }
 .hemsPin[data-ready='true'] { opacity: 1; transform: scale(1); }
 .hemsPin[data-ready='true'][data-dim='true'] { opacity: 1; }
+
+/* label on the left of the dot — the dot stays the positioned anchor (so the
+   connecting wires are unaffected); the label floats out to the left, right-aligned */
+.hemsPinLeft .hemsPinLabel {
+  position: absolute;
+  top: 0;
+  right: calc(100% + 19px);
+  align-items: flex-start;
+  text-align: left;
+}
 
 /* highlighted hotspot for the active category */
 .hemsPin[data-active='true'] .hemsPinDot {
