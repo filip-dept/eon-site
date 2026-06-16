@@ -104,6 +104,13 @@ const HomeGreenIcon = () => (
     <path d="M3 10.5L12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/>
   </svg>
 );
+/* leaf — "Besonders nachhaltig" badge */
+const LeafIcon = () => (
+  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M5 21c.5-4.5 2.5-8 7-10" />
+    <path d="M9 18c6.2 0 10.5-3.3 11-12V4h-4c-9 0-12 4-12 9 0 1 0 3 2 5h3z" />
+  </svg>
+);
 const MicIcon = () => (
   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
     <rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10v1a7 7 0 0 0 14 0v-1M12 18v4"/>
@@ -449,12 +456,18 @@ export default function TariffPage() {
     if (chatOpen) {
       const card  = chatCardRef.current;
       const inner = chatInnerRef.current;
+      const row   = chatRowRef.current;
       if (!card || !inner) return;
       const fullW = inner.offsetWidth, fullH = inner.offsetHeight;
       const targetX = orbCentered.current ? -fullW / 2 : vw / 2 - fullW - 30;
       gsap.set(card, { width: pillSize.current.w, height: pillSize.current.h });
-      gsap.to(card, { width: fullW, height: fullH, duration: 0.55, ease: CHAT_EASE, clearProps: 'width,height' });
-      gsap.to(orb, { x: targetX, duration: 0.55, ease: CHAT_EASE });
+      gsap.to(card, { width: fullW, height: fullH, duration: 0.5, ease: CHAT_EASE, clearProps: 'width,height' });
+      gsap.to(orb, { x: targetX, duration: 0.5, ease: CHAT_EASE });
+      /* hover → open: the row greys in and the send slides in from the right —
+         the exact reverse of the open → hover close */
+      const send = row?.querySelector<HTMLElement>(`.${styles.chatSend}`) ?? null;
+      if (row)  gsap.fromTo(row,  { backgroundColor: '#ffffff' }, { backgroundColor: '#efefea', duration: 0.5, ease: CHAT_EASE, clearProps: 'backgroundColor' });
+      if (send) gsap.fromTo(send, { x: 70, opacity: 0 }, { x: 0, opacity: 1, duration: 0.5, ease: CHAT_EASE, clearProps: 'opacity,transform' });
     } else {
       const w = orb.offsetWidth;
       gsap.set(orb, { x: orbCentered.current ? -w / 2 : vw / 2 - w - 30 });
@@ -464,20 +477,52 @@ export default function TariffPage() {
   /* Close in two beats, both with CHAT_EASE: (1) open → hovered — fold the card
      down to the input row (still full width, prompt visible); (2) hovered →
      default — collapse the width back to the pill and re-anchor, then unmount. */
-  const closeChat = useCallback(() => {
-    const orb  = orbRef.current;
-    const card = chatCardRef.current;
-    const inner = chatInnerRef.current;
-    const row  = chatRowRef.current;
-    if (!orb || !card || !inner || !row) { setChatOpen(false); return; }
+  /* hover → default: collapse the (already folded) card to the pill and unmount.
+     x re-anchors by `orbCentered`, so a centred chat stays centred (no jump). */
+  const dwellTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const closingRef = useRef(false);
+
+  const collapseChatToDefault = useCallback(() => {
+    closingRef.current = false;
+    const orb = orbRef.current, card = chatCardRef.current, row = chatRowRef.current;
+    if (!orb || !card) { setChatOpen(false); return; }
     const vw = document.documentElement.clientWidth;
     const targetX = orbCentered.current ? -DEFAULT_PILL_W / 2 : vw / 2 - DEFAULT_PILL_W - 30;
-    gsap.set(card, { width: inner.offsetWidth, height: inner.offsetHeight });
+    const reveal = row?.querySelector<HTMLElement>(`.${styles.orbReveal}`) ?? null;
     const tl = gsap.timeline({ onComplete: () => setChatOpen(false) });
-    tl.to(card, { height: row.offsetHeight, duration: 0.3, ease: CHAT_EASE });           // → hovered
-    tl.to(card, { width: DEFAULT_PILL_W, height: PILL_H, duration: 0.4, ease: CHAT_EASE }); // → default
-    tl.to(orb,  { x: targetX, duration: 0.4, ease: CHAT_EASE }, '<');
+    if (reveal) {   // collapse the prompt so the row becomes the condensed pill
+      gsap.set(reveal, { flexGrow: 0, width: reveal.getBoundingClientRect().width });
+      tl.to(reveal, { width: 0, opacity: 0, duration: 0.4, ease: CHAT_EASE }, 0);
+    }
+    tl.to(card, { width: DEFAULT_PILL_W, height: PILL_H, duration: 0.4, ease: CHAT_EASE }, 0);
+    tl.to(orb,  { x: targetX, duration: 0.4, ease: CHAT_EASE }, 0);
   }, []);
+
+  /* (re)arm the 1s dwell before the hover-state pill collapses to default */
+  const armChatDwell = useCallback(() => {
+    clearTimeout(dwellTimer.current);
+    dwellTimer.current = setTimeout(collapseChatToDefault, 1000);
+  }, [collapseChatToDefault]);
+
+  /* Close — open → hover: the EXACT reverse of hover → open. Fold the header/
+     body away, grey → white immediately, and the send slides out to the right
+     (clipped by the card). Hold there; after 1s untouched it collapses hover →
+     default. Hovering the card during the hold cancels the collapse (re-armed
+     on leave). The card never moves horizontally, so a centred chat stays put. */
+  const closeChat = useCallback(() => {
+    const card = chatCardRef.current, inner = chatInnerRef.current, row = chatRowRef.current;
+    if (!card || !inner || !row) { setChatOpen(false); return; }
+    const send = row.querySelector<HTMLElement>(`.${styles.chatSend}`);
+    gsap.set(card, { width: inner.offsetWidth, height: inner.offsetHeight });
+    gsap.to(card, { height: row.offsetHeight, duration: 0.5, ease: CHAT_EASE });   // fold → hover
+    gsap.to(row,  { backgroundColor: '#ffffff', duration: 0.5, ease: CHAT_EASE }); // grey → white
+    if (send) gsap.to(send, { x: 70, opacity: 0, duration: 0.5, ease: CHAT_EASE });// send slides out
+    closingRef.current = true;
+    armChatDwell();
+  }, [armChatDwell]);
+
+  /* clear the dwell timer on unmount */
+  useEffect(() => () => clearTimeout(dwellTimer.current), []);
 
   /* ── Pill hover: reveal the prompt while keeping the orb's anchor fixed.
      Width-reveal and the compensating x-shift run on the SAME tween (duration +
@@ -505,6 +550,8 @@ export default function TariffPage() {
 
   /* capture the pill's footprint (default or hovered) so the card can grow from it */
   const openChat = useCallback(() => {
+    clearTimeout(dwellTimer.current);
+    closingRef.current = false;
     const pill = orbRef.current?.querySelector<HTMLElement>(`.${styles.orbPill}`);
     if (pill) { const r = pill.getBoundingClientRect(); pillSize.current = { w: r.width, h: r.height }; }
     setChatOpen(true);
@@ -540,24 +587,20 @@ export default function TariffPage() {
           (so the grid appears in a wide card, the way it left one on expand). */
   const closeCompare = useCallback(() => {
     const el = panelRef.current;
-    if (!el) { setComparing(false); return; }
-    const extras = Array.from(el.querySelectorAll<HTMLElement>(`.${styles.card}[data-extra='true']`));
-    if (!extras.length) { setComparing(false); return; }
-
-    const tl = gsap.timeline();
-    /* Fly out to the right + fade, full width kept (comparing still true) so
-       there's no width-shrink. The fade is FAST (its own quick tween) so the
-       cards are gone almost immediately and we can flip to solo early — keeping
-       the overall collapse as quick as the expand. The x fly-out runs a touch
-       longer underneath (invisible once faded). */
+    const extras = el
+      ? Array.from(el.querySelectorAll<HTMLElement>(`.${styles.card}[data-extra='true']`))
+      : [];
+    /* Flip to solo IMMEDIATELY so the recommendation card widens + its features
+       reflow to the 2×2 grid from t0 — the exact reverse of the expand (which
+       narrows from t0), so the card's animation matches in both directions.
+       The alternatives fade out fast (masking their width-collapse) and slide
+       to the right — the inverse of their slide-in entrance. */
+    setComparing(false);
+    if (!extras.length) return;
     gsap.set(extras, { opacity: 1, x: 0 });
-    tl.to(extras, { opacity: 0, duration: 0.18, ease: 'power1.in',
-      stagger: { each: 0.03, from: 'end' } }, 0);
-    tl.to(extras, { x: 80, duration: 0.3, ease: 'power2.in',
-      stagger: { each: 0.03, from: 'end' } }, 0);
-    /* flip to solo as soon as they've faded — the rec card widens AND its
-       features reflow to the 2×2 grid together (driven by `comparing`) */
-    tl.add(() => { setComparing(false); }, 0.22);
+    gsap.to(extras, { opacity: 0, duration: 0.16, ease: 'power1.in', stagger: { each: 0.04, from: 'end' } });
+    gsap.to(extras, { x: 90, duration: 0.45, ease: 'power3.in', stagger: { each: 0.04, from: 'end' },
+      clearProps: 'opacity,transform' });
   }, []);
 
   const toggleEco = () => {
@@ -844,27 +887,23 @@ export default function TariffPage() {
       invalidateOnRefresh: true,
     });
 
-    /* ── AI chat drifts from its bottom-right dock to screen centre as the
-       cards fly into the breakdown row (same scrub window as the morph). The
-       orb sits at left:50%, so x = 0 is centred; it starts pushed to the right. ── */
+    /* ── AI chat: parks bottom-right, then ANIMATES to screen centre as a
+       one-shot (NOT scroll-scrubbed) once the breakdown is reached — so it's
+       never stuck halfway, and `orbCentered` is a reliable boolean that the
+       open/close logic can trust (centred stays centred). ── */
     const orbEl = orbRef.current!;
-    const orbDockX = () => {
-      const vw = document.documentElement.clientWidth;
-      return vw / 2 - orbEl.offsetWidth - 30;        /* right edge 30px from viewport */
-    };
+    const orbDockX = () => document.documentElement.clientWidth / 2 - orbEl.offsetWidth - 30;
+    const orbCtrX  = () => -orbEl.offsetWidth / 2;
     gsap.set(orbEl, { x: orbDockX });
-    const orbCenterTween = gsap.to(orbEl, {
-      x: () => -orbEl.offsetWidth / 2,               /* centred */
-      ease: 'none',
-      /* "centred" only once the drift is essentially complete — not at progress
-         0 on init (which would make a docked open think it's already centred) */
-      onUpdate: function () { orbCentered.current = this.progress() > 0.85; },
-      scrollTrigger: {
-        start: () => pinST.start + phase1() + ROT,
-        end:   () => pinST.start + phase1() + ROT + MORPH,
-        scrub: 1,
-        invalidateOnRefresh: true,
-      },
+    const centreOrb = (toCentre: boolean) => {
+      orbCentered.current = toCentre;
+      gsap.to(orbEl, { x: toCentre ? orbCtrX : orbDockX, duration: 0.7, ease: 'power3.inOut', overwrite: 'auto' });
+    };
+    const orbCenterST = ScrollTrigger.create({
+      start: () => pinST.start + phase1() + ROT,     /* breakdown morph start */
+      invalidateOnRefresh: true,
+      onEnter:     () => centreOrb(true),
+      onLeaveBack: () => centreOrb(false),
     });
 
     /* ── Stories: the text frame scrolls normally above; the cards start near
@@ -1028,8 +1067,7 @@ export default function TariffPage() {
       window.removeEventListener('resize', setFrameWidth);
       cardParallax.forEach((t) => { t.scrollTrigger?.kill(); t.kill(); });
       clearTimeout(hemsDwell);
-      orbCenterTween.scrollTrigger?.kill();
-      orbCenterTween.kill();
+      orbCenterST.kill();
       hemsChatST.kill();
       zoneBgST.kill();
       hemsST.kill();
@@ -1119,6 +1157,8 @@ export default function TariffPage() {
             className={styles.chatCard}
             ref={chatCardRef}
             style={{ justifyContent: 'flex-end', alignItems: 'flex-start' }}
+            onMouseEnter={() => { if (closingRef.current) clearTimeout(dwellTimer.current); }}
+            onMouseLeave={() => { if (closingRef.current) armChatDwell(); }}
           >
             {/* fixed-width inner so the outer box can grow (width+height) without
                 reflowing text — overflow on the outer reveals it like the pill.
@@ -1140,9 +1180,13 @@ export default function TariffPage() {
                   Hier kommt ein HEMS (Home Energy Management System) ins Spiel. Über Apps (wie E.ON Home oder Smart Control) siehst du in Echtzeit, welche deiner Geräte wie viel verbrauchen. Stromfresser werden sofort entlarvt. So kannst du deinen Gesamtverbrauch – und damit auch den Bedarf an Erzeugung – nachhaltig senken.
                 </p>
               </div>
-              <div className={styles.chatInputRow} ref={chatRowRef}>
+              {/* SAME input row as the closed pill — only adds the send button
+                  and a grey fill (data-open). Shared markup ⇒ seamless morph. */}
+              <div className={styles.chatInputRow} data-open="true" ref={chatRowRef}>
                 <div className={styles.orb} />
-                <span className={styles.chatPlaceholder}>Was beschäftigt dich heute?</span>
+                <div className={styles.orbReveal}>
+                  <span className={styles.orbHint}>Was beschäftigt dich heute?</span>
+                </div>
                 <div className={styles.voiceDivider} />
                 <button className={styles.chatIconBtn} aria-label="Spracheingabe"><MicIcon /></button>
                 <button className={styles.chatSend} aria-label="Senden">
@@ -1153,7 +1197,8 @@ export default function TariffPage() {
           </div>
         ) : (
           <button
-            className={styles.orbPill}
+            className={styles.chatInputRow}
+            data-open="false"
             onClick={openChat}
             onMouseEnter={onPillEnter}
             onMouseLeave={onPillLeave}
@@ -1164,7 +1209,7 @@ export default function TariffPage() {
               <span className={styles.orbHint}>Was beschäftigt dich heute?</span>
             </div>
             <div className={styles.voiceDivider} />
-            <span className={styles.micBtn} aria-hidden="true"><MicIcon /></span>
+            <span className={styles.chatIconBtn} aria-hidden="true"><MicIcon /></span>
           </button>
         )}
       </div>
@@ -1228,12 +1273,18 @@ export default function TariffPage() {
                 {/* one row: recommendation + two alternatives. In normal mode the
                     extras are collapsed to zero width; comparing fans them out. */}
                 <div className={styles.cards} data-comparing={comparing}>
-                  {[tariff, ...family.filter((t) => t.id !== tariff.id)].map((t) => {
-                    const isRec = t.id === tariff.id;
+                  {/* the recommendation uses a STABLE key ('rec') so changing the
+                      product (slider or checkbox) just updates its content + fades
+                      — it never reuses a collapsed sibling and width-expands. The
+                      alternatives keep product-id keys. */}
+                  {[
+                    { t: tariff, isRec: true, k: 'rec' },
+                    ...family.filter((t) => t.id !== tariff.id).map((t) => ({ t, isRec: false, k: t.id })),
+                  ].map(({ t, isRec, k }) => {
                     const tag = FAMILY_TAGS[family.indexOf(t)];
                     return (
                       <div
-                        key={t.id}
+                        key={k}
                         className={styles.card}
                         data-comparing={comparing}
                         data-rec={isRec ? 'true' : 'false'}
@@ -1249,7 +1300,9 @@ export default function TariffPage() {
                         ) : (
                           <div className={styles.cardNav}>
                             <span className={styles.cardTitle}>{t.name}</span>
-                            <span className={styles.cardBadge}>Unsere Empfehlung für dich</span>
+                            {eco && (
+                              <span className={styles.cardBadge}><LeafIcon /> Besonders nachhaltig</span>
+                            )}
                           </div>
                         )}
                         {comparing && <p className={styles.cardName}>{t.name}</p>}

@@ -13,9 +13,9 @@
 .solid {
   color: var(--c-text-primary, #262626);
   background: #fff;
-  border-radius: 18px;
+  border-radius: 4px;
   box-shadow: 0 10px 34px rgba(0, 0, 0, 0.08);
-  padding: 4px 8px 4px 24px;
+  padding: 4px 24px 4px 24px;
 }
 
 .left {
