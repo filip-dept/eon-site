@@ -1648,15 +1648,17 @@
    height, so appending a section deepens the bottom without shifting the
    sections above it. */
 .redZoneBg {
-  /* FIXED full-viewport gradient (was absolute) — the horizontal gradient is
-     uniform vertically, so a fixed layer looks identical while the red-zone
-     content scrolls over it, and it's inherently "still" as the white proof
-     panel rises over it. Fixed (not pinned) means we never transform .redZone,
-     so the HEMS `position: sticky` stage can't break on a cold first load.
-     Faded in by ScrollTrigger as the zone enters; white sections (proof/faq)
-     sit on top with their own opaque background. */
-  position: fixed;
-  inset: 0;
+  /* STICKY background layer — sticks to the viewport (100vh × full width) for
+     the whole .redZone, so the gradient stays put behind stories → HEMS → FAQ.
+     `margin-bottom: -100vh` removes its flow height so it doesn't push the
+     content down (content overlaps it, lifted above by z-index). Sticky (not a
+     ScrollTrigger pin) means .redZone is never transformed → the HEMS sticky
+     stage can't break on a cold first load. Faded in by ScrollTrigger. */
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  width: 100%;
+  margin-bottom: -100vh;
   z-index: 0;
   opacity: 0;
   pointer-events: none;
