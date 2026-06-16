@@ -16,6 +16,9 @@ html {
 
 body {
   font-family: var(--font-body);
+  font-size: var(--fs-md);      /* Copy/md — 16 / 24 */
+  line-height: var(--lh-md);
+  font-weight: var(--fw-regular);
   background: var(--c-white);
   color: var(--c-text-primary);
   -webkit-font-smoothing: antialiased;

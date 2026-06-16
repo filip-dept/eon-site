@@ -93,7 +93,7 @@
   border: none;
   background: none;
   font-family: var(--font-body);
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 500;
   color: var(--c-text-secondary);
   cursor: pointer;
@@ -211,7 +211,7 @@
 .stepHeadline {
   font-family: var(--font-body);
   font-weight: 700;
-  font-size: clamp(56px, 3.4vw, 40px); /* Headings/2: 40 / 48 */
+  font-size: clamp(28px, 3.4vw, 40px); /* Headings/2: 40 / 48 */
   line-height: 1.2;
   color: var(--c-text-primary);
   margin-bottom: 28px;
@@ -279,7 +279,7 @@
 .optionTitle {
   font-family: var(--font-body);
   font-weight: 700;
-  font-size: 17px;
+  font-size: 18px;
   line-height: 1.25;
   color: var(--c-text-primary);
 }
@@ -371,7 +371,7 @@
 .plzOptionCode {
   font-family: var(--font-body);
   font-weight: 700;
-  font-size: 15px;
+  font-size: 16px;
   color: var(--c-text-primary);
   min-width: 48px;
   flex-shrink: 0;
@@ -404,8 +404,8 @@
   outline: none;
   background: transparent;
   font-family: var(--font-body);
-  font-weight: 800;
-  font-size: clamp(52px, 7vw, 80px);   /* match the kWh number on Q3 */
+  font-weight: 700;
+  font-size: clamp(40px, 7vw, 56px);   /* match the kWh number on Q3 */
   line-height: 1;
   color: var(--c-text-primary);
   width: 100%;
@@ -448,8 +448,8 @@
 
 .stepperVal {
   font-family: var(--font-body);
-  font-weight: 800;
-  font-size: clamp(52px, 7vw, 80px);   /* match the kWh number on Q3 */
+  font-weight: 700;
+  font-size: clamp(40px, 7vw, 56px);   /* match the kWh number on Q3 */
   line-height: 1;
   color: var(--c-text-primary);
   min-width: 64px;
@@ -476,7 +476,7 @@
   cursor: pointer;
   font-family: var(--font-body);
   font-size: 14px;
-  font-weight: 600;
+  font-weight: 500;
   color: var(--c-text-secondary);
   transition: border-color 0.15s, background 0.15s, color 0.15s;
   display: flex;
@@ -500,8 +500,8 @@
 
 .kwhNum {
   font-family: var(--font-body);
-  font-weight: 800;
-  font-size: clamp(52px, 7vw, 80px);
+  font-weight: 700;
+  font-size: clamp(40px, 7vw, 56px);
   line-height: 1;
   color: var(--c-text-primary);
   transition: color 0.2s;
@@ -622,7 +622,7 @@
 .presetTitle {
   font-family: var(--font-body);
   font-weight: 700;
-  font-size: 15px;
+  font-size: 16px;
   color: var(--c-text-primary);
   margin: 0;
 }
@@ -647,7 +647,7 @@
   border-radius: 8px;
   font-family: var(--font-body);
   font-weight: 700;
-  font-size: 15px;
+  font-size: 16px;
   cursor: pointer;
   transition: background 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease;
   margin-top: auto;
@@ -769,7 +769,7 @@
 .tpName {
   font-family: var(--font-body);
   font-weight: 700;
-  font-size: 17px;
+  font-size: 18px;
   color: var(--c-text-primary);
 }
 .tpBadge {
@@ -785,8 +785,8 @@
 .tpSub { font-family: var(--font-body); font-size: 13px; color: var(--c-text-secondary); }
 .tpPriceRow { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-top: 4px; }
 .tpPrice { font-family: var(--font-body); font-size: 13px; color: var(--c-text-secondary); }
-.tpPrice strong { font-size: 19px; font-weight: 800; color: var(--c-text-primary); margin-right: 2px; }
-.tpBonus { font-family: var(--font-body); font-size: 13px; font-weight: 600; color: #8215b4; }
+.tpPrice strong { font-size: 19px; font-weight: 700; color: var(--c-text-primary); margin-right: 2px; }
+.tpBonus { font-family: var(--font-body); font-size: 13px; font-weight: 500; color: #8215b4; }
 .tpBonus em { font-style: normal; font-weight: 400; color: #b07cc7; }
 
 /* ── Start row: red button + Enter hint + voice box ── */
@@ -890,7 +890,7 @@
   border-radius: 8px;
   padding: 13px 16px;
   font-family: var(--font-body);
-  font-size: 15px;
+  font-size: 16px;
   color: var(--c-text-primary);
   background: #fff;
   outline: none;
@@ -911,7 +911,7 @@
   padding: 12px;
   background: #fff;
   font-family: var(--font-body);
-  font-size: 15px;
+  font-size: 16px;
   color: var(--c-text-primary);
   cursor: pointer;
   transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
@@ -921,7 +921,7 @@
   border-color: var(--c-red);
   background: #fdf1ef;
   color: var(--c-red);
-  font-weight: 600;
+  font-weight: 500;
 }
 
 /* ── Bottom actions: Zurück + Weiter ── */
@@ -940,7 +940,7 @@
   border: none;
   padding: 8px 0;
   font-family: var(--font-body);
-  font-size: 15px;
+  font-size: 16px;
   color: var(--c-text-secondary);
   cursor: pointer;
   transition: color 0.15s ease;

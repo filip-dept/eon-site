@@ -13,19 +13,35 @@
   /* Hero brand gradient (red → magenta → purple), top-left origin */
   --hero-gradient: linear-gradient(135deg, #ea1b0a 0%, #ea1b0a 35%, #c11054 72%, #941481 100%);
 
-  /* ─── Typography ─── */
+  /* ─── Typography (E.ON design system — Figma "Design eon.de") ───
+     Family: EON Brix Sans. Loaded weights: Regular 400 / Medium 500 / Bold 700.
+     Scale (size / line-height), letter-spacing 0:
+       Headings (Bold 700): H3 56/64 · H2 40/48 · H4 36/44 · H5 22/30 · H6 16/24
+       Copy: xl 20/30 · lg 18/27 · md 16/24 · sm 14/21  (Regular/Medium/Bold) */
   --font-head: 'EON Head', 'Arial Black', system-ui, sans-serif;
   --font-body: 'EON Brix Sans', Arial, system-ui, sans-serif;
 
-  --fs-headline: 72px;
-  --lh-headline: 80px;
-  --fs-subhead: 28px;
-  --lh-subhead: 40px;
+  --fw-regular: 400;
+  --fw-medium: 500;
+  --fw-bold: 700;
+
+  /* headings */
+  --fs-h3: 56px;  --lh-h3: 64px;
+  --fs-h2: 40px;  --lh-h2: 48px;
+  --fs-h4: 36px;  --lh-h4: 44px;
+  --fs-h5: 22px;  --lh-h5: 30px;
+  --fs-h6: 16px;  --lh-h6: 24px;
+
+  /* copy */
+  --fs-xl: 20px;  --lh-xl: 30px;
+  --fs-lg: 18px;  --lh-lg: 27px;
+  --fs-md: 16px;  --lh-md: 24px;
+  --fs-sm: 14px;  --lh-sm: 21px;
+
+  /* aliases still referenced in components */
   --fs-nav: 18px;
-  --fs-input: 18px;
-  --lh-input: 27px;
-  --fs-chip: 16px;
-  --lh-chip: 24px;
+  --fs-input: 18px;   --lh-input: 27px;   /* Copy/lg */
+  --fs-chip: 16px;    --lh-chip: 24px;    /* Copy/md */
 
   /* ─── Layout ─── */
   --nav-height: 68px;

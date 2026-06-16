@@ -180,7 +180,7 @@
 .floatLabel {
   font-family: var(--font-body);
   font-weight: 500;
-  font-size: 15px;
+  font-size: 16px;
   color: var(--c-text-primary);
   white-space: nowrap;
   max-width: 0;
@@ -251,7 +251,7 @@
   align-items: center;
   gap: 12px;
   font-family: var(--font-body);
-  font-size: 15px;
+  font-size: 16px;
   color: var(--c-text-primary);
   white-space: nowrap;
   cursor: pointer;
@@ -288,7 +288,7 @@
 
 .prefLabel {
   font-family: var(--font-body);
-  font-size: 15px;
+  font-size: 16px;
   color: rgba(38,38,38,0.75);
   white-space: nowrap;
   max-width: 180px;
@@ -382,7 +382,7 @@
 .floatTariffName {
   font-family: var(--font-body);
   font-weight: 700;
-  font-size: 15px;
+  font-size: 16px;
   color: var(--c-text-primary);
 }
 
@@ -507,7 +507,7 @@
 .socialPct {
   font-family: var(--font-body);
   font-weight: 700;
-  font-size: 15px;
+  font-size: 16px;
   color: var(--c-text-primary);
   margin-bottom: 1px;
 }
@@ -633,15 +633,15 @@
 
 .panelLabel {
   font-family: var(--font-body);
-  font-size: 15px;
-  font-weight: 600;
+  font-size: 16px;
+  font-weight: 500;
   color: rgba(255, 255, 255, 0.9);
 }
 
 .panelTitle {
   font-family: var(--font-body);
   font-weight: 700;
-  font-size: clamp(30px, 2.9vw, 42px);
+  font-size: clamp(28px, 2.9vw, 40px);
   line-height: 1.15;
   color: #fff;
 }
@@ -725,7 +725,7 @@
   padding: 4px 9px;
   font-family: var(--font-body);
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 500;
   color: var(--c-text-secondary);
 }
 .cardTag[data-green='true'] { background: #dcefe0; color: #1d6b3a; }
@@ -734,7 +734,7 @@
   margin: 0;
   font-family: var(--font-body);
   font-weight: 700;
-  font-size: 17px;
+  font-size: 18px;
   line-height: 1.3;
   color: var(--c-text-primary);
 }
@@ -742,10 +742,10 @@
 /* ── Comparing: tighter card internals so three fit cleanly ── */
 .card[data-comparing='true'] .cardSub { padding: 2px 16px 0; }
 .card[data-comparing='true'] .cardBody { padding: 4px 16px 16px; gap: 14px; }
-.card[data-comparing='true'] .priceMain { font-size: 26px; }
+.card[data-comparing='true'] .priceMain { font-size: 22px; }
 .card[data-comparing='true'] .featureName { font-size: 14px; line-height: 1.4; }
 .card[data-comparing='true'] .cardBtns { height: 44px; }
-.card[data-comparing='true'] .btnPrimary { font-size: 15px; border-radius: 10px; }
+.card[data-comparing='true'] .btnPrimary { font-size: 16px; border-radius: 10px; }
 
 .cardNav {
   display: flex;
@@ -915,7 +915,7 @@
   border-radius: 12px;
   font-family: var(--font-body);
   font-weight: 700;
-  font-size: 17px;
+  font-size: 18px;
   cursor: pointer;
   transition: background 0.2s;
   white-space: nowrap;
@@ -930,7 +930,7 @@
   border-radius: 12px;
   font-family: var(--font-body);
   font-weight: 700;
-  font-size: 17px;
+  font-size: 18px;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -960,7 +960,7 @@
 .editorialTitle {
   font-family: var(--font-body);
   font-weight: 700;
-  font-size: clamp(64px, 3.4vw, 48px);
+  font-size: clamp(40px, 3.4vw, 56px);
   line-height: 1.16;
   color: #262626;
   margin: 0;
@@ -1113,7 +1113,7 @@
 .articleTitle {
   font-family: var(--font-body);
   font-weight: 700;
-  font-size: 17px;
+  font-size: 18px;
   color: #fff;
   line-height: 1.4;
   margin: 0;
@@ -1127,7 +1127,7 @@
   border: none;
   cursor: pointer;
   font-family: var(--font-body);
-  font-size: 15px;
+  font-size: 16px;
   color: #fff;
   padding: 0;
 }
@@ -1203,7 +1203,7 @@
 .barPctSm {
   font-family: var(--font-body);
   font-weight: 700;
-  font-size: 30px;
+  font-size: 36px;
   line-height: 1;
 }
 
@@ -1239,7 +1239,7 @@
 .totalValue {
   font-family: var(--font-body);
   font-weight: 700;
-  font-size: clamp(36px, 3.6vw, 52px);
+  font-size: clamp(36px, 3.6vw, 56px);
   color: #262626;
   line-height: 1.1;
 }
@@ -1325,7 +1325,7 @@
 .colPct {
   font-family: var(--font-body);
   font-weight: 700;
-  font-size: 24px;
+  font-size: 22px;
   line-height: 1.35;
   margin-bottom: 18px;
 }
@@ -1339,7 +1339,7 @@
 .colPriceMain {
   font-family: var(--font-body);
   font-weight: 700;
-  font-size: clamp(36px, 3.6vw, 52px);
+  font-size: clamp(36px, 3.6vw, 56px);
   line-height: 1.15;
 }
 
@@ -1523,7 +1523,7 @@
 .storiesTitle {
   font-family: var(--font-body);
   font-weight: 700;
-  font-size: clamp(40px, 4.45vw, 64px);
+  font-size: clamp(40px, 4.45vw, 56px);
   line-height: 1.05;
   margin: 0;
   color: inherit;
@@ -1593,7 +1593,7 @@
 .storyCaptionTitle {
   font-family: var(--font-body);
   font-weight: 700;
-  font-size: clamp(20px, 1.7vw, 24px);
+  font-size: clamp(20px, 1.7vw, 22px);
   line-height: 1.25;
   margin: 0;
 }
@@ -1635,7 +1635,7 @@
 
 .hemsLogo {
   font-family: var(--font-head);
-  font-size: 64px;
+  font-size: 56px;
   line-height: 1;
   margin: 0;
 }
@@ -1643,7 +1643,7 @@
 .hemsTitle {
   font-family: var(--font-body);
   font-weight: 500;
-  font-size: clamp(40px, 4.45vw, 64px);
+  font-size: clamp(40px, 4.45vw, 56px);
   line-height: 1;
   margin: 4px 0 12px;
   max-width: 500px;
@@ -1818,7 +1818,7 @@
 .faqTitle {
   font-family: var(--font-body);
   font-weight: 700;
-  font-size: clamp(32px, 3.4vw, 48px);
+  font-size: clamp(32px, 3.4vw, 40px);
   line-height: 1.1;
   margin: 0;
 }
@@ -1847,7 +1847,7 @@
 .faqQuestion {
   font-family: var(--font-body);
   font-weight: 500;
-  font-size: clamp(18px, 1.7vw, 24px);
+  font-size: clamp(18px, 1.7vw, 22px);
   line-height: 1.1;
   color: #fff;
 }
@@ -1925,7 +1925,7 @@
 .proofZipNum {
   font-family: var(--font-body);
   font-weight: 700;
-  font-size: 48px;
+  font-size: 40px;
   line-height: 1;
   color: #262626;
   opacity: 0.9;
@@ -1993,7 +1993,7 @@
 .proofQuoteTitle {
   font-family: var(--font-body);
   font-weight: 700;
-  font-size: clamp(18px, 1.7vw, 24px);
+  font-size: clamp(18px, 1.7vw, 22px);
   line-height: 1.1;
   margin: 0;
 }
@@ -2024,7 +2024,7 @@
   justify-content: center;
   font-family: var(--font-body);
   font-weight: 700;
-  font-size: 15px;
+  font-size: 16px;
   color: #fff;
 }
 
@@ -2196,13 +2196,13 @@
 }
 .compareLabel {
   font-family: var(--font-body);
-  font-size: 15px;
-  font-weight: 600;
+  font-size: 16px;
+  font-weight: 500;
   color: var(--c-text-primary);
 }
 .compareTitle {
   font-family: var(--font-body);
-  font-weight: 800;
+  font-weight: 700;
   font-size: clamp(28px, 3vw, 40px);
   line-height: 1.12;
   color: var(--c-text-primary);
@@ -2249,7 +2249,7 @@
   padding: 4px 9px;
   font-family: var(--font-body);
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 500;
   color: var(--c-text-secondary);
 }
 .compareTag[data-green='true'] { background: #dcefe0; color: #1d6b3a; }
@@ -2257,7 +2257,7 @@
 .compareName {
   font-family: var(--font-body);
   font-weight: 700;
-  font-size: 17px;
+  font-size: 18px;
   color: var(--c-text-primary);
   margin: 0;
 }
@@ -2273,7 +2273,7 @@
   gap: 6px;
   margin: 2px 0 4px;
 }
-.comparePrice strong { font-size: 24px; font-weight: 800; color: var(--c-text-primary); }
+.comparePrice strong { font-size: 22px; font-weight: 700; color: var(--c-text-primary); }
 .comparePrice span { font-size: 12px; color: var(--c-text-secondary); }
 
 .compareFeatures { display: flex; flex-direction: column; gap: 10px; margin-bottom: 4px; }
@@ -2288,7 +2288,7 @@
   border: 1.5px solid var(--c-red);
   font-family: var(--font-body);
   font-weight: 700;
-  font-size: 15px;
+  font-size: 16px;
   cursor: pointer;
   transition: background 0.18s ease, color 0.18s ease;
 }

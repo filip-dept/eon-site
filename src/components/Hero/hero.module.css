@@ -75,7 +75,7 @@
 .subhead {
   font-family: var(--font-body);
   font-weight: 400;
-  font-size: clamp(17px, 2.2vw, 30px);
+  font-size: clamp(18px, 2.2vw, 22px);   /* Copy lg → Headings/5 */
   line-height: 1.4;
   color: var(--c-white);
   text-align: center;
