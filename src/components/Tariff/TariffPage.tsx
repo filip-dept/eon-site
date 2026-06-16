@@ -977,6 +977,18 @@ export default function TariffPage() {
       },
     });
 
+    /* auto-open the chat once the user has been INACTIVE (not scrolling) for 3s
+       while on the HEMS slide. Any scroll within the section re-arms the timer,
+       so it only fires when the user actually pauses. Once per visit. */
+    let hemsIdle: ReturnType<typeof setTimeout> | undefined;
+    let hemsAutoOpened = false;
+    let hemsActiveNow = false;
+    const armHemsIdle = () => {
+      clearTimeout(hemsIdle);
+      if (!hemsActiveNow || hemsAutoOpened) return;
+      hemsIdle = setTimeout(() => { hemsAutoOpened = true; setChatOpen(true); }, 3000);
+    };
+
     /* sticky scroll-through: progress across the tall section selects the
        active category (the stage itself stays pinned via CSS position:sticky) */
     const HEMS_N = HEMS_CATS.length;
@@ -999,23 +1011,22 @@ export default function TariffPage() {
         }
         const idx = Math.min(HEMS_N - 1, Math.round(self.progress * (HEMS_N - 1)));
         if (idx !== hemsIdxRef.current) { hemsIdxRef.current = idx; setHemsActive(idx); }
+        /* scrolling = active → push the idle auto-open back out */
+        armHemsIdle();
       },
     });
     hemsSTRef.current = hemsScrubST;
 
-    /* auto-open the chat once the user has dwelled on the HEMS section for 3s.
-       Fires only once per visit; clears the timer if they leave first. */
-    let hemsDwell: ReturnType<typeof setTimeout> | undefined;
-    let hemsAutoOpened = false;
+    /* track whether the HEMS slide is on screen; entering arms the idle timer,
+       leaving cancels it (see armHemsIdle / hemsScrubST onUpdate above) */
     const hemsChatST = ScrollTrigger.create({
       trigger: hems,
       start: 'top top',
       end: 'bottom bottom',
       onToggle: (self) => {
-        clearTimeout(hemsDwell);
-        if (self.isActive && !hemsAutoOpened) {
-          hemsDwell = setTimeout(() => { hemsAutoOpened = true; setChatOpen(true); }, 3000);
-        }
+        hemsActiveNow = self.isActive;
+        if (self.isActive) armHemsIdle();
+        else clearTimeout(hemsIdle);
       },
     });
 
@@ -1104,7 +1115,7 @@ export default function TariffPage() {
       lateImgs.forEach((im) => im.removeEventListener('load', refresh));
       window.removeEventListener('resize', setFrameWidth);
       cardParallax.forEach((t) => { t.scrollTrigger?.kill(); t.kill(); });
-      clearTimeout(hemsDwell);
+      clearTimeout(hemsIdle);
       orbCenterST.kill();
       hemsChatST.kill();
       zoneBgST.kill();

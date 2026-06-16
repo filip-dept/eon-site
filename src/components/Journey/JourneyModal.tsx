@@ -643,9 +643,6 @@ export default function JourneyModal() {
             <path d="M15 5l-7 7 7 7" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
         </button>
-        <button className={styles.skipBtn} onClick={submit} aria-label="Fragen überspringen">
-          Überspringen
-        </button>
         <button className={styles.cornerBtn} data-pos="close" onClick={closeModal} aria-label="Schließen">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
             <path d="M5 5l14 14M19 5L5 19" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round"/>

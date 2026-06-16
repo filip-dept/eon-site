@@ -83,24 +83,6 @@
 .cornerBtn[data-pos='back']  { left: clamp(20px, 4vw, 62px); }
 .cornerBtn[data-pos='close'] { right: clamp(20px, 4vw, 32px); }
 
-/* Skip — text button just left of the close button */
-.skipBtn {
-  position: absolute;
-  top: 34px;
-  right: calc(clamp(20px, 4vw, 32px) + 60px);
-  height: 48px;
-  padding: 0 16px;
-  border: none;
-  background: none;
-  font-family: var(--font-body);
-  font-size: 16px;
-  font-weight: 500;
-  color: var(--c-text-secondary);
-  cursor: pointer;
-  z-index: 6;
-  transition: color 0.15s ease;
-}
-.skipBtn:hover { color: var(--c-text-primary); }
 
 /* ─── Body — left categories + centred content (above the gradient) ───────── */
 .modalBody {
@@ -681,7 +663,6 @@
   .presets { flex-direction: column; }
   .cornerBtn[data-pos='back']  { left: 16px; }
   .cornerBtn[data-pos='close'] { right: 16px; }
-  .skipBtn { right: calc(16px + 56px); padding: 0 10px; }
 }
 
 /* ═══ Wizard v2 — Figma steps (Overview/Wechsel) + screenshot steps ════════ */
