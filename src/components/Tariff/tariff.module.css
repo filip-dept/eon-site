@@ -1423,16 +1423,16 @@
   align-items: center;
   padding: 9px 16px;
 }
-/* closed = white rounded pill (clickable; condensed → hover reveals the prompt) */
+/* closed = white pill (clickable; condensed → hover reveals the prompt) */
 .chatInputRow[data-open='false'] {
   background: #fff;
   border: none;
-  border-radius: 16px;
+  border-radius: 4px;
   cursor: pointer;
   box-shadow: 0 0 2px rgba(0,0,0,0.06), 0 10px 32px rgba(0,0,0,0.12);
 }
-/* open = slightly grey fill at the foot of the card */
-.chatInputRow[data-open='true'] { background: #efefea; }
+/* open = same white fill (no grey) */
+.chatInputRow[data-open='true'] { background: #fff; }
 /* open shows the prompt and lets it fill, pushing the controls to the right */
 .chatInputRow[data-open='true'] .orbReveal { flex: 1; width: auto; opacity: 1; overflow: visible; }
 /* divider — full orb height, 16px each side (same in both states) */
@@ -1640,18 +1640,24 @@
 .redZone {
   position: relative;
 }
+/* content sits above the fixed gradient layer (.redZoneBg, z-index 0) */
+.redZone > section { position: relative; z-index: 1; }
 
 /* fades in over the initial white, then runs seamlessly through HEMS + FAQ.
    Stops are anchored to fixed scroll distances (vh) rather than % of total
    height, so appending a section deepens the bottom without shifting the
    sections above it. */
 .redZoneBg {
-  /* Clipped to the red zone (no bleed onto the white sections). The gradient
-     runs HORIZONTALLY, so scrolling vertically never changes its appearance —
-     ONE constant red→purple background across stories → HEMS → FAQ. Faded in
-     by ScrollTrigger as the zone enters. */
-  position: absolute;
+  /* FIXED full-viewport gradient (was absolute) — the horizontal gradient is
+     uniform vertically, so a fixed layer looks identical while the red-zone
+     content scrolls over it, and it's inherently "still" as the white proof
+     panel rises over it. Fixed (not pinned) means we never transform .redZone,
+     so the HEMS `position: sticky` stage can't break on a cold first load.
+     Faded in by ScrollTrigger as the zone enters; white sections (proof/faq)
+     sit on top with their own opaque background. */
+  position: fixed;
   inset: 0;
+  z-index: 0;
   opacity: 0;
   pointer-events: none;
   background: linear-gradient(90deg, #ea1b0a 0%, #c11054 55%, #941481 100%);
@@ -1675,7 +1681,7 @@
 
 .storiesStage {
   position: relative;
-  height: 140vh;
+  height: 100%;
   overflow: hidden;
 }
 
@@ -1790,7 +1796,7 @@
 .hems {
   position: relative;
   /* runway per category — kept short so you move through them quickly */
-  height: 230vh;
+  height: 300vh;
 }
 
 .hemsStage {

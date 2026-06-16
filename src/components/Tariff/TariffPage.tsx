@@ -463,10 +463,8 @@ export default function TariffPage() {
       gsap.set(card, { width: pillSize.current.w, height: pillSize.current.h });
       gsap.to(card, { width: fullW, height: fullH, duration: 0.5, ease: CHAT_EASE, clearProps: 'width,height' });
       gsap.to(orb, { x: targetX, duration: 0.5, ease: CHAT_EASE });
-      /* hover → open: the row greys in and the send slides in from the right —
-         the exact reverse of the open → hover close */
+      /* hover → open: the send slides in from the right (reverse of the close) */
       const send = row?.querySelector<HTMLElement>(`.${styles.chatSend}`) ?? null;
-      if (row)  gsap.fromTo(row,  { backgroundColor: '#ffffff' }, { backgroundColor: '#efefea', duration: 0.5, ease: CHAT_EASE, clearProps: 'backgroundColor' });
       if (send) gsap.fromTo(send, { x: 70, opacity: 0 }, { x: 0, opacity: 1, duration: 0.5, ease: CHAT_EASE, clearProps: 'opacity,transform' });
     } else {
       const w = orb.offsetWidth;
@@ -515,7 +513,6 @@ export default function TariffPage() {
     const send = row.querySelector<HTMLElement>(`.${styles.chatSend}`);
     gsap.set(card, { width: inner.offsetWidth, height: inner.offsetHeight });
     gsap.to(card, { height: row.offsetHeight, duration: 0.5, ease: CHAT_EASE });   // fold → hover
-    gsap.to(row,  { backgroundColor: '#ffffff', duration: 0.5, ease: CHAT_EASE }); // grey → white
     if (send) gsap.to(send, { x: 70, opacity: 0, duration: 0.5, ease: CHAT_EASE });// send slides out
     closingRef.current = true;
     armChatDwell();
@@ -1017,7 +1014,6 @@ export default function TariffPage() {
     /* ── Background switch: white until the stories text passes the middle of
        the viewport, then the constant red→purple gradient fades in (and the
        text flips to white). It stays on for the rest of the journey. ── */
-    const redZone     = page.querySelector<HTMLElement>(`.${styles.redZone}`)!;
     const zoneBg      = page.querySelector<HTMLElement>(`.${styles.redZoneBg}`)!;
     const storiesText = page.querySelector<HTMLElement>(`.${styles.storiesText}`)!;
     const zoneBgST = ScrollTrigger.create({
@@ -1034,17 +1030,10 @@ export default function TariffPage() {
       },
     });
 
-    /* ── Proof panel overlap: pin the gradient zone still while the white
-       panel scrolls up over it (it sits at a higher z-index). ── */
-    const proofWrap = page.querySelector<HTMLElement>(`.${styles.proofWrap}`)!;
-    const overlapST = ScrollTrigger.create({
-      trigger: proofWrap,
-      start: 'top bottom',   /* proof just entering from below */
-      end: 'top top',        /* proof fills the viewport */
-      pin: redZone,
-      pinSpacing: false,     /* no extra runway — proof rises over the frozen zone */
-      invalidateOnRefresh: true,
-    });
+    /* Proof panel overlap: the gradient (.redZoneBg) is position:fixed, so it's
+       inherently still while the white proof panel (higher z-index) scrolls up
+       over it — no pin needed. Pinning .redZone here used to transform it and
+       break the HEMS `position: sticky` stage on a cold first load. */
 
     /* Re-measure as the layout settles. On a fresh client-side navigation the
        fonts and images (e.g. the HEMS house) load AFTER the first measure and
@@ -1073,7 +1062,6 @@ export default function TariffPage() {
       hemsST.kill();
       hemsScrubST.kill();
       faqST.kill();
-      overlapST.kill();
       stateST.kill();
       rotST.kill();
       morphST.kill();
