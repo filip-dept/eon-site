@@ -26,11 +26,11 @@
   --fw-bold: 700;
 
   /* headings */
-  --fs-h3: 56px;  --lh-h3: 64px;
-  --fs-h2: 40px;  --lh-h2: 48px;
-  --fs-h4: 36px;  --lh-h4: 44px;
-  --fs-h5: 22px;  --lh-h5: 30px;
-  --fs-h6: 16px;  --lh-h6: 24px;
+  --fs-h3: 56px;  --lh-h3: 100%;
+  --fs-h2: 40px;  --lh-h2: 100%;
+  --fs-h4: 36px;  --lh-h4: 100%;
+  --fs-h5: 22px;  --lh-h5: 100%;
+  --fs-h6: 16px;  --lh-h6: 100%;
 
   /* copy */
   --fs-xl: 20px;  --lh-xl: 30px;

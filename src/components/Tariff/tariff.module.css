@@ -445,7 +445,7 @@
   flex: 1 1 58%;
   position: relative;
   overflow: hidden;
-  border-radius: 20px;
+  border-radius: 6px;
   transition: flex-basis 0.46s var(--ease-out), flex-grow 0.46s var(--ease-out);
 }
 /* comparison open → the image grows to absorb all slack the capped panel
@@ -474,7 +474,7 @@
   left: 15px;
   right: 15px;
   background: #fff;
-  border-radius: 8px;
+  border-radius: 4px;
   padding: 12px 16px;
   display: flex;
   align-items: center;
@@ -540,7 +540,7 @@
      held by flex-basis (not max-width) so it transitions both ways symmetrically */
   flex: 0 1 600px;
   min-width: 0;
-  border-radius: 20px;
+  border-radius: 6px;
   background: linear-gradient(138deg, #ea1b0a 0%, #e0190f 55%, #c11054 100%);
   display: flex;
   flex-direction: column;
@@ -674,7 +674,7 @@
   flex: 1 1 0;
   min-width: 0;
   background: #fff;
-  border-radius: 8px;
+  border-radius: 4px;
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -724,8 +724,9 @@
   border-radius: 6px;
   padding: 4px 9px;
   font-family: var(--font-body);
-  font-size: 12px;
-  font-weight: 500;
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 600;
   color: var(--c-text-secondary);
 }
 .cardTag[data-green='true'] { background: #dcefe0; color: #1d6b3a; }
@@ -868,13 +869,13 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   column-gap: 8px;
-  row-gap: 14px;
+  row-gap: 16px;
 }
 /* comparing → vertical stack (each of the three cards is narrow) */
 .features[data-comparing='true'] {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 16px;
 }
 
 .feature {
@@ -1137,7 +1138,7 @@
   flex: 1;
   position: relative;
   background: #f8f5f2;
-  border-radius: 20px;
+  border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1245,38 +1246,61 @@
 }
 
 /* ─── Gradient sphere — fixed bottom-right, follows the scroll ───────────── */
+/* positioned wrapper only — anchored at left:50% so GSAP's translateX drives
+   it from the bottom-right dock to screen centre (x=0 ⇒ centred). Opacity is
+   the reveal; transform belongs to GSAP, so it's NOT in the transition. */
 .orbFloat {
   position: fixed;
-  right: 30px;
+  left: 50%;
   bottom: 26px;
   z-index: 60;
-  display: flex;
-  align-items: center;
-  background: #fff;
-  border-radius: 16px;
-  padding: 10px 14px;
-  box-shadow: 0 0 2px rgba(0,0,0,0.06), 0 10px 32px rgba(0,0,0,0.12);
   opacity: 0;
-  transform: translateY(24px);
   pointer-events: none;
-  transition: opacity 0.4s ease, transform 0.55s var(--ease-out);
+  transition: opacity 0.4s ease;
 }
 .scrolled .orbFloat {
   opacity: 1;
-  transform: translateY(0);
   pointer-events: auto;
 }
 
-/* mic slides into the dock on the expanded breakdown state */
-.orbMicWrap {
+/* ── Condensed pill (default) → reveals the prompt on hover (hovered variant).
+   The reveal width + the orb's x-shift are animated together by GSAP so the
+   anchor stays fixed; CSS only sets the collapsed starting state. ── */
+/* Figma default (1093:8015): 16px padding, orb · 16 · divider · 16 · mic */
+.orbPill {
   display: flex;
   align-items: center;
-  max-width: 0;
-  overflow: hidden;
-  transition: max-width 0.5s var(--ease-out);
+  background: #fff;
+  border: none;
+  border-radius: 4px;
+  padding: 9px 16px;
+  cursor: pointer;
+  box-shadow: 0 0 2px rgba(0,0,0,0.06), 0 10px 32px rgba(0,0,0,0.12);
 }
-.compact .orbMicWrap { max-width: 100px; }
-.orbMicWrap .voiceDivider { margin-left: 14px; margin-right: 10px; }
+/* collapsed by default; GSAP animates width 0 → scrollWidth on hover. Holds
+   only the prompt — the divider sits outside so it shows in the default state */
+.orbReveal {
+  display: flex;
+  align-items: center;
+  width: 0;
+  opacity: 0;
+  overflow: hidden;
+}
+.orbReveal .orbHint {
+  margin-left: 16px;            /* 16px gap from the orb when revealed */
+  white-space: nowrap;
+  flex-shrink: 0;
+  font-family: var(--font-body);
+  font-size: 16px;
+  color: rgba(38,38,38,0.6);
+}
+/* always-visible divider between orb and mic — 16px each side, full orb height */
+.orbPill .voiceDivider {
+  flex-shrink: 0;
+  width: 1px;
+  height: 44px;
+  margin: 0 16px;
+}
 
 .orb {
   width: 44px;
@@ -1285,6 +1309,135 @@
   background: radial-gradient(circle at 32% 28%, #f9c8b8 0%, #ee7e9d 45%, #c46be0 100%);
   flex-shrink: 0;
 }
+
+/* ── Opened card (Figma 1093:7923) ── */
+.chatCard {
+  width: 438px;
+  max-width: calc(100vw - 32px);
+  background: #fff;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 0 2px rgba(0,0,0,0.08), 0 18px 48px rgba(0,0,0,0.18);
+  display: flex;
+  flex-direction: column;
+}
+.chatHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 9px 24px;
+  background: #fffdfc;
+}
+.chatHeaderLeft { display: flex; align-items: center; gap: 13px; }
+.chatAssistant {
+  font-family: var(--font-body);
+  font-weight: 500;
+  font-size: 16px;
+  line-height: 21px;
+  color: var(--c-text-primary);
+  opacity: 0.8;
+}
+.chatClose {
+  width: 36px;
+  height: 36px;
+  border: none;
+  background: none;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--c-text-primary);
+  opacity: 0.75;
+  cursor: pointer;
+  transition: background 0.15s ease, opacity 0.15s ease;
+}
+.chatClose:hover { background: #f3efec; opacity: 1; }
+
+/* brand-red accent bar under the header */
+.chatAccent { height: 2px; width: 30%; background: var(--c-red); }
+
+.chatBody {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 24px;
+  overflow: hidden;
+}
+/* soft orb glow, top-right of the message */
+.chatGlow {
+  position: absolute;
+  top: -10px;
+  right: -20px;
+  width: 150px;
+  height: 110px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 50%, rgba(255,120,90,0.45), rgba(196,107,224,0.18) 55%, transparent 72%);
+  filter: blur(12px);
+  pointer-events: none;
+}
+.chatHeading {
+  position: relative;
+  font-family: var(--font-body);
+  font-weight: 500;
+  font-size: 18px;
+  line-height: 24px;
+  color: var(--c-text-primary);
+}
+.chatText {
+  position: relative;
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 24px;
+  color: var(--c-text-primary);
+  opacity: 0.75;
+}
+.chatInputRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 9px 16px;
+  background: #efefea;
+}
+.chatInputRow .orb { width: 47px; height: 47px; border-radius: 3px; }
+.chatPlaceholder {
+  flex: 1;
+  min-width: 0;
+  font-family: var(--font-body);
+  font-size: 16px;
+  color: rgba(38,38,38,0.6);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.chatInputRow .voiceDivider { height: 47px; }
+.chatIconBtn {
+  width: 36px;
+  height: 36px;
+  border: none;
+  background: none;
+  border-radius: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--c-text-primary);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.chatSend {
+  width: 40px;
+  height: 40px;
+  border: none;
+  border-radius: 10px;
+  background: var(--c-red);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.15s ease;
+}
+.chatSend:hover { background: #cc1709; }
 
 /* ─── Expanded breakdown (revealed inside barsPanel by the morph) ────────── */
 .bdContent {
