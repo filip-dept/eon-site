@@ -182,6 +182,10 @@
   background: var(--c-red);
   color: var(--c-white);
 }
+.chip[data-inactive='true'] {
+  cursor: default;
+  pointer-events: none;
+}
 
 /* New journey-starter chip */
 .chipPrimary {

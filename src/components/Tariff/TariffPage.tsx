@@ -60,46 +60,12 @@ const ShieldIcon = () => (
   </svg>
 );
 
-/* ─── Comparison cards — Figma 1093:4573 ─────────────────────────────────── */
+/* ─── Comparison tags — one per family position (Flex | Ausgewogen | Sicher) ── */
 type CompareTag = { label: string; green?: boolean; icon?: React.ReactNode };
-interface CompareCard {
-  id: string; name: string; term: string; price: string; ct: string;
-  highlight?: boolean; tags: CompareTag[]; features: [string, string][];
-}
-const COMPARE: CompareCard[] = [
-  {
-    id: 'extra12', name: 'E.ON SolarStrom Extra 12', term: '12 Mo | Solar DE',
-    price: '55,80', ct: '29,60ct/kWh', highlight: true,
-    tags: [{ label: 'Ausgewogen', icon: <BalanceIcon /> }, { label: 'Beste Wahl für dich', green: true }],
-    features: [
-      ['12 Monaten', 'Preisgarantie'],
-      ['100% Solarstrom', 'aus der deutschen Anlagen'],
-      ['Monatlich kündbar', 'nach der Mindestlaufzeit'],
-      ['75 €', 'Neukunden-Bonus'],
-    ],
-  },
-  {
-    id: 'flex', name: 'E.ON SolarStrom Flex', term: '12 Mo | Solar DE',
-    price: '60,10', ct: '31,80ct/kWh',
-    tags: [{ label: 'Maximal Flexibel', icon: <BoltIcon /> }],
-    features: [
-      ['Keine Bindung', 'jederzeit wechselbar'],
-      ['100% Solarstrom', 'aus der deutschen Anlagen'],
-      ['Monatlich kündbar', 'nach der Mindestlaufzeit'],
-      ['40 €', 'Neukunden-Bonus'],
-    ],
-  },
-  {
-    id: 'fest24', name: 'E.ON SolarStrom Festpreis 24', term: '12 Mo | Solar DE',
-    price: '51,10', ct: '29,60ct/kWh',
-    tags: [{ label: 'Maximale Sicherheit', icon: <ShieldIcon /> }],
-    features: [
-      ['24 Monaten', 'Preisgarantie'],
-      ['100% Solarstrom', 'aus der deutschen Anlagen'],
-      ['Kündbar nach 24 Monaten', 'danach monatlich'],
-      ['110 €', 'Neukunden-Bonus'],
-    ],
-  },
+const FAMILY_TAGS: CompareTag[] = [
+  { label: 'Maximal Flexibel', icon: <BoltIcon /> },
+  { label: 'Ausgewogen', icon: <BalanceIcon /> },
+  { label: 'Maximale Sicherheit', icon: <ShieldIcon /> },
 ];
 const ChevronRight = () => (
   <svg width="10" height="14" viewBox="0 0 10 16" fill="none">
@@ -412,6 +378,10 @@ export default function TariffPage() {
   const [eco,  setEco]  = useState(true);   // "Besonders nachhaltig" → Zukunft family
   const [pref, setPref] = useState(94);     // Flexibilität (0) ↔ Sicherheit (100)
   const tariff = tariffFor(eco, pref);
+  /* the active family's three tariffs (Flex | Ausgewogen | Sicherheit) — the
+     recommended card is one of them; the other two are the comparison cards
+     that fan out of the red panel when "Tarif vergleichen" is pressed */
+  const family = eco ? TARIFFS.zukunft : TARIFFS.standard;
 
   /* ── HEMS: which category is active while scrolling through the pinned stage ── */
   const [hemsActive, setHemsActive] = useState(0);
@@ -438,53 +408,63 @@ export default function TariffPage() {
     }
   }, [hemsActive]);
 
-  /* "Tarif vergleichen" expands the comparison + pushes the image to the edge */
+  /* "Tarif vergleichen" widens the red panel and fans the two alternative
+     cards out beside the recommendation. The image narrows (no mask), the
+     panel grows — all via CSS transitions; GSAP just nudges the new cards'
+     content in once they have width. */
   const [comparing, setComparing] = useState(false);
-  const compareRef = useRef<HTMLDivElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
 
-  /* Once the grey background has expanded, reveal the head text, then unmask
-     each card top→bottom (eonReveal) with a quick stagger. */
+  const openCompare = useCallback(() => setComparing(true), []);
+
+  /* fade the two extra cards' content in (staggered) after the panel widens */
   useEffect(() => {
     if (!comparing) return;
-    const el = compareRef.current;
+    const el = panelRef.current;
     if (!el) return;
-    const head  = el.querySelector<HTMLElement>(`.${styles.compareHead}`);
-    const cards = Array.from(el.querySelectorAll<HTMLElement>(`.${styles.compareCard}`));
-    const CARD_HIDDEN = 'inset(0% 0% 100% 0% round 12px)';
-    const CARD_SHOWN  = 'inset(0% 0% 0% 0% round 12px)';
-
-    if (head) gsap.set(head, { y: 16, opacity: 0 });
-    if (cards.length) gsap.set(cards, { clipPath: CARD_HIDDEN, opacity: 1 });
-
-    /* start while the frame is still expanding so the whole thing reads as one
-       smooth motion; the unmask itself stays gentle */
-    const tl = gsap.timeline({ delay: 0.22 });
-    if (head) tl.to(head, { y: 0, opacity: 1, duration: 0.5, ease: 'eonOut' }, 0);
-    if (cards.length) {
-      tl.to(cards, {
-        clipPath: CARD_SHOWN,
-        duration: 0.7,
-        ease: 'eonReveal',
-        stagger: 0.06,
-        clearProps: 'clipPath',
-      }, 0.06);
-    }
+    const extras = Array.from(el.querySelectorAll<HTMLElement>(`.${styles.card}[data-extra='true']`));
+    if (!extras.length) return;
+    /* the panel widens left→right; the alternatives slide in from the right and
+       fade up. Fixed-px x (mirror of the collapse fly-out), and a duration that
+       runs alongside the width transition so they glide into place rather than
+       snapping when the flex layout settles. */
+    gsap.set(extras, { opacity: 0, x: 90 });
+    const tl = gsap.timeline({ delay: 0.04 });
+    tl.to(extras, { opacity: 1, x: 0, duration: 0.48, ease: 'power3.out', stagger: 0.08,
+      clearProps: 'opacity,transform' }, 0);
+    /* only kill the entrance timeline on cleanup — do NOT clear inline props
+       here, or it would wipe the collapse fly-out tween when comparing flips */
     return () => { tl.kill(); };
   }, [comparing]);
 
-  /* Close: content fades out fast, THEN the frame retreats (CSS) */
+  /* Collapse, mirroring the entrance:
+       1. the two alternatives FLY OUT to the right and fade (full width kept,
+          comparing still true → no width-shrink, exactly the inverse of their
+          slide-in);
+       2. then flip to solo so the recommendation + panel run the width
+          transition in reverse;
+       3. once the card has widened, rearrange the features into the 2×2 grid
+          (so the grid appears in a wide card, the way it left one on expand). */
   const closeCompare = useCallback(() => {
-    const el = compareRef.current;
+    const el = panelRef.current;
     if (!el) { setComparing(false); return; }
-    const head  = el.querySelector<HTMLElement>(`.${styles.compareHead}`);
-    const cards = Array.from(el.querySelectorAll<HTMLElement>(`.${styles.compareCard}`));
-    gsap.to([head, ...cards].filter(Boolean) as HTMLElement[], {
-      opacity: 0,
-      duration: 0.14,
-      ease: 'power1.in',
-      overwrite: 'auto',
-      onComplete: () => setComparing(false),
-    });
+    const extras = Array.from(el.querySelectorAll<HTMLElement>(`.${styles.card}[data-extra='true']`));
+    if (!extras.length) { setComparing(false); return; }
+
+    const tl = gsap.timeline();
+    /* Fly out to the right + fade, full width kept (comparing still true) so
+       there's no width-shrink. The fade is FAST (its own quick tween) so the
+       cards are gone almost immediately and we can flip to solo early — keeping
+       the overall collapse as quick as the expand. The x fly-out runs a touch
+       longer underneath (invisible once faded). */
+    gsap.set(extras, { opacity: 1, x: 0 });
+    tl.to(extras, { opacity: 0, duration: 0.18, ease: 'power1.in',
+      stagger: { each: 0.03, from: 'end' } }, 0);
+    tl.to(extras, { x: 80, duration: 0.3, ease: 'power2.in',
+      stagger: { each: 0.03, from: 'end' } }, 0);
+    /* flip to solo as soon as they've faded — the rec card widens AND its
+       features reflow to the 2×2 grid together (driven by `comparing`) */
+    tl.add(() => { setComparing(false); }, 0.22);
   }, []);
 
   const toggleEco = () => {
@@ -1013,13 +993,12 @@ export default function TariffPage() {
               <img src="/newhouse.png" alt="E.ON Kundin" />
               <div className={styles.socialProof}>
                 <div className={styles.avatars}>
-                  {[0,1,2].map(i => (
-                    <div key={i} className={styles.avatar} style={{
-                      background: ['#e8c9a0','#b8d4e8','#c8e0c8'][i],
-                      display:'flex', alignItems:'center', justifyContent:'center', fontSize:16,
-                    }}>
-                      {['👩','👨','👩‍🦱'][i]}
-                    </div>
+                  {[
+                    'https://randomuser.me/api/portraits/women/44.jpg',
+                    'https://randomuser.me/api/portraits/men/32.jpg',
+                    'https://randomuser.me/api/portraits/women/68.jpg',
+                  ].map((src, i) => (
+                    <img key={i} className={styles.avatar} src={src} alt="" loading="lazy" />
                   ))}
                 </div>
                 <div className={styles.socialText}>
@@ -1030,108 +1009,106 @@ export default function TariffPage() {
               </div>
             </div>
 
-            <div className={styles.panel}>
-              {/* ── Normal state: headline + recommended card ── */}
-              <div className={styles.panelNormal}>
-              <div className={styles.panelHeader} data-al>
-                <h1 className={styles.panelTitle}>Dein Stromtarif,<br />in 15 Sekunden</h1>
-                <p className={styles.panelSub}>Ehrlich erklärt, was deinen Tarif besonders macht – und warum du mit E.ON richtig liegst.</p>
-              </div>
-
-              <div className={styles.card} data-au ref={cardRef}>
-                <div className={styles.cardNav}>
-                  <span className={styles.cardTitle}>{tariff.name}</span>
-                  <span className={styles.cardBadge}>Unsere Empfehlung für dich</span>
-                </div>
-                <p className={styles.cardSub}>{tariff.sub}</p>
-                <div className={styles.cardBody}>
-                  <div className={styles.priceRow}>
-                    <div className={styles.priceBlock}>
-                      <span className={styles.priceMain}>{tariff.price}</span>
-                      <span className={styles.priceUnit}>€ pro Monat</span>
-                    </div>
-                  </div>
-                  <div className={styles.divider} />
-                  {/* 2×2 feature grid — the Neukunden-Bonus is the first cell (no purple badge) */}
-                  <div className={styles.features}>
-                    <div className={styles.feature}>
-                      <BonusIcon />
-                      <div className={styles.featureText}>
-                        <span className={styles.featureName}>{tariff.bonus}</span>
-                        <span className={styles.featureDesc}>{tariff.bonusUntil}</span>
-                      </div>
-                    </div>
-                    {tariff.features.map(([name, desc]) => (
-                      <div key={name + desc} className={styles.feature}>
-                        <CheckCircleIcon />
-                        <div className={styles.featureText}>
-                          <span className={styles.featureName}>{name}</span>
-                          <span className={styles.featureDesc}>{desc}</span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                  <div className={styles.cardBtns}>
-                    <button className={styles.btnPrimary} onClick={startCheckout}>Tarif auswählen</button>
-                    <button className={styles.btnSecondary} onClick={() => setComparing(true)}>
-                      Tarif vergleichen <ChevronRight />
-                    </button>
-                  </div>
-                </div>
-              </div>
-              </div>{/* /panelNormal */}
-            </div>
-
-            {/* ── Comparison — expands as its own frame beside the panel (Figma 1093:4573) ── */}
-            <div className={styles.panelCompare} aria-hidden={!comparing} ref={compareRef}>
+            <div className={styles.panel} ref={panelRef}>
+              {/* collapse chevron — left edge, vertically centred, only while comparing */}
+              {comparing && (
                 <button
                   className={styles.compareCollapse}
                   onClick={closeCompare}
                   aria-label="Vergleich schließen"
                 >
-                  <svg width="11" height="16" viewBox="0 0 10 16" fill="none">
-                    <path d="M2 2l6 6-6 6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+                  <svg width="14" height="20" viewBox="0 0 14 20" fill="none">
+                    <path d="M3 2l8 8-8 8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                   </svg>
                 </button>
+              )}
 
-                <div className={styles.compareHead}>
-                  <span className={styles.compareLabel}>Tarif im Vergleich</span>
-                  <h2 className={styles.compareTitle}>Drei Wege, ein Ökostrom</h2>
-                  <p className={styles.compareSub}>Gleiche strom Quelle, unterschiedliche Bindung–wähle, was zu dir passt.</p>
+              <div className={styles.panelNormal}>
+                <div className={styles.panelHeader} data-al>
+                  {comparing ? (
+                    <>
+                      <span className={styles.panelLabel}>Tarif im Vergleich</span>
+                      <h1 className={styles.panelTitle}>Drei Wege, ein Ökostrom</h1>
+                      <p className={styles.panelSub}>Gleiche Strom-Quelle, unterschiedliche Bindung – wähle, was zu dir passt.</p>
+                    </>
+                  ) : (
+                    <>
+                      <h1 className={styles.panelTitle}>Dein Stromtarif,<br />in 15 Sekunden</h1>
+                      <p className={styles.panelSub}>Ehrlich erklärt, was deinen Tarif besonders macht – und warum du mit E.ON richtig liegst.</p>
+                    </>
+                  )}
                 </div>
 
-                <div className={styles.compareCards}>
-                  {COMPARE.map((c) => (
-                    <div key={c.id} className={styles.compareCard} data-highlight={c.highlight ? 'true' : 'false'}>
-                      <div className={styles.compareTags}>
-                        {c.tags.map((t) => (
-                          <span key={t.label} className={styles.compareTag} data-green={t.green ? 'true' : 'false'}>
-                            {t.icon}{t.label}
-                          </span>
-                        ))}
-                      </div>
-                      <p className={styles.compareName}>{c.name}</p>
-                      <p className={styles.compareTerm}>{c.term}</p>
-                      <p className={styles.comparePrice}>
-                        <strong>{c.price}</strong> <span>€ pro Monat | {c.ct}</span>
-                      </p>
-                      <div className={styles.compareFeatures}>
-                        {c.features.map(([name, desc], i) => (
-                          <div key={name + desc} className={styles.compareFeature}>
-                            {i === c.features.length - 1 ? <BonusIcon /> : <CheckCircleIcon />}
-                            <div className={styles.featureText}>
-                              <span className={styles.featureName}>{name}</span>
-                              <span className={styles.featureDesc}>{desc}</span>
+                {/* one row: recommendation + two alternatives. In normal mode the
+                    extras are collapsed to zero width; comparing fans them out. */}
+                <div className={styles.cards} data-comparing={comparing}>
+                  {[tariff, ...family.filter((t) => t.id !== tariff.id)].map((t) => {
+                    const isRec = t.id === tariff.id;
+                    const tag = FAMILY_TAGS[family.indexOf(t)];
+                    return (
+                      <div
+                        key={t.id}
+                        className={styles.card}
+                        data-comparing={comparing}
+                        data-rec={isRec ? 'true' : 'false'}
+                        data-extra={isRec ? undefined : 'true'}
+                        data-au={isRec ? '' : undefined}
+                        ref={isRec ? cardRef : undefined}
+                      >
+                        {comparing ? (
+                          <div className={styles.cardTags}>
+                            <span className={styles.cardTag}>{tag.icon}{tag.label}</span>
+                            {isRec && <span className={styles.cardTag} data-green="true">Beste Wahl für dich</span>}
+                          </div>
+                        ) : (
+                          <div className={styles.cardNav}>
+                            <span className={styles.cardTitle}>{t.name}</span>
+                            <span className={styles.cardBadge}>Unsere Empfehlung für dich</span>
+                          </div>
+                        )}
+                        {comparing && <p className={styles.cardName}>{t.name}</p>}
+                        <p className={styles.cardSub}>{t.sub}</p>
+                        <div className={styles.cardBody}>
+                          <div className={styles.priceRow}>
+                            <div className={styles.priceBlock}>
+                              <span className={styles.priceMain}>{t.price}</span>
+                              <span className={styles.priceUnit}>€ pro Monat</span>
                             </div>
                           </div>
-                        ))}
+                          <div className={styles.divider} />
+                          {/* 2×2 grid normally; a vertical stack while comparing */}
+                          <div className={styles.features} data-comparing={comparing}>
+                            <div className={styles.feature}>
+                              <BonusIcon />
+                              <div className={styles.featureText}>
+                                <span className={styles.featureName}>{t.bonus}</span>
+                                <span className={styles.featureDesc}>{t.bonusUntil}</span>
+                              </div>
+                            </div>
+                            {t.features.map(([name, desc]) => (
+                              <div key={name + desc} className={styles.feature}>
+                                <CheckCircleIcon />
+                                <div className={styles.featureText}>
+                                  <span className={styles.featureName}>{name}</span>
+                                  <span className={styles.featureDesc}>{desc}</span>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                          <div className={styles.cardBtns}>
+                            <button className={styles.btnPrimary} onClick={startCheckout}>Tarif auswählen</button>
+                            {isRec && !comparing && (
+                              <button className={styles.btnSecondary} onClick={openCompare}>
+                                Tarif vergleichen <ChevronRight />
+                              </button>
+                            )}
+                          </div>
+                        </div>
                       </div>
-                      <button className={c.highlight ? styles.compareBtnPrimary : styles.compareBtnOutline} onClick={startCheckout}>
-                        Tarif auswählen
-                      </button>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
+              </div>{/* /panelNormal */}
             </div>
           </div>
 

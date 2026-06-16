@@ -951,6 +951,15 @@
   .abRow, .rowSplit { grid-template-columns: 1fr; }
 }
 
+/* ─── Checkout journey — white background, no animated blobs ─────────────── */
+.modalWhite {
+  background: #ffffff;
+}
+.modalWhite::before,
+.modalWhite::after {
+  display: none;
+}
+
 /* ═══ Conversational variant — layout only (gradient now lives on .modal) ══ */
 /* drop the column below the top bar; keep cards at natural size + scroll */
 .modalConv .stepPanel {

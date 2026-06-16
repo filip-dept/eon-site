@@ -44,14 +44,15 @@ const ChatWidget = forwardRef<HTMLDivElement>((_, ref) => {
         </div>
       </div>
 
-      {/* Suggestion chips */}
+      {/* Suggestion chips — only the first triggers the journey */}
       <div className={styles.chatChips}>
-        {CHIPS.map((chip) => (
+        {CHIPS.map((chip, i) => (
           <button
             key={chip.id}
             className={styles.chip}
-            onClick={() => handleChipClick(chip.id)}
+            onClick={i === 0 ? () => handleChipClick(chip.id) : undefined}
             data-chip
+            data-inactive={i !== 0 ? true : undefined}
           >
             {chip.label}
           </button>

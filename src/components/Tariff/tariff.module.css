@@ -240,8 +240,10 @@
 .compact .ctxSliders { max-width: 0; opacity: 0; }
 .ctxSliders .prefSlider { flex-shrink: 0; }
 
-/* its divider collapses with it so compact keeps a single divider */
-.compact .midDivider { width: 0; opacity: 0; }
+/* its divider collapses with it so compact keeps a single divider;
+   use .compact.scrolled to beat .scrolled .floatDivider's cascade order */
+.compact .midDivider,
+.compact.scrolled .midDivider { width: 0; opacity: 0; }
 
 /* "Besonders nachhaltig" checkbox — interactive (switches the tariff family) */
 .checkItem {
@@ -438,18 +440,18 @@
 }
 
 .frameImage {
-  flex: 0 0 58%;
+  /* grows past 58% to absorb the slack the capped (≤600px) panel leaves on
+     wide screens — so the frame never shows an empty gutter */
+  flex: 1 1 58%;
   position: relative;
   overflow: hidden;
   border-radius: 20px;
-  /*max-width: 900px; */
-  transition: flex-basis 0.6s var(--ease-out), margin-right 0.6s var(--ease-out);
+  transition: flex-basis 0.46s var(--ease-out), flex-grow 0.46s var(--ease-out);
 }
-/* comparison open → the image is masked out entirely (0% of the frame width
-   visible); the negative margin swallows its flex gap so the panel lands flush */
+/* comparison open → the image grows to absorb all slack the capped panel
+   leaves, so image + panel always span the full frame (no side gutters) */
 .frameHero[data-comparing='true'] .frameImage {
-  flex-basis: 0;
-  margin-right: -16px;
+  flex: 1 1 0;
 }
 .frameHero[data-comparing='true'] .socialProof {
   opacity: 0;
@@ -485,14 +487,17 @@
   flex-shrink: 0;
 }
 
-.avatar {
+/* scoped under .avatars to outrank `.frameImage img { width:100% }` */
+.avatars .avatar {
   width: 48px;
   height: 48px;
   border-radius: 50%;
   border: 2px solid #fff;
   background: #e0dedd;
+  object-fit: cover;
+  display: block;
 }
-.avatar + .avatar { margin-left: -20px; }
+.avatars .avatar + .avatar { margin-left: -16px; }
 
 .socialText {
   flex: 1;
@@ -531,7 +536,9 @@
    radial blooms orbit on independent paths/speeds over the red base */
 .panel {
   position: relative;
-  flex: 1 1 0%;
+  /* normal: 600px wide (no grow) so the single card never sprawls — width is
+     held by flex-basis (not max-width) so it transitions both ways symmetrically */
+  flex: 0 1 600px;
   min-width: 0;
   border-radius: 20px;
   background: linear-gradient(138deg, #ea1b0a 0%, #e0190f 55%, #c11054 100%);
@@ -541,7 +548,17 @@
   padding: 16px 16px 16px 16px;
   gap: 16px;
   overflow: hidden;
-  transition: flex-grow 0.6s var(--ease-out), flex-basis 0.6s var(--ease-out);
+  transition:
+    flex-grow 0.46s var(--ease-out),
+    flex-basis 0.46s var(--ease-out),
+    padding 0.46s var(--ease-out);
+}
+/* comparison open → the panel grows just enough to hold the three capped cards
+   (1120 row + 64 left for the chevron + 16 right), then stops — so it hugs its
+   content rather than sprawling across wide monitors */
+.frameHero[data-comparing='true'] .panel {
+  flex: 0 1 1208px;            /* basis grows the panel; image absorbs the rest */
+  padding-left: 72px;          /* clear the collapse chevron + 8px breathing room */
 }
 /* comparison open → the gradient panel just fills the space left of the
    comparison frame (which takes 65%) */
@@ -558,14 +575,16 @@
   content: '';
   position: absolute;
   z-index: 0;
-  width: 95%;
+  width: 120%;
   aspect-ratio: 1;
-  left: 15%;
-  bottom: -45%;
+  left: 5%;
+  bottom: -55%;
   pointer-events: none;
-  filter: blur(80px);
+  filter: blur(120px);
+  /* gentler, earlier falloff so the colour is faint by the panel edge — the
+     clip never cuts a visible (straight) edge */
   background: radial-gradient(circle at 45% 40%,
-    #c11054 0%, #941481 45%, rgba(148, 20, 129, 0) 70%);
+    #c11054 0%, #941481 38%, rgba(148, 20, 129, 0) 62%);
   animation: panelBloomA 9s ease-in-out infinite;
 }
 
@@ -574,13 +593,14 @@
   content: '';
   position: absolute;
   z-index: 0;
-  width: 90%;
+  width: 115%;
   aspect-ratio: 1;
-  left: -30%;
-  top: -30%;
+  left: -40%;
+  top: -40%;
   pointer-events: none;
+  filter: blur(110px);          /* was un-blurred → hard clipped edge */
   background: radial-gradient(circle at 60% 60%,
-    rgba(255, 110, 60, 0.85) 0%, rgba(255, 90, 50, 0.3) 42%, rgba(255, 90, 50, 0) 68%);
+    rgba(255, 110, 60, 0.85) 0%, rgba(255, 90, 50, 0.28) 38%, rgba(255, 90, 50, 0) 62%);
   animation: panelBloomB 8.5s ease-in-out infinite alternate;
 }
 
@@ -611,6 +631,13 @@
   padding: 12px;  
 }
 
+.panelLabel {
+  font-family: var(--font-body);
+  font-size: 15px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.9);
+}
+
 .panelTitle {
   font-family: var(--font-body);
   font-weight: 700;
@@ -627,14 +654,98 @@
   max-width: 480px;
 }
 
+/* ─── Cards row: recommendation + (when comparing) two alternatives ───────── */
+.cards {
+  display: flex;
+  align-items: stretch;
+  gap: 16px;
+  min-width: 0;
+}
+/* comparing → cap the three-card row and centre it so it never sprawls wide */
+.cards[data-comparing='true'] {
+  max-width: 1120px;
+  margin-left: auto;
+  margin-right: auto;
+  width: 100%;
+}
+
 /* ─── Tariff card ─────────────────────────────────────────────────────────── */
 .card {
+  flex: 1 1 0;
+  min-width: 0;
   background: #fff;
   border-radius: 8px;
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  /* opacity is driven by GSAP (entrance / collapse) — keep it OUT of the CSS
+     transition so a React re-render dropping the inline value can't animate it
+     back up and flash the card during collapse. Snappy (0.46s) so the rec card
+     widens + its 2×2 features settle quickly on collapse. */
+  transition:
+    flex-grow 0.46s var(--ease-out),
+    flex-basis 0.46s var(--ease-out),
+    margin-left 0.46s var(--ease-out),
+    max-height 0.46s var(--ease-out);
 }
+/* the two alternatives are collapsed to zero width until comparing — the
+   negative margin swallows the flex gap so the recommendation fills 100% */
+.card[data-extra='true'] {
+  flex-grow: 0;
+  flex-basis: 0;
+  margin-left: -16px;
+  opacity: 0;
+  pointer-events: none;
+  /* zero-width text would wrap catastrophically tall and stretch the row —
+     collapse the height too so the recommendation card hugs its own content */
+  max-height: 0;
+}
+.cards[data-comparing='true'] .card[data-extra='true'] {
+  flex-grow: 1;
+  flex-basis: 0;
+  margin-left: 0;
+  opacity: 1;
+  pointer-events: auto;
+  max-height: 600px;
+}
+/* the recommended card keeps a subtle red cap + lift while comparing */
+.card[data-rec='true'][data-comparing='true'] {
+  border-top: 3px solid var(--c-red);
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.12);
+}
+
+/* tags row (Figma comparison) — replaces the cardNav while comparing */
+.cardTags { display: flex; flex-wrap: wrap; gap: 8px; padding: 16px 16px 0; }
+.cardTag {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: #f1eeec;
+  border-radius: 6px;
+  padding: 4px 9px;
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--c-text-secondary);
+}
+.cardTag[data-green='true'] { background: #dcefe0; color: #1d6b3a; }
+.cardName {
+  padding: 8px 16px 0;
+  margin: 0;
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: 17px;
+  line-height: 1.3;
+  color: var(--c-text-primary);
+}
+
+/* ── Comparing: tighter card internals so three fit cleanly ── */
+.card[data-comparing='true'] .cardSub { padding: 2px 16px 0; }
+.card[data-comparing='true'] .cardBody { padding: 4px 16px 16px; gap: 14px; }
+.card[data-comparing='true'] .priceMain { font-size: 26px; }
+.card[data-comparing='true'] .featureName { font-size: 14px; line-height: 1.4; }
+.card[data-comparing='true'] .cardBtns { height: 44px; }
+.card[data-comparing='true'] .btnPrimary { font-size: 15px; border-radius: 10px; }
 
 .cardNav {
   display: flex;
@@ -758,6 +869,12 @@
   grid-template-columns: 1fr 1fr;
   column-gap: 8px;
   row-gap: 14px;
+}
+/* comparing → vertical stack (each of the three cards is narrow) */
+.features[data-comparing='true'] {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
 .feature {
@@ -2050,26 +2167,26 @@
   visibility: visible;
 }
 
+/* collapse button — left edge of the expanded red panel, vertically centred */
 .compareCollapse {
   position: absolute;
-  left: 12px;
+  left: 14px;
   top: 50%;
   transform: translateY(-50%);
-  width: 34px;
-  height: 34px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
-  background: #fff;
-  border: 1px solid #ece9e7;
-  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.1);
+  background: rgba(255, 255, 255, 0.16);
+  border: 1px solid rgba(255, 255, 255, 0.4);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--c-text-primary);
+  color: #fff;
   cursor: pointer;
-  z-index: 2;
+  z-index: 3;
   transition: background 0.15s ease;
 }
-.compareCollapse:hover { background: #f3efec; }
+.compareCollapse:hover { background: rgba(255, 255, 255, 0.28); }
 
 .compareHead {
   display: flex;

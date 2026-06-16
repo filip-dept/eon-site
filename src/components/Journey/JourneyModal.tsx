@@ -345,7 +345,7 @@ export default function JourneyModal() {
     /* ── 1 · Overview (Figma) ── */
     <>
       <p className={styles.stepLabel}>Review</p>
-      <h2 className={styles.stepHeadline}>Bereit für dein neues Energie? Wir schon.</h2>
+      <h2 className={styles.stepHeadline}>Bereit für deine neue Energie? Los geht's!</h2>
 
       <div className={styles.ctxRow}>
         <span className={styles.ctxChip}><LocationIcon />81245</span>
@@ -632,7 +632,7 @@ export default function JourneyModal() {
       {/* Modal */}
       <div
         ref={modalRef}
-        className={styles.modal}
+        className={`${styles.modal} ${styles.modalWhite}`}
         role="dialog"
         aria-modal="true"
         aria-label="Tarif-Assistent"
