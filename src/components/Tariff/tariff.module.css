@@ -153,16 +153,17 @@
     box-shadow 0.6s ease;
 }
 .scrolled .ctxBar {
-  left: calc(50% - 461px);
-  right: calc(50% - 461px);
+  left: calc(50% - 500px);
+  right: calc(50% - 500px);
   background: rgba(255, 255, 255, 1);
   box-shadow: 0 0 2px rgba(0, 0, 0, 0.08), 0 12px 40px rgba(0, 0, 0, 0.14);
   padding: 8px 8px 8px 20px;
 }
-/* slider + checkbox are gone in compact — pill narrows further */
+/* slider + checkbox are gone in compact — pill narrows further (but still wide
+   enough for "Deine Eingaben" + tariff without clipping) */
 .compact .ctxBar {
-  left: calc(50% - 253px);
-  right: calc(50% - 253px);
+  left: calc(50% - 280px);
+  right: calc(50% - 280px);
 }
 
 /* group: PLZ / persons / kWh — collapses away in the floating state */
@@ -186,6 +187,7 @@
   max-width: 0;
   overflow: hidden;
   opacity: 0;
+  flex-shrink: 0;   /* never squeeze "Deine Eingaben" below its text */
   transition: max-width 0.8s var(--ease-out), opacity 0.5s ease;
 }
 .scrolled .floatLabel { max-width: 180px; opacity: 1; }
@@ -237,6 +239,7 @@
   gap: 16px;
   max-width: 720px;
   overflow: hidden;
+  flex-shrink: 0;   /* don't squeeze the slider+checkbox group (clips "Besonders nachhaltig") */
   transition: max-width 0.8s var(--ease-out), opacity 0.5s ease;
 }
 .ctxSliders .checkItem { flex-shrink: 0; }

@@ -444,6 +444,9 @@ export default function TariffPage() {
   /* ── AI chat (orbFloat): open state + a ref so GSAP can drift it to centre.
      `orbCentered` flips true once the breakdown morph has parked it centre. ── */
   const [chatOpen, setChatOpen] = useState(false);
+  /* placeholder flips to the tariff-specific prompt once the orb parks centre
+     (breakdown onward — the "this tariff" context) */
+  const [orbTariffQ, setOrbTariffQ] = useState(false);
   const orbRef = useRef<HTMLDivElement>(null);
   const orbCentered = useRef(false);
 
@@ -905,6 +908,7 @@ export default function TariffPage() {
     gsap.set(orbEl, { x: orbDockX });
     const centreOrb = (toCentre: boolean) => {
       orbCentered.current = toCentre;
+      setOrbTariffQ(toCentre);   /* switch placeholder to the tariff prompt */
       gsap.to(orbEl, { x: toCentre ? orbCtrX : orbDockX, duration: 0.7, ease: 'power3.inOut', overwrite: 'auto' });
     };
     const orbCenterST = ScrollTrigger.create({
@@ -978,15 +982,20 @@ export default function TariffPage() {
     });
 
     /* auto-open the chat once the user has been INACTIVE (not scrolling) for 3s
-       while on the HEMS slide. Any scroll within the section re-arms the timer,
-       so it only fires when the user actually pauses. Once per visit. */
+       while the HEMS category (and ONLY HEMS — not Solar/Strom/…) is active. Any
+       scroll within the section re-arms the timer, so it only fires when the user
+       actually pauses; the category is re-checked at fire time. Once per visit. */
     let hemsIdle: ReturnType<typeof setTimeout> | undefined;
     let hemsAutoOpened = false;
     let hemsActiveNow = false;
     const armHemsIdle = () => {
       clearTimeout(hemsIdle);
       if (!hemsActiveNow || hemsAutoOpened) return;
-      hemsIdle = setTimeout(() => { hemsAutoOpened = true; setChatOpen(true); }, 3000);
+      hemsIdle = setTimeout(() => {
+        if (hemsIdxRef.current !== 0) return;   /* only the first (HEMS) category */
+        hemsAutoOpened = true;
+        setChatOpen(true);
+      }, 3000);
     };
 
     /* sticky scroll-through: progress across the tall section selects the
@@ -1042,6 +1051,14 @@ export default function TariffPage() {
         gsap.fromTo(faq.querySelectorAll(`.${styles.faqItem}`),
           { y: 32, opacity: 0 }, { y: 0, opacity: 1, duration: 0.7, ease: 'expo.out', stagger: 0.1, delay: 0.15 });
       },
+    });
+
+    /* leaving HEMS toward the FAQ section → compact the chat back to the pill
+       (no-op if it's already collapsed) */
+    const faqApproachST = ScrollTrigger.create({
+      trigger: faq,
+      start: 'top bottom',
+      onEnter: () => collapseChatToDefault(),
     });
 
     /* ── Background switch: white until the stories text passes the middle of
@@ -1119,6 +1136,7 @@ export default function TariffPage() {
       orbCenterST.kill();
       hemsChatST.kill();
       zoneBgST.kill();
+      faqApproachST.kill();
       hemsST.kill();
       hemsScrubST.kill();
       faqST.kill();
@@ -1233,7 +1251,7 @@ export default function TariffPage() {
               <div className={styles.chatInputRow} data-open="true" ref={chatRowRef}>
                 <div className={styles.orb} />
                 <div className={styles.orbReveal}>
-                  <span className={styles.orbHint}>Was beschäftigt dich heute?</span>
+                  <span className={styles.orbHint}>{orbTariffQ ? 'Fragen zu diesem Tarif?' : 'Was beschäftigt dich heute?'}</span>
                 </div>
                 <div className={styles.voiceDivider} />
                 <button className={styles.chatIconBtn} aria-label="Spracheingabe"><MicIcon /></button>
@@ -1254,7 +1272,7 @@ export default function TariffPage() {
           >
             <div className={styles.orb} />
             <div className={styles.orbReveal} ref={pillRevealRef}>
-              <span className={styles.orbHint}>Was beschäftigt dich heute?</span>
+              <span className={styles.orbHint}>{orbTariffQ ? 'Fragen zu diesem Tarif?' : 'Was beschäftigt dich heute?'}</span>
             </div>
             <div className={styles.voiceDivider} />
             <span className={styles.chatIconBtn} aria-hidden="true"><MicIcon /></span>
