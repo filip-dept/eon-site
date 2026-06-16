@@ -390,6 +390,9 @@
   font-weight: 700;
   font-size: clamp(40px, 7vw, 56px);   /* match the kWh number on Q3 */
   line-height: 1;
+  /* override the browser's intrinsic control height so the input box is exactly
+     the text height (1em) — matches the persons value, so both underlines align */
+  height: 1em;
   color: var(--c-text-primary);
   width: 100%;
   min-width: 0;

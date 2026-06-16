@@ -226,6 +226,11 @@ export default function JourneyModal() {
     return () => document.removeEventListener('eon:checkout-start', handler);
   }, [openModal]);
 
+  /* always release the body scroll-lock on unmount, so navigating away while
+     open never leaves `body { overflow: hidden }` behind (which breaks
+     position: sticky on the next page) */
+  useEffect(() => () => { document.body.style.overflow = ''; }, []);
+
   /* ── Enter animation ── */
   useEffect(() => {
     if (!open) return;

@@ -510,6 +510,14 @@ export default function OnboardingModal() {
     return () => document.removeEventListener('eon:journey-start', handler);
   }, [openModal]);
 
+  /* Safety net: always release the body scroll-lock when this modal unmounts.
+     Submitting calls router.push('/tariff') and navigates away WITHOUT running
+     closeModal, which used to leave `body { overflow: hidden }` set. On the
+     destination page that turns <body> into a non-scrolling scroll container,
+     which silently breaks `position: sticky` (e.g. the HEMS stage) until a hard
+     refresh resets the inline style. */
+  useEffect(() => () => { document.body.style.overflow = ''; }, []);
+
   /* ── Enter animation (fires when open transitions true → rendered) ── */
   useEffect(() => {
     if (!open) return;
