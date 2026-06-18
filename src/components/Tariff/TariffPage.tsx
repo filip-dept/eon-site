@@ -49,30 +49,6 @@ const BonusIcon = () => (
     />
   </svg>
 );
-/* tiny tag icons for the comparison cards */
-const BalanceIcon = () => (
-  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M12 3v18M5 7h14M5 7l-3 6a3 3 0 0 0 6 0l-3-6zM19 7l-3 6a3 3 0 0 0 6 0l-3-6zM8 21h8"/>
-  </svg>
-);
-const BoltIcon = () => (
-  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M13 2 4 14h7l-1 8 10-12h-7l1-8z"/>
-  </svg>
-);
-const ShieldIcon = () => (
-  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6l8-3z"/>
-  </svg>
-);
-
-/* ─── Comparison tags — one per family position (Flex | Ausgewogen | Sicher) ── */
-type CompareTag = { label: string; green?: boolean; icon?: React.ReactNode };
-const FAMILY_TAGS: CompareTag[] = [
-  { label: 'Maximal Flexibel', icon: <BoltIcon /> },
-  { label: 'Ausgewogen', icon: <BalanceIcon /> },
-  { label: 'Maximale Sicherheit', icon: <ShieldIcon /> },
-];
 const ChevronRight = () => (
   <svg width="10" height="14" viewBox="0 0 10 16" fill="none">
     <path d="M2 2l6 6-6 6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
@@ -102,13 +78,6 @@ const InfoIcon = () => (
 const HomeGreenIcon = () => (
   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#1ea354" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <path d="M3 10.5L12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/>
-  </svg>
-);
-/* leaf — "Besonders nachhaltig" badge */
-const LeafIcon = () => (
-  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M5 21c.5-4.5 2.5-8 7-10" />
-    <path d="M9 18c6.2 0 10.5-3.3 11-12V4h-4c-9 0-12 4-12 9 0 1 0 3 2 5h3z" />
   </svg>
 );
 const MicIcon = () => (
@@ -1334,6 +1303,7 @@ export default function TariffPage() {
               <img src="/newhouse.png" alt="E.ON Kundin" />
             </div>
 
+            <div className={styles.heroRight}>
             <div className={styles.panel} ref={panelRef}>
               {/* collapse chevron — left edge, vertically centred, only while comparing */}
               {comparing && (
@@ -1358,7 +1328,7 @@ export default function TariffPage() {
                     </>
                   ) : (
                     <>
-                      <h1 className={styles.panelTitle}>Dein Stromtarif,<br />in 15 Sekunden</h1>
+                      <h1 className={styles.panelTitle}>Dein Stromtarif, in 15 Sekunden</h1>
                       <p className={styles.panelSub}>Ehrlich erklärt, was deinen Tarif besonders macht – und warum du mit E.ON richtig liegst.</p>
                     </>
                   )}
@@ -1374,83 +1344,68 @@ export default function TariffPage() {
                   {[
                     { t: tariff, isRec: true, k: 'rec' },
                     ...family.filter((t) => t.id !== tariff.id).map((t) => ({ t, isRec: false, k: t.id })),
-                  ].map(({ t, isRec, k }) => {
-                    const tag = FAMILY_TAGS[family.indexOf(t)];
-                    return (
-                      <div
-                        key={k}
-                        className={styles.card}
-                        data-comparing={comparing}
-                        data-rec={isRec ? 'true' : 'false'}
-                        data-extra={isRec ? undefined : 'true'}
-                        data-au={isRec ? '' : undefined}
-                        ref={isRec ? cardRef : undefined}
-                      >
-                        {comparing ? (
-                          <div className={styles.cardTags}>
-                            <span className={styles.cardTag}>{tag.icon}{tag.label}</span>
-                            {isRec && <span className={styles.cardTag} data-green="true">Beste Wahl für dich</span>}
+                  ].map(({ t, isRec, k }) => (
+                    <div
+                      key={k}
+                      className={styles.card}
+                      data-comparing={comparing}
+                      data-rec={isRec ? 'true' : 'false'}
+                      data-extra={isRec ? undefined : 'true'}
+                      data-au={isRec ? '' : undefined}
+                      ref={isRec ? cardRef : undefined}
+                    >
+                      {/* Header: name + sub (+ recommendation badge on the rec card), price */}
+                      <div className={styles.cardHeader}>
+                        <div className={styles.cardHeadRow}>
+                          <div className={styles.cardHeadText}>
+                            <p className={styles.cardName}>{t.name}</p>
+                            <p className={styles.cardSub}>{t.sub}</p>
                           </div>
-                        ) : (
-                          <div className={styles.cardNav}>
-                            <span className={styles.cardTitle}>{t.name}</span>
-                            {eco && (
-                              <span className={styles.cardBadge}><LeafIcon /> Besonders nachhaltig</span>
-                            )}
-                          </div>
-                        )}
-                        {comparing && <p className={styles.cardName}>{t.name}</p>}
-                        <p className={styles.cardSub}>{t.sub}</p>
-                        <div className={styles.cardBody}>
-                          <div className={styles.priceRow}>
-                            <div className={styles.priceBlock}>
-                              <span className={styles.priceMain}>{t.price}</span>
-                              <span className={styles.priceUnit}>€ pro Monat</span>
-                            </div>
-                          </div>
-                          <div className={styles.divider} />
-                          {/* 2×2 grid normally; a vertical stack while comparing */}
-                          <div className={styles.features} data-comparing={comparing}>
-                            <div className={styles.feature}>
-                              <BonusIcon />
-                              <div className={styles.featureText}>
-                                <span key={tariff.id} className={styles.featureName}>
-                                  {t.bonus.split('').map((char, i) => (
-                                    <span
-                                      key={i}
-                                      className={styles.featureNameLetter}
-                                      style={{ '--i': i } as React.CSSProperties}
-                                    >{char}</span>
-                                  ))}
-                                </span>
-                                <span className={styles.featureDesc}>{t.bonusUntil}</span>
-                              </div>
-                            </div>
-                            {t.features.map(([name, desc]) => (
-                              <div key={name + desc} className={styles.feature}>
-                                <CheckCircleIcon />
-                                <div className={styles.featureText}>
-                                  <span className={styles.featureName}>{name}</span>
-                                  <span className={styles.featureDesc}>{desc}</span>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                          <div className={styles.cardBtns}>
-                            <button className={styles.btnPrimary} onClick={startCheckout}>Tarif auswählen</button>
-                            {isRec && !comparing && (
-                              <button className={styles.btnSecondary} onClick={openCompare}>
-                                Tarif vergleichen <ChevronRight />
-                              </button>
-                            )}
-                          </div>
+                          {isRec && <span className={styles.cardBadge}>Unsere Empfehlung für dich</span>}
+                        </div>
+                        <div className={styles.cardPrice}>
+                          <span className={styles.priceMain}>{t.price}</span>
+                          <span className={styles.priceUnit}>€ pro Monat</span>
                         </div>
                       </div>
-                    );
-                  })}
+
+                      {/* Body: divider, features (2×2 grid in panel · list while comparing), actions */}
+                      <div className={styles.cardBody}>
+                        <div className={styles.cardDivider} />
+                        <div className={styles.cardFeatures} data-comparing={comparing}>
+                          <div className={styles.feature}>
+                            <BonusIcon />
+                            <div className={styles.featureText}>
+                              <span className={styles.featureName}>{t.bonus}</span>
+                              <span className={styles.featureDesc}>{t.bonusUntil}</span>
+                            </div>
+                          </div>
+                          {t.features.map(([name, desc]) => (
+                            <div key={name + desc} className={styles.feature}>
+                              <CheckCircleIcon />
+                              <div className={styles.featureText}>
+                                <span className={styles.featureName}>{name}</span>
+                                <span className={styles.featureDesc}>{desc}</span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                        <div className={styles.cardActions}>
+                          <button className={styles.btnPrimary} onClick={startCheckout}>Tarif auswählen</button>
+                          {isRec && !comparing && (
+                            <button className={styles.btnCompare} onClick={openCompare}>
+                              Tarif vergleichen <ChevronRight />
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>{/* /panelNormal */}
+            </div>{/* /panel */}
 
+              {/* Social proof — sits BELOW the red panel, on the white page */}
               <div className={styles.socialProof}>
                 <div className={styles.avatars}>
                   {[
@@ -1467,7 +1422,7 @@ export default function TariffPage() {
                 </div>
                 <button className={styles.socialCta}>Mehr entdecken</button>
               </div>
-            </div>{/* /panel */}
+            </div>{/* /heroRight */}
           </div>
 
           {/* ═══ Frame 2: Editorial "28 cent" intro — the ONE travelling headline.
