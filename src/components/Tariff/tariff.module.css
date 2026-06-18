@@ -458,10 +458,9 @@
 .frameHero[data-comparing='true'] .frameImage {
   flex: 1 1 0;
 }
+/* comparing → drop the social-proof card so the three tariff cards get full height */
 .frameHero[data-comparing='true'] .socialProof {
-  opacity: 0;
-  transition: opacity 0.25s ease;
-  pointer-events: none;
+  display: none;
 }
 
 .frameImage img {
@@ -472,14 +471,11 @@
   object-position: top center;   /* fill, cropping evenly around the centre */
 }
 
-/* Social proof card (bottom of image) */
+/* Social proof card — sits below the red panel in the right column */
 .socialProof {
-  position: absolute;
-  bottom: 15px;
-  left: 15px;
-  right: 15px;
+  flex-shrink: 0;
   background: #fff;
-  border-radius: 4px;
+  border-radius: 6px;
   padding: 12px 16px;
   display: flex;
   align-items: center;
@@ -721,6 +717,13 @@
 .card[data-rec='true'][data-comparing='true'] {
   filter: drop-shadow(0 14px 34px rgba(0, 0, 0, 0.18)) drop-shadow(0 2px 6px rgba(0, 0, 0, 0.10));
 }
+/* …and it's a touch wider than the two alternatives so it stands out — the two
+   extras keep flex-grow:1, so this ratio (1.06) makes the rec card ~6% wider.
+   No vertical overhang: it stays within the panel so nothing spills the frame. */
+.cards[data-comparing='true'] .card[data-rec='true'] {
+  flex-grow: 1.06;
+  z-index: 1;
+}
 
 /* tags row (Figma comparison) — replaces the cardNav while comparing */
 .cardTags { display: flex; flex-wrap: wrap; gap: 8px; padding: 16px 16px 0; }
@@ -823,7 +826,7 @@
 .priceMain {
   font-family: var(--font-body);
   font-weight: 700;
-  font-size: 36px;
+  font-size: 56px;
   line-height: 1;
   color: var(--c-text-primary);
 }

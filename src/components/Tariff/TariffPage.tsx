@@ -1153,10 +1153,17 @@ export default function TariffPage() {
     const lateImgs = Array.from(page.querySelectorAll('img')).filter((im) => !im.complete);
     lateImgs.forEach((im) => im.addEventListener('load', refresh, { once: true }));
     window.addEventListener('load', refresh);
-    /* re-anchor pins + re-route wires whenever the layout changes size.
-       ScrollTrigger auto-refreshes (debounced) on resize/orientation change,
-       so its 'refresh' event is the reliable hook for keeping the image-fraction
-       hotspots and wires aligned at every viewport size. */
+    /* re-anchor pins + re-route wires + re-cap labels whenever the layout changes
+       size, so the image-fraction hotspots stay glued to the re-cropped photo at
+       every viewport width. Direct resize listener (rAF-coalesced) — don't rely on
+       ScrollTrigger's debounced refresh alone. The 'refresh' hook covers the other
+       settle events (fonts/images/load). */
+    let resizeRaf = 0;
+    const onHemsResize = () => {
+      cancelAnimationFrame(resizeRaf);
+      resizeRaf = requestAnimationFrame(buildHemsPaths);
+    };
+    window.addEventListener('resize', onHemsResize);
     ScrollTrigger.addEventListener('refresh', buildHemsPaths);
 
     return () => {
@@ -1164,6 +1171,8 @@ export default function TariffPage() {
       clearTimeout(settle2);
       window.removeEventListener('load', refresh);
       ScrollTrigger.removeEventListener('refresh', buildHemsPaths);
+      cancelAnimationFrame(resizeRaf);
+      window.removeEventListener('resize', onHemsResize);
       lateImgs.forEach((im) => im.removeEventListener('load', refresh));
       window.removeEventListener('resize', setFrameWidth);
       cardParallax.forEach((t) => { t.scrollTrigger?.kill(); t.kill(); });
@@ -1323,22 +1332,6 @@ export default function TariffPage() {
           <div className={`${styles.frame} ${styles.frameHero}`} data-comparing={comparing}>
             <div className={styles.frameImage} data-aimg>
               <img src="/newhouse.png" alt="E.ON Kundin" />
-              <div className={styles.socialProof}>
-                <div className={styles.avatars}>
-                  {[
-                    'https://randomuser.me/api/portraits/women/44.jpg',
-                    'https://randomuser.me/api/portraits/men/32.jpg',
-                    'https://randomuser.me/api/portraits/women/68.jpg',
-                  ].map((src, i) => (
-                    <img key={i} className={styles.avatar} src={src} alt="" loading="lazy" />
-                  ))}
-                </div>
-                <div className={styles.socialText}>
-                  <p className={styles.socialPct}>68% der Haushalte</p>
-                  <p className={styles.socialDesc}>mit ähnlichem Verbrauch wählen diesen Tarif</p>
-                </div>
-                <button className={styles.socialCta}>Mehr entdecken</button>
-              </div>
             </div>
 
             <div className={styles.panel} ref={panelRef}>
@@ -1457,7 +1450,24 @@ export default function TariffPage() {
                   })}
                 </div>
               </div>{/* /panelNormal */}
-            </div>
+
+              <div className={styles.socialProof}>
+                <div className={styles.avatars}>
+                  {[
+                    'https://randomuser.me/api/portraits/women/44.jpg',
+                    'https://randomuser.me/api/portraits/men/32.jpg',
+                    'https://randomuser.me/api/portraits/women/68.jpg',
+                  ].map((src, i) => (
+                    <img key={i} className={styles.avatar} src={src} alt="" loading="lazy" />
+                  ))}
+                </div>
+                <div className={styles.socialText}>
+                  <p className={styles.socialPct}>68% der Haushalte</p>
+                  <p className={styles.socialDesc}>mit ähnlichem Verbrauch wählen diesen Tarif</p>
+                </div>
+                <button className={styles.socialCta}>Mehr entdecken</button>
+              </div>
+            </div>{/* /panel */}
           </div>
 
           {/* ═══ Frame 2: Editorial "28 cent" intro — the ONE travelling headline.
