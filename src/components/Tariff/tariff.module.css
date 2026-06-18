@@ -695,6 +695,10 @@
 }
 /* the two alternatives are collapsed to zero width until comparing — the
    negative margin swallows the flex gap so the recommendation fills 100% */
+.card[data-rec='true'] {
+  filter: drop-shadow(0 8px 28px rgba(0, 0, 0, 0.18)) drop-shadow(0 2px 6px rgba(0, 0, 0, 0.10));
+}
+
 .card[data-extra='true'] {
   flex-grow: 0;
   flex-basis: 0;
@@ -715,8 +719,7 @@
 }
 /* the recommended card keeps a subtle red cap + lift while comparing */
 .card[data-rec='true'][data-comparing='true'] {
-  border-top: 3px solid var(--c-red);
-  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.12);
+  filter: drop-shadow(0 14px 34px rgba(0, 0, 0, 0.18)) drop-shadow(0 2px 6px rgba(0, 0, 0, 0.10));
 }
 
 /* tags row (Figma comparison) — replaces the cardNav while comparing */
@@ -748,7 +751,7 @@
 /* ── Comparing: tighter card internals so three fit cleanly ── */
 .card[data-comparing='true'] .cardSub { padding: 2px 16px 0; }
 .card[data-comparing='true'] .cardBody { padding: 4px 16px 16px; gap: 14px; }
-.card[data-comparing='true'] .priceMain { font-size: 22px; }
+.card[data-comparing='true'] .priceMain { font-size: 36px; }
 .card[data-comparing='true'] .featureName { font-size: 14px; line-height: 1.4; }
 .card[data-comparing='true'] .cardBtns { height: 44px; }
 .card[data-comparing='true'] .btnPrimary { font-size: 16px; border-radius: 10px; }
@@ -875,6 +878,15 @@
 }
 
 /* 2×2 grid — Figma 904:10812 (the Neukunden-Bonus is the first cell) */
+/* @keyframes bonusSpin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+.bonusIcon {
+  animation: bonusSpin 0.55s cubic-bezier(0.2, 0, 0.3, 1) 0.2s both;
+  transform-origin: center;
+} */
+
 .features {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -888,6 +900,14 @@
   gap: 16px;
 }
 
+/* Phase 1 (0-25%): letter blurs in.
+   Phase 2 (25-100%): brand gradient (red→purple) sweeps to dark text. */
+@keyframes letterReveal {
+  0%   { filter: blur(10px); opacity: 0; background-position-x: 0%; }
+  25%  { filter: blur(0);    opacity: 1; background-position-x: 0%; }
+  100% { filter: blur(0);    opacity: 1; background-position-x: 100%; }
+}
+
 .feature {
   display: flex;
   align-items: flex-start;
@@ -895,14 +915,34 @@
   min-width: 0;
 }
 
+.card:not([data-extra]) .feature:first-child .featureNameLetter {
+  display: inline-block;
+  background: linear-gradient(90deg,
+    #EA1A1A 0%,
+    #9B27AF 25%,
+    #EA1A1A 50%,
+    var(--c-text-primary) 66%,
+    var(--c-text-primary) 100%
+  );
+  background-size: 300% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: letterReveal 1.8s ease-out calc(var(--i) * 0.04s) both;
+}
+
 .featureText { display: flex; flex-direction: column; gap: 1px; }
 
 .featureName {
+  display: block;
   font-family: var(--font-body);
   font-weight: 700;
   font-size: 16px;
   color: var(--c-text-primary);
   line-height: 1.5;
+}
+.featureNameLetter {
+  display: inline;
 }
 
 .featureDesc {
@@ -932,6 +972,15 @@
   white-space: nowrap;
 }
 .btnPrimary:hover { background: #cc1709; }
+
+.card[data-extra] .btnPrimary {
+  background: transparent;
+  color: var(--c-red);
+  border: 2px solid var(--c-red);
+}
+.card[data-extra] .btnPrimary:hover {
+  background: rgba(234, 27, 10, 0.06);
+}
 
 .btnSecondary {
   flex: 1;
@@ -1305,6 +1354,7 @@
   position: relative;
   overflow: hidden;
   background: radial-gradient(circle at 32% 28%, #f9c8b8 0%, #ee7e9d 45%, #c46be0 100%);
+  object-fit: cover;
 }
 .orb::before,
 .orb::after {
@@ -1938,7 +1988,7 @@
 
 .hemsRight {
   position: relative;
-  flex: 0 0 49%;
+  flex: 0 0 60%;          /* house : text ≈ 60 : 40 */
   border-radius: 4px;
   /* dark backing so the top-right unmask never flashes the white page through
      the not-yet-revealed corner */
@@ -2019,8 +2069,8 @@
 .hemsPin {
   position: absolute;
   display: flex;
-  align-items: flex-start;
-  gap: 19px;
+  align-items: center;
+  gap: 16px;
   opacity: 0;
   transform: scale(0.92);
   transform-origin: left center;
@@ -2032,11 +2082,9 @@
 /* label on the left of the dot — the dot stays the positioned anchor (so the
    connecting wires are unaffected); the label floats out to the left, right-aligned */
 .hemsPinLeft .hemsPinLabel {
-  position: absolute;
-  top: 0;
-  right: calc(100% + 19px);
-  align-items: flex-start;
-  text-align: left;
+  left: auto;                      /* float to the left of the dot instead of the right */
+  right: calc(100% + 16px);
+  text-align: right;
 }
 
 /* highlighted hotspot for the active category */
@@ -2070,6 +2118,12 @@
 }
 
 .hemsPinLabel {
+  /* absolute so the .hemsPin box stays exactly dot-sized (40px) — the dot then
+     always centres on the wire endpoint regardless of label height */
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  left: calc(100% + 16px);       /* 16px to the right of the dot — matches gap */
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -2078,21 +2132,28 @@
   background: rgba(121, 100, 96, 0.5);
   backdrop-filter: blur(6px);
   color: #fff;
-  white-space: nowrap;
+  /* max-width is set per-pin in JS (buildHemsPaths) to the room available toward
+     each label's side — so it stays single-line when it fits and only wraps when
+     it would overflow. This is just a pre-JS fallback. */
+  max-width: 280px;
+  /* size to the natural single-line width, but never past max-width (the room
+     available toward this side); only then does the text wrap */
+  width: max-content;
+  white-space: normal;
   transition: background 0.3s ease;
 }
 
 .hemsPinTitle {
   font-family: var(--font-body);
   font-weight: 700;
-  font-size: 16px;
-  line-height: 20px;
+  font-size: clamp(13px, 1.05vw, 16px);
+  line-height: 1.25;
 }
 
 .hemsPinSub {
   font-family: var(--font-body);
-  font-size: 16px;
-  line-height: 20px;
+  font-size: clamp(12px, 1.05vw, 16px);
+  line-height: 1.25;
   opacity: 0.75;
 }
 

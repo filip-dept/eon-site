@@ -33,30 +33,35 @@
   filter: blur(38px);
   will-change: transform;
 }
+/* blobs anchored to the four corners + side edges of the modal.
+   inset:-50% ⇒ modal maps to the 25–75% band of this element,
+   so positions ≤18% / ≥82% sit outside the modal boundary — they
+   only wash in very gently at the frame edges, never reaching centre. */
 .modal::before {
   background:
-    radial-gradient(34% 40% at 20% 28%, rgba(234, 27, 10, 0.36), transparent 60%),
-    radial-gradient(30% 36% at 86% 18%, rgba(255, 99, 54, 0.28), transparent 62%),
-    radial-gradient(46% 50% at 72% 95%, rgba(130, 17, 113, 0.32), transparent 64%);
-  animation: journeyBlobA 8s ease-in-out infinite alternate;
+    radial-gradient(20% 24% at 12% 12%, rgba(234, 27, 10, 0.20), transparent 48%),
+    radial-gradient(18% 22% at 88% 11%, rgba(255, 99, 54, 0.16), transparent 46%),
+    radial-gradient(22% 26% at 87% 89%, rgba(130, 17, 113, 0.18), transparent 48%);
+  animation: journeyBlobA 11s ease-in-out infinite alternate;
 }
 .modal::after {
   background:
-    radial-gradient(40% 34% at 62% 22%, rgba(178, 21, 90, 0.28), transparent 60%),
-    radial-gradient(38% 44% at 10% 72%, rgba(234, 27, 10, 0.26), transparent 62%),
-    radial-gradient(34% 30% at 94% 80%, rgba(255, 120, 60, 0.24), transparent 60%);
-  animation: journeyBlobB 10.5s ease-in-out infinite alternate;
+    radial-gradient(20% 24% at 13% 88%, rgba(234, 27, 10, 0.16), transparent 46%),
+    radial-gradient(16% 20% at 8%  50%, rgba(255, 120, 60, 0.14), transparent 44%),
+    radial-gradient(16% 20% at 92% 50%, rgba(178, 21, 90, 0.14), transparent 44%);
+  animation: journeyBlobB 13.5s ease-in-out infinite alternate;
 }
+/* gentle drift — small translate so blobs stay at the edges (never swing in);
+   scaling from centre only pushes them further out, keeping the middle clear */
 @keyframes journeyBlobA {
   0%   { transform: translate(0, 0) scale(1, 1) rotate(0deg); }
-  33%  { transform: translate(-14%, 10%) scale(1.32, 0.82) rotate(15deg); }
-  66%  { transform: translate(12%, -9%) scale(0.8, 1.3) rotate(-13deg); }
-  100% { transform: translate(8%, 13%) scale(1.22, 1.06) rotate(9deg); }
+  50%  { transform: translate(-4%, 3%) scale(1.08, 0.96) rotate(6deg); }
+  100% { transform: translate(3%, 4%) scale(1.05, 1.05) rotate(-5deg); }
 }
 @keyframes journeyBlobB {
   0%   { transform: translate(0, 0) scale(1, 1) rotate(0deg); }
-  50%  { transform: translate(15%, -13%) scale(1.34, 0.78) rotate(-17deg); }
-  100% { transform: translate(-11%, 10%) scale(0.82, 1.32) rotate(13deg); }
+  50%  { transform: translate(5%, -4%) scale(1.1, 0.94) rotate(-7deg); }
+  100% { transform: translate(-4%, 3%) scale(0.96, 1.08) rotate(5deg); }
 }
 @media (prefers-reduced-motion: reduce) {
   .modal::before, .modal::after { animation: none; }
@@ -69,7 +74,7 @@
   width: 48px;
   height: 48px;
   border-radius: 14px;            /* button-100 radius */
-  background: #efeae5;            /* Beige */
+  background: #F9F6F4;            /* Beige */
   border: none;
   display: flex;
   align-items: center;
@@ -193,10 +198,10 @@
 .stepHeadline {
   font-family: var(--font-body);
   font-weight: 700;
-  font-size: clamp(28px, 3.4vw, 40px); /* Headings/2: 40 / 48 */
-  line-height: 1.2;
+  font-size: clamp(56px, 3.4vw, 40px); /* Headings/2: 40 / 48 */
+  line-height: 100%;
   color: var(--c-text-primary);
-  margin-bottom: 28px;
+  margin-bottom: 40px;
 }
 .stepHeadline em {
   font-style: normal;
@@ -276,7 +281,7 @@
 
 .footNote {
   font-family: var(--font-body);
-  font-size: 13px;
+  font-size: 16px;
   color: var(--c-text-secondary);
   margin-top: auto;
   padding-top: 4px;
@@ -288,8 +293,7 @@
   flex-direction: row;
   gap: 100px;
   align-items: flex-start;
-  margin-bottom: auto;
-  flex: 1;
+  margin-bottom: 16px;
 }
 
 .s2col { display: flex; flex-direction: column; flex: 1 1 0; min-width: 0; }
@@ -588,7 +592,7 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
-  box-shadow: 0 10px 30px rgba(120, 20, 40, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.55);
+  /*box-shadow: 0 10px 30px rgba(120, 20, 40, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.55); */
   transition: transform 0.22s var(--ease-out), box-shadow 0.22s ease, border-color 0.22s ease, background 0.22s ease;
 }
 .presetCard:hover {
@@ -923,8 +927,8 @@
 .actionsRow {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  max-width: 640px;
+  justify-content: flex-start;
+  /*max-width: 640px; */
   margin-top: 30px;
 }
 .actionsRow .ctaBtn { margin-top: 0; align-self: auto; }

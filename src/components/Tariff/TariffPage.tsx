@@ -41,7 +41,7 @@ const CheckCircleIcon = () => (
 );
 /* "reward program" seal — red star badge for the Neukunden-Bonus cell */
 const BonusIcon = () => (
-  <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+  <svg className={styles.bonusIcon} width="28" height="28" viewBox="0 0 28 28" fill="none">
     <circle cx="14" cy="14" r="13" stroke="#ea1b0a" strokeWidth="1.5"/>
     <path
       d="M14 7.5l1.9 3.85 4.25.62-3.08 3 .73 4.23L14 17.2l-3.8 2 .73-4.23-3.08-3 4.25-.62L14 7.5z"
@@ -367,13 +367,23 @@ const HEMS_CATS: HemsCat[] = [
   },
 ];
 
+/* Hotspots are anchored as fractions of the source image (1600×893), not as
+   container percentages — so each dot sticks to its physical feature regardless
+   of how object-fit:cover crops the portrait frame at different viewport widths. */
+const HEMS_IMG_W = 1600, HEMS_IMG_H = 893;
 const HEMS_PINS = [
-  { title: 'HEMS',       sub: 'Alles vernetzt · smart gesteuert', left: '49%', top: '15%', labelSide: 'right' },
-  { title: 'Solar',      sub: '4,2 kWp · ~3.900 kWh/Jahr', left: '35%',   top: '27%',   labelSide: 'left'  },
-  { title: 'Strom',      sub: '100 % Ökostrom · 3.200 kWh', left: '37%',   top: '49.6%', labelSide: 'left'  },
-  { title: 'Wallbox',    sub: '11 kW · lädt mit Solar',     left: '63.8%', top: '53.5%', labelSide: 'right' },
-  { title: 'Wärmepumpe', sub: 'COP 4,1 · ~60 % weniger Gas', left: '17%', top: '72%',    labelSide: 'right' },
+  { title: 'HEMS',       sub: 'Alles vernetzt · smart gesteuert', nx: 0.477, ny: 0.248, labelSide: 'right' },
+  { title: 'Solar',      sub: '4,2 kWp · ~3.900 kWh/Jahr',        nx: 0.554, ny: 0.388, labelSide: 'right' },
+  { title: 'Strom',      sub: '100 % Ökostrom · 3.200 kWh',       nx: 0.435, ny: 0.528, labelSide: 'left' },
+  { title: 'Wallbox',    sub: '11 kW · lädt mit Solar',           nx: 0.554, ny: 0.738, labelSide: 'right'  },
+  { title: 'Wärmepumpe', sub: 'COP 4,1 · ~60 % weniger Gas',      nx: 0.435, ny: 0.700, labelSide: 'left' },
 ];
+/* map a native-image fraction → container px under object-fit:cover (centered) */
+const hemsCover = (cw: number, ch: number, nx: number, ny: number) => {
+  const s = Math.max(cw / HEMS_IMG_W, ch / HEMS_IMG_H);
+  const rw = HEMS_IMG_W * s, rh = HEMS_IMG_H * s;
+  return { x: (cw - rw) / 2 + nx * rw, y: (ch - rh) / 2 + ny * rh };
+};
 
 /* HEMS is the hub that connects every device. As the user scrolls through the
    stage the wires draw outward from the hub (load-bar fill) with a travelling
@@ -382,7 +392,6 @@ const HEMS_PINS = [
 const HEMS_HUB = HEMS_PINS[0];
 const HEMS_LINKS = ['Solar', 'Strom', 'Wärmepumpe', 'Wallbox']
   .map((t) => HEMS_PINS.find((p) => p.title === t)!);
-const pctNum = (s: string) => parseFloat(s);
 
 /* ─── Main page ──────────────────────────────────────────────────────────── */
 export default function TariffPage() {
@@ -1099,14 +1108,34 @@ export default function TariffPage() {
       const W = svg.clientWidth, H = svg.clientHeight;
       if (!W || !H) return;
       svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
-      const DOT = 20, R = 18;                       /* dot radius / corner radius */
-      const hx = (pctNum(HEMS_HUB.left) / 100) * W + DOT;
-      const hy = (pctNum(HEMS_HUB.top) / 100) * H + DOT;
+      const DOT = 20, R = 18;                       /* dot half-size / corner radius */
+      /* dot-centre px for every hotspot, anchored to the photo content */
+      const C: Record<string, { x: number; y: number }> = {};
+      HEMS_PINS.forEach((p) => { C[p.title] = hemsCover(W, H, p.nx, p.ny); });
+      /* place the pins on their features (left/top = the dot's top-left corner) */
+      const GAP = 16, EDGE = 12;                    /* dot→label gap / container breathing room */
+      const pinEls = svg.parentElement?.querySelectorAll<HTMLElement>(`.${styles.hemsPin}`);
+      if (pinEls) HEMS_PINS.forEach((p, i) => {
+        const c = C[p.title], el = pinEls[i];
+        if (!el) return;
+        el.style.left = `${c.x - DOT}px`;
+        el.style.top = `${c.y - DOT}px`;
+        /* cap each label to the room available toward its side, so it stays on a
+           single line when it fits and only wraps once it would overflow/clip */
+        const label = el.querySelector<HTMLElement>(`.${styles.hemsPinLabel}`);
+        if (label) {
+          const room = p.labelSide === 'left'
+            ? c.x - DOT - GAP - EDGE                /* dot → left edge */
+            : W - (c.x + DOT + GAP) - EDGE;         /* dot → right edge */
+          label.style.maxWidth = `${Math.max(80, Math.round(room))}px`;
+        }
+      });
+      /* hub → device wires, routed from one dot centre to the next */
+      const hub = C[HEMS_HUB.title];
       const groups = svg.children;
       for (let i = 0; i < groups.length; i++) {
-        const link = HEMS_LINKS[i];
-        const dx = (pctNum(link.left) / 100) * W + DOT;
-        const dy = (pctNum(link.top) / 100) * H + DOT;
+        const c = C[HEMS_LINKS[i].title];
+        const hx = hub.x, hy = hub.y, dx = c.x, dy = c.y;
         const sy = dy > hy ? 1 : -1, sx = dx > hx ? 1 : -1;
         const rr = Math.max(0, Math.min(R, Math.abs(dy - hy) - 1, Math.abs(dx - hx) - 1));
         /* down the central trunk from the hub, round the corner, branch out to
@@ -1124,11 +1153,17 @@ export default function TariffPage() {
     const lateImgs = Array.from(page.querySelectorAll('img')).filter((im) => !im.complete);
     lateImgs.forEach((im) => im.addEventListener('load', refresh, { once: true }));
     window.addEventListener('load', refresh);
+    /* re-anchor pins + re-route wires whenever the layout changes size.
+       ScrollTrigger auto-refreshes (debounced) on resize/orientation change,
+       so its 'refresh' event is the reliable hook for keeping the image-fraction
+       hotspots and wires aligned at every viewport size. */
+    ScrollTrigger.addEventListener('refresh', buildHemsPaths);
 
     return () => {
       clearTimeout(settle);
       clearTimeout(settle2);
       window.removeEventListener('load', refresh);
+      ScrollTrigger.removeEventListener('refresh', buildHemsPaths);
       lateImgs.forEach((im) => im.removeEventListener('load', refresh));
       window.removeEventListener('resize', setFrameWidth);
       cardParallax.forEach((t) => { t.scrollTrigger?.kill(); t.kill(); });
@@ -1249,7 +1284,7 @@ export default function TariffPage() {
               {/* SAME input row as the closed pill — only adds the send button
                   and a grey fill (data-open). Shared markup ⇒ seamless morph. */}
               <div className={styles.chatInputRow} data-open="true" ref={chatRowRef}>
-                <div className={styles.orb} />
+                <video className={styles.orb} src="/orb-anim.mp4" autoPlay loop muted playsInline onCanPlay={(e) => { (e.target as HTMLVideoElement).playbackRate = 3; }} />
                 <div className={styles.orbReveal}>
                   <span className={styles.orbHint}>{orbTariffQ ? 'Fragen zu diesem Tarif?' : 'Was beschäftigt dich heute?'}</span>
                 </div>
@@ -1270,7 +1305,7 @@ export default function TariffPage() {
             onMouseLeave={onPillLeave}
             aria-label="E.ON Assistant öffnen"
           >
-            <div className={styles.orb} />
+            <video className={styles.orb} src="/orb-anim.mp4" autoPlay loop muted playsInline onCanPlay={(e) => { (e.target as HTMLVideoElement).playbackRate = 3; }} />
             <div className={styles.orbReveal} ref={pillRevealRef}>
               <span className={styles.orbHint}>{orbTariffQ ? 'Fragen zu diesem Tarif?' : 'Was beschäftigt dich heute?'}</span>
             </div>
@@ -1386,7 +1421,15 @@ export default function TariffPage() {
                             <div className={styles.feature}>
                               <BonusIcon />
                               <div className={styles.featureText}>
-                                <span className={styles.featureName}>{t.bonus}</span>
+                                <span key={tariff.id} className={styles.featureName}>
+                                  {t.bonus.split('').map((char, i) => (
+                                    <span
+                                      key={i}
+                                      className={styles.featureNameLetter}
+                                      style={{ '--i': i } as React.CSSProperties}
+                                    >{char}</span>
+                                  ))}
+                                </span>
                                 <span className={styles.featureDesc}>{t.bonusUntil}</span>
                               </div>
                             </div>
@@ -1648,7 +1691,7 @@ export default function TariffPage() {
               <div
                 key={pin.title}
                 className={pin.labelSide === 'left' ? `${styles.hemsPin} ${styles.hemsPinLeft}` : styles.hemsPin}
-                style={{ left: pin.left, top: pin.top }}
+                style={{}}
                 data-ready={hemsPinsReady ? 'true' : 'false'}
                 data-active={hemsCat.pin === pin.title ? 'true' : 'false'}
                 data-dim={hemsCat.pin && hemsCat.pin !== pin.title ? 'true' : 'false'}
@@ -1692,7 +1735,7 @@ export default function TariffPage() {
         <section className={styles.proof}>
           <div className={styles.proofLeft}>
             <span className={styles.proofLabel}>In deiner Nähe</span>
-            <h2 className={styles.proofTitle}>Du bist nicht der<br />erste rund um</h2>
+            <h2 className={styles.proofTitle}>Du bist nicht der<br />Erste rund um</h2>
             <div className={styles.proofZip}>
               <LocationIcon />
               <span className={styles.proofZipNum}>{plz}</span>
@@ -1742,7 +1785,7 @@ export default function TariffPage() {
                 <span className={styles.proofStatNum}>94%</span>
                 <span className={styles.proofStatLabel}>würden wieder wechseln</span>
               </div>
-              <button className={styles.proofStatsBtn}>Mehr erfahrungen</button>
+              <button className={styles.proofStatsBtn}>Mehr Erfahrungen</button>
             </div>
           </div>
         </section>

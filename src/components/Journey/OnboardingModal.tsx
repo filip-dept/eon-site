@@ -364,9 +364,7 @@ function Step2({ answers, setAnswers, goNext, goBack }: {
       </div>
 
       <div className={styles.actionsRow} data-appear>
-        <button className={styles.backLink} onClick={goBack}>Zurück</button>
         <div className={styles.ctaGroup}>
-          <EnterHint />
           <button
             className={styles.ctaBtn}
             onClick={goNext}
@@ -375,6 +373,7 @@ function Step2({ answers, setAnswers, goNext, goBack }: {
           >
             Weiter <ArrowRight />
           </button>
+          <EnterHint />
         </div>
       </div>
     </>
@@ -438,7 +437,6 @@ function Step3({ answers, setAnswers, onSubmit, goBack }: {
             data-selected={activePreset === p.id ? 'true' : 'false'}
             onClick={() => setAnswers({ ...answers, kwh: p.kwh })}
           >
-            <span className={styles.presetIcon}>{p.icon}</span>
             <p className={styles.presetTitle}>{p.title}</p>
             <p className={styles.presetSub}>{p.sub}</p>
           </button>
@@ -446,12 +444,11 @@ function Step3({ answers, setAnswers, onSubmit, goBack }: {
       </div>
 
       <div className={styles.actionsRow} data-appear>
-        <button className={styles.backLink} onClick={goBack}>Zurück</button>
         <div className={styles.ctaGroup}>
-          <EnterHint />
           <button className={styles.ctaBtn} onClick={onSubmit}>
             Meinen Tarif sehen <ArrowRight />
           </button>
+          <EnterHint />
         </div>
       </div>
     </>

@@ -437,12 +437,11 @@ export default function JourneyModal() {
       </div>
 
       <div className={styles.actionsRow}>
-        <button className={styles.backLink} onClick={goBack}>Zurück</button>
         <div className={styles.ctaGroup}>
-          <EnterHint />
           <button className={styles.ctaBtn} onClick={advance} disabled={!stepValid(3, answers)}>
             Weiter <ArrowRight />
           </button>
+          <EnterHint />
         </div>
       </div>
     </>,
@@ -466,12 +465,11 @@ export default function JourneyModal() {
       </div>
 
       <div className={styles.actionsRow}>
-        <button className={styles.backLink} onClick={goBack}>Zurück</button>
         <div className={styles.ctaGroup}>
-          <EnterHint />
           <button className={styles.ctaBtn} onClick={advance} disabled={!stepValid(4, answers)}>
             Weiter <ArrowRight />
           </button>
+          <EnterHint />
         </div>
       </div>
     </>,
@@ -536,12 +534,11 @@ export default function JourneyModal() {
       </div>
 
       <div className={styles.actionsRow}>
-        <button className={styles.backLink} onClick={goBack}>Zurück</button>
         <div className={styles.ctaGroup}>
-          <EnterHint />
           <button className={styles.ctaBtn} onClick={advance} disabled={!stepValid(5, answers)}>
             Weiter <ArrowRight />
           </button>
+          <EnterHint />
         </div>
       </div>
     </>,
@@ -569,9 +566,6 @@ export default function JourneyModal() {
         </button>
       </div>
 
-      <div className={styles.actionsRow}>
-        <button className={styles.backLink} onClick={goBack}>Zurück</button>
-      </div>
     </>,
 
     /* ── 7 · Daten ── */
@@ -618,12 +612,11 @@ export default function JourneyModal() {
       </div>
 
       <div className={styles.actionsRow}>
-        <button className={styles.backLink} onClick={goBack}>Zurück</button>
         <div className={styles.ctaGroup}>
-          <EnterHint />
           <button className={styles.ctaBtn} onClick={advance} disabled={!stepValid(7, answers)}>
             Vertrag abschließen <ArrowRight />
           </button>
+          <EnterHint />
         </div>
       </div>
     </>,
