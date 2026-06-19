@@ -810,6 +810,7 @@
 .cardBadge {
   display: inline-flex;
   align-items: center;
+  gap: 6px;
   flex-shrink: 0;
   height: 24px;
   padding: 0 10px;
@@ -821,6 +822,10 @@
   font-size: 14px;
   line-height: 21px;
   white-space: nowrap;
+}
+/* comparison view: the "Unsere Empfehlung für dich" badge is purple */
+.card[data-comparing='true'] .cardBadge {
+  background: var(--c-purple);
 }
 /* narrow comparison cards: the badge stacks above the name rather than beside it */
 .card[data-comparing='true'] .cardHeadRow {

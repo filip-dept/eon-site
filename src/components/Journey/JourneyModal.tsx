@@ -244,6 +244,20 @@ export default function JourneyModal() {
      position: sticky on the next page) */
   useEffect(() => () => { document.body.style.overflow = ''; }, []);
 
+  /* blurred rise-in of the step's content blocks — matches the 1st journey */
+  const animateStepIn = useCallback((idx: number, delay = 0.12) => {
+    const panel = stepRefs.current[idx];
+    if (!panel) return;
+    const items = Array.from(panel.children) as HTMLElement[];
+    if (!items.length) return;
+    gsap.fromTo(
+      items,
+      { opacity: 0, y: 16, filter: 'blur(6px)' },
+      { opacity: 1, y: 0, filter: 'blur(0px)', duration: 0.5, ease: 'power3.out',
+        stagger: 0.06, delay, clearProps: 'transform,opacity,filter' }
+    );
+  }, []);
+
   /* ── Enter animation ── */
   useEffect(() => {
     if (!open) return;
@@ -261,12 +275,12 @@ export default function JourneyModal() {
     tl.to(overlay, { opacity: 1, duration: 0.28, ease: 'none' }, 0)
       .to(modal, { clipPath: 'inset(0px 0px 0px 0px)', duration: 0.7, ease: 'eonOut' }, 0);
 
+    /* the first frame does NOT slide in — it stays put while its content
+       blur-reveals with a slight delay (after the shell has opened) */
     const firstStep = stepRefs.current[0];
-    if (firstStep) {
-      gsap.set(firstStep, { y: 24, opacity: 0 });
-      tl.to(firstStep, { y: 0, opacity: 1, duration: 0.42, ease: 'eonOut' }, 0.38);
-    }
-  }, [open]);
+    if (firstStep) gsap.set(firstStep, { y: 0, opacity: 1 });
+    animateStepIn(0, 0.4);
+  }, [open, animateStepIn]);
 
   /* ── Step transition ── */
   const transitionTo = useCallback((nextStep: number, dir: 'fwd' | 'bck') => {
@@ -276,29 +290,32 @@ export default function JourneyModal() {
     if (!outEl || !inEl) return;
 
     animating.current = true;
-    const dx = dir === 'fwd' ? -44 : 44;
+    /* vertical "scroll" motion (matches the 1st journey): forward → current step
+       rises up & out, next rises in from below; backward → the reverse */
+    const dy = dir === 'fwd' ? -140 : 140;
 
     gsap.to(outEl, {
-      x: dx,
+      y: dy,
       opacity: 0,
       duration: 0.32,
       ease: 'eonReveal',
       onComplete: () => {
-        gsap.set(outEl, { display: 'none', x: 0 });
+        gsap.set(outEl, { display: 'none', y: 0 });
         setStep(nextStep);
         requestAnimationFrame(() => {
-          gsap.set(inEl, { display: 'flex', x: -dx, opacity: 0 });
+          gsap.set(inEl, { display: 'flex', y: -dy, opacity: 0 });
           gsap.to(inEl, {
-            x: 0,
+            y: 0,
             opacity: 1,
             duration: 0.42,
             ease: 'eonOut',
             onComplete: () => { animating.current = false; },
           });
+          animateStepIn(nextStep - 1);
         });
       },
     });
-  }, [step]);
+  }, [step, animateStepIn]);
 
   const goNext = useCallback(() => {
     if (step < TOTAL_STEPS) transitionTo(step + 1, 'fwd');
@@ -343,7 +360,7 @@ export default function JourneyModal() {
       if (!el) return;
       if (i === step - 1) {
         if (el.style.display === 'none') return;
-        gsap.set(el, { display: 'flex', opacity: 1, x: 0 });
+        gsap.set(el, { display: 'flex', opacity: 1, y: 0 });
       } else {
         if (!animating.current) gsap.set(el, { display: 'none' });
       }

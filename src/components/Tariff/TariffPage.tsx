@@ -1,7 +1,10 @@
 'use client';
 
-import { useRef, useEffect, useState, useCallback } from 'react';
+import { useRef, useEffect, useLayoutEffect, useState, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
+
+/* layout effect on the client (runs before paint → no flash), no-op on the server */
+const useIsoLayoutEffect = typeof window !== 'undefined' ? useLayoutEffect : useEffect;
 import { gsap, ScrollTrigger } from '@/lib/gsap';
 import Navbar from '@/components/Navbar/Navbar';
 import JourneyModal from '@/components/Journey/JourneyModal';
@@ -54,6 +57,18 @@ const ChevronRight = () => (
     <path d="M2 2l6 6-6 6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
   </svg>
 );
+/* one feature row — shared by the solo card (grid) and the comparison cards (list) */
+function Feature({ icon, name, desc }: { icon: React.ReactNode; name: string; desc: string }) {
+  return (
+    <div className={styles.feature}>
+      {icon}
+      <div className={styles.featureText}>
+        <span className={styles.featureName}>{name}</span>
+        <span className={styles.featureDesc}>{desc}</span>
+      </div>
+    </div>
+  );
+}
 const MenuIcon = () => (
   <svg width="18" height="14" viewBox="0 0 18 14" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
     <path d="M1 1h16M1 7h16M1 13h16"/>
@@ -414,10 +429,12 @@ export default function TariffPage() {
      cards out beside the recommendation. The image narrows (no mask), the
      panel grows — all via CSS transitions; GSAP just nudges the new cards'
      content in once they have width. */
-  const [comparing, setComparing] = useState(false);
+  const [comparing, setComparing] = useState(false);   // drives the BACKGROUND (frame/column/panel)
+  const [cardPhase, setCardPhase] = useState<'solo' | 'compare'>('solo'); // which card SET is mounted
   const panelRef = useRef<HTMLDivElement>(null);
-
-  const openCompare = useCallback(() => setComparing(true), []);
+  const cardsRef = useRef<HTMLDivElement>(null);        // .cards container (to query the compare cards)
+  const animatingCards = useRef(false);
+  const firstCardPhase = useRef(true);
 
   /* ── AI chat (orbFloat): open state + a ref so GSAP can drift it to centre.
      `orbCentered` flips true once the breakdown morph has parked it centre. ── */
@@ -546,62 +563,67 @@ export default function TariffPage() {
     setChatOpen(true);
   }, []);
 
-  /* Entrance: after the background has begun expanding + fading to light, ALL
-     THREE cards (recommendation first, then the two alternatives) move in from
-     the right out of 0 opacity, one after another. */
-  useEffect(() => {
-    if (!comparing) return;
-    const el = panelRef.current;
-    if (!el) return;
-    const cards = Array.from(el.querySelectorAll<HTMLElement>(`.${styles.card}`));
-    if (!cards.length) return;
-    gsap.set(cards, { opacity: 0, x: 80 });
-    const tl = gsap.timeline({ delay: 0.1 });   /* let the bg expand/recolour lead */
-    tl.to(cards, {
-      opacity: 1, x: 0, duration: 0.4, ease: 'power3.out',
-      stagger: 0.1,                              /* one after another */
-      clearProps: 'opacity,transform',
-    }, 0);
-    return () => { tl.kill(); };
-  }, [comparing]);
-
-  /* Collapse = the entrance played backwards:
-       1. all three cards fade + slide out to the right, one after another
-          (reverse order — right-most first), at full size (comparing stays true
-          so nothing width-shrinks);
-       2. THEN the background collapses — the panel narrows + the red glow fades
-          back in (CSS, same eased duration as the expand), and the recommendation
-          card fades back in as the panel content as the red returns. */
-  const closeCompare = useCallback(() => {
-    const el = panelRef.current;
-    const cards = el ? Array.from(el.querySelectorAll<HTMLElement>(`.${styles.card}`)) : [];
-    const rec = el?.querySelector<HTMLElement>(`.${styles.card}[data-rec='true']`) ?? null;
-    if (!cards.length) { setComparing(false); return; }
-
-    gsap.killTweensOf(cards);
-    gsap.set(cards, { opacity: 1, x: 0 });
-    /* 1) cards leave first — the 3rd (right-most) card moves the instant the
-       button is clicked (no delay); the stagger then ripples left, so the 1st
-       card leaves last, with equal gaps between each */
-    gsap.to(cards, {
-      opacity: 0, x: 80, duration: 0.26, ease: 'power2.in',
-      stagger: { each: 0.05, from: 'end' },
-      onComplete: () => {
-        /* 2) background collapses (width + glow→red via CSS, faster + eased-out) */
-        setComparing(false);
-        const extras = cards.filter((c) => c !== rec);
-        gsap.set(extras, { clearProps: 'opacity,transform' });
-        /* final beat: once the panel has closed back to red, the single
-           recommendation card glides IN FROM THE LEFT after a slight delay (it
-           lands on the now-red panel, so its white text never flashes on light) */
-        if (rec) {
-          gsap.set(rec, { x: -48, opacity: 0 });
-          gsap.to(rec, { x: 0, opacity: 1, duration: 0.42, ease: 'power3.out', delay: 0.1,
-            clearProps: 'opacity,transform' });
-        }
-      },
-    });
+  /* ── Sequenced OPEN: fade the solo card out → expand the background + mount the
+     comparison cards (hidden) → (reveal effect) stagger them in once bg opened. ── */
+  const openCompare = useCallback(() => {
+    if (animatingCards.current) return;
+    animatingCards.current = true;
+    const solo = cardRef.current;   // the solo card IS the rec card
+    const go = () => { setComparing(true); setCardPhase('compare'); };
+    if (solo) gsap.to(solo, { opacity: 0, y: -10, duration: 0.2, ease: 'power2.in', onComplete: go });
+    else go();
   }, []);
+
+  /* ── Sequenced CLOSE: stagger the comparison cards out (right-most first) →
+     collapse the background + mount the solo card (hidden) → (reveal effect) fade
+     it back in. The two animation tracks (background vs cards) never overlap. ── */
+  const closeCompare = useCallback(() => {
+    if (animatingCards.current) return;
+    animatingCards.current = true;
+    const cont = cardsRef.current;
+    const cards = cont ? Array.from(cont.querySelectorAll<HTMLElement>(`.${styles.card}`)) : [];
+    const go = () => { setComparing(false); setCardPhase('solo'); };
+    if (cards.length) {
+      gsap.to(cards, {
+        opacity: 0, x: 80, duration: 0.26, ease: 'power2.in',
+        stagger: { each: 0.05, from: 'end' },
+        onComplete: go,
+      });
+    } else go();
+  }, []);
+
+  /* Reveal whichever card set just mounted (after its background track has begun):
+     comparison cards stagger in from the right; the solo card fades up. The very
+     first mount is skipped — the hero entrance reveals the solo card via data-au. */
+  useIsoLayoutEffect(() => {
+    if (firstCardPhase.current) { firstCardPhase.current = false; return; }
+    if (cardPhase === 'compare') {
+      const cont = cardsRef.current;
+      const cards = cont ? Array.from(cont.querySelectorAll<HTMLElement>(`.${styles.card}`)) : [];
+      if (!cards.length) { animatingCards.current = false; return; }
+      /* Snappy, energetic cascade: each card pops up + fades with a slight
+         overshoot; tight stagger, 3rd card first → 2nd → 1st. */
+      gsap.set(cards, { opacity: 0, y: 30, scale: 0.9 });
+      gsap.to(cards, {
+        opacity: 1, y: 0, scale: 1,
+        duration: 0.4, ease: 'back.out(1.6)',
+        stagger: { each: 0.08, from: 'end' },
+        delay: 0.14,
+        clearProps: 'opacity,transform',
+        onComplete: () => { animatingCards.current = false; },
+      });
+    } else {
+      const solo = cardRef.current;
+      if (!solo) { animatingCards.current = false; return; }
+      gsap.set(solo, { opacity: 0, y: 12 });
+      gsap.to(solo, {
+        opacity: 1, y: 0, duration: 0.4, ease: 'power3.out',
+        delay: 0.16,   /* come in while the background is still collapsing */
+        clearProps: 'opacity,transform',
+        onComplete: () => { animatingCards.current = false; },
+      });
+    }
+  }, [cardPhase]);
 
   const toggleEco = () => {
     const next = !eco;
@@ -1379,71 +1401,93 @@ export default function TariffPage() {
 
                 {/* one row: recommendation + two alternatives. In normal mode the
                     extras are collapsed to zero width; comparing fans them out. */}
-                <div className={styles.cards} data-comparing={comparing}>
-                  {/* the recommendation uses a STABLE key ('rec') so changing the
-                      product (slider or checkbox) just updates its content + fades
-                      — it never reuses a collapsed sibling and width-expands. The
-                      alternatives keep product-id keys. */}
-                  {[
-                    { t: tariff, isRec: true, k: 'rec' },
-                    ...family.filter((t) => t.id !== tariff.id).map((t) => ({ t, isRec: false, k: t.id })),
-                  ].map(({ t, isRec, k }) => (
+                <div className={styles.cards} data-comparing={cardPhase === 'compare'} ref={cardsRef}>
+                  {cardPhase === 'solo' ? (
+                    /* ── Card A — initial recommended card: full width, 2×2 grid ── */
                     <div
-                      key={k}
                       className={styles.card}
-                      data-comparing={comparing}
-                      data-rec={isRec ? 'true' : 'false'}
-                      data-extra={isRec ? undefined : 'true'}
-                      data-au={isRec ? '' : undefined}
-                      ref={isRec ? cardRef : undefined}
+                      data-rec="true"
+                      data-au=""
+                      ref={cardRef}
                     >
-                      {/* Header: name + sub (+ recommendation badge on the rec card), price */}
                       <div className={styles.cardHeader}>
                         <div className={styles.cardHeadRow}>
                           <div className={styles.cardHeadText}>
-                            <p className={styles.cardName}>{t.name}</p>
-                            <p className={styles.cardSub}>{t.sub}</p>
+                            <p className={styles.cardName}>{tariff.name}</p>
+                            <p className={styles.cardSub}>{tariff.sub}</p>
                           </div>
-                          {isRec && <span className={styles.cardBadge}>Unsere Empfehlung für dich</span>}
+                          {eco && (
+                            <span className={styles.cardBadge}>
+                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                                <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10z"/>
+                                <path d="M2 21c0-3 1.85-5.36 5.08-6"/>
+                              </svg>
+                              Besonders nachhaltig
+                            </span>
+                          )}
                         </div>
                         <div className={styles.cardPrice}>
-                          <span className={styles.priceMain}>{t.price}</span>
+                          <span className={styles.priceMain}>{tariff.price}</span>
                           <span className={styles.priceUnit}>€ pro Monat</span>
                         </div>
                       </div>
-
-                      {/* Body: divider, features (2×2 grid in panel · list while comparing), actions */}
                       <div className={styles.cardBody}>
                         <div className={styles.cardDivider} />
-                        <div className={styles.cardFeatures} data-comparing={comparing}>
-                          <div className={styles.feature}>
-                            <BonusIcon />
-                            <div className={styles.featureText}>
-                              <span className={styles.featureName}>{t.bonus}</span>
-                              <span className={styles.featureDesc}>{t.bonusUntil}</span>
-                            </div>
-                          </div>
-                          {t.features.map(([name, desc]) => (
-                            <div key={name + desc} className={styles.feature}>
-                              <CheckCircleIcon />
-                              <div className={styles.featureText}>
-                                <span className={styles.featureName}>{name}</span>
-                                <span className={styles.featureDesc}>{desc}</span>
-                              </div>
-                            </div>
+                        <div className={styles.cardFeatures}>
+                          <Feature icon={<BonusIcon />} name={tariff.bonus} desc={tariff.bonusUntil} />
+                          {tariff.features.map(([name, desc]) => (
+                            <Feature key={name + desc} icon={<CheckCircleIcon />} name={name} desc={desc} />
                           ))}
                         </div>
                         <div className={styles.cardActions}>
                           <button className={styles.btnPrimary} onClick={startCheckout}>Tarif auswählen</button>
-                          {isRec && !comparing && (
-                            <button className={styles.btnCompare} onClick={openCompare}>
-                              Tarif vergleichen <ChevronRight />
-                            </button>
-                          )}
+                          <button className={styles.btnCompare} onClick={openCompare}>
+                            Tarif vergleichen <ChevronRight />
+                          </button>
                         </div>
                       </div>
                     </div>
-                  ))}
+                  ) : (
+                    /* ── Cards B/C/D — comparison cards: vertical feature list ── */
+                    [
+                      { t: tariff, isRec: true, k: 'rec' },
+                      ...family.filter((t) => t.id !== tariff.id).map((t) => ({ t, isRec: false, k: t.id })),
+                    ].map(({ t, isRec, k }) => (
+                      <div
+                        key={k}
+                        className={styles.card}
+                        data-comparing="true"
+                        data-rec={isRec ? 'true' : 'false'}
+                        data-extra={isRec ? undefined : 'true'}
+                      >
+                        <div className={styles.cardHeader}>
+                          <div className={styles.cardHeadRow}>
+                            <div className={styles.cardHeadText}>
+                              <p className={styles.cardName}>{t.name}</p>
+                              <p className={styles.cardSub}>{t.sub}</p>
+                            </div>
+                            {isRec && <span className={styles.cardBadge}>Unsere Empfehlung für dich</span>}
+                          </div>
+                          <div className={styles.cardPrice}>
+                            <span className={styles.priceMain}>{t.price}</span>
+                            <span className={styles.priceUnit}>€ pro Monat</span>
+                          </div>
+                        </div>
+                        <div className={styles.cardBody}>
+                          <div className={styles.cardDivider} />
+                          <div className={styles.cardFeatures} data-comparing="true">
+                            <Feature icon={<BonusIcon />} name={t.bonus} desc={t.bonusUntil} />
+                            {t.features.map(([name, desc]) => (
+                              <Feature key={name + desc} icon={<CheckCircleIcon />} name={name} desc={desc} />
+                            ))}
+                          </div>
+                          <div className={styles.cardActions}>
+                            <button className={styles.btnPrimary} onClick={startCheckout}>Tarif auswählen</button>
+                          </div>
+                        </div>
+                      </div>
+                    ))
+                  )}
                 </div>
               </div>{/* /panelNormal */}
             </div>{/* /panel */}
