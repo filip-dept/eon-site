@@ -606,7 +606,9 @@
   border-radius: inherit;
   background: linear-gradient(138deg, #ea1b0a 0%, #e0190f 55%, #c11054 100%);
   pointer-events: none;
-  /* collapse: the red glow fades back in faster than it faded out, eased-out */
+  /* the red lives on the recommendation card now; the panel keeps the grey
+     secondary base in both states (matching the comparison view) */
+  opacity: 0;
   transition: opacity 0.4s var(--ease-out);
 }
 
@@ -676,7 +678,7 @@
   font-family: var(--font-body);
   font-size: 16px;
   font-weight: 500;
-  color: rgba(255, 255, 255, 0.9);
+  color: var(--c-red);
 }
 
 .panelTitle {
@@ -684,14 +686,14 @@
   font-weight: 700;
   font-size: clamp(28px, 2.9vw, 40px);
   line-height: 1.15;
-  color: #fff;
+  color: var(--c-text-primary);
 }
 
 .panelSub {
   font-family: var(--font-body);
   font-size: clamp(14px, 1.4vw, 18px);
   line-height: 1.5;
-  color: rgba(255,255,255,0.85);
+  color: var(--c-text-secondary);
   max-width: 480px;
 }
 
@@ -745,8 +747,10 @@
 .card[data-extra='true'] { transition: none; }
 /* the two alternatives are collapsed to zero width until comparing — the
    negative margin swallows the flex gap so the recommendation fills 100% */
-/* recommended card: white, lifted off the red gradient with a red-tinted glow */
+/* recommended card: red living-gradient fill (same as the comparison rec card),
+   lifted off the grey panel with a red-tinted glow */
 .card[data-rec='true'] {
+  background: linear-gradient(138deg, #ea1b0a 0%, #e0190f 55%, #c11054 100%);
   box-shadow: var(--shadow-rec);
 }
 
@@ -782,37 +786,46 @@
    The recommended card flips to a solid red fill with white content; the
    alternatives stay light. Scoped to comparing so the initial-view rec card
    keeps its white treatment. */
+/* the comparison rec card sits inline in the row → no standalone lift */
 .card[data-rec='true'][data-comparing='true'] {
-  /* same red living-gradient as the pre-comparison .panel, instead of flat red */
-  background: linear-gradient(138deg, #ea1b0a 0%, #e0190f 55%, #c11054 100%);
-  box-shadow: none;            /* the red-glow lift is only for the white panel card */
+  box-shadow: none;
 }
-.card[data-rec='true'][data-comparing='true'] .cardName,
-.card[data-rec='true'][data-comparing='true'] .priceMain,
-.card[data-rec='true'][data-comparing='true'] .featureName {
+/* red-card content treatment — applies in BOTH the initial view and the
+   comparison (Figma 1802:11576): white text, white icons, light CTAs */
+.card[data-rec='true'] .cardName,
+.card[data-rec='true'] .priceMain,
+.card[data-rec='true'] .featureName {
   color: var(--c-white);
 }
-.card[data-rec='true'][data-comparing='true'] .cardSub,
-.card[data-rec='true'][data-comparing='true'] .priceUnit,
-.card[data-rec='true'][data-comparing='true'] .featureDesc {
+.card[data-rec='true'] .cardSub,
+.card[data-rec='true'] .priceUnit,
+.card[data-rec='true'] .featureDesc {
   color: rgba(255, 255, 255, 0.8);
 }
-.card[data-rec='true'][data-comparing='true'] .cardDivider {
+.card[data-rec='true'] .cardDivider {
   background: rgba(255, 255, 255, 0.28);
 }
 /* feature icons (hardcoded red strokes) → white on the red card */
-.card[data-rec='true'][data-comparing='true'] .feature svg circle,
-.card[data-rec='true'][data-comparing='true'] .feature svg path {
+.card[data-rec='true'] .feature svg circle,
+.card[data-rec='true'] .feature svg path {
   stroke: var(--c-white);
 }
-/* CTA: white fill, red text */
-.card[data-rec='true'][data-comparing='true'] .btnPrimary {
+/* primary CTA: white fill, red text */
+.card[data-rec='true'] .btnPrimary {
   background: var(--c-white);
   color: var(--c-red);
   border: none;
 }
-.card[data-rec='true'][data-comparing='true'] .btnPrimary:hover {
+.card[data-rec='true'] .btnPrimary:hover {
   background: rgba(255, 255, 255, 0.9);
+}
+/* secondary "Tarif vergleichen" (initial view only) → white outline on red */
+.card[data-rec='true'] .btnCompare {
+  color: var(--c-white);
+  border-color: rgba(255, 255, 255, 0.7);
+}
+.card[data-rec='true'] .btnCompare:hover {
+  background: rgba(255, 255, 255, 0.14);
 }
 
 /* ── Card header: name + sub (+ recommendation badge), then price ── */
