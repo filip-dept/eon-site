@@ -1,5 +1,43 @@
+/* Cascade layer order. NOTE: Tailwind's Preflight (base reset) is intentionally
+   NOT imported — this repo has its own reset below and migration is incremental,
+   so utilities must not restyle existing CSS-Module components. Phase 0 keeps the
+   visual result identical; Preflight is reconsidered once components fully migrate. */
+@layer theme, base, components, utilities;
+
 @import '../styles/fonts.css';
 @import '../styles/tokens.css';
+
+@import 'tailwindcss/theme.css' layer(theme);
+@import 'tailwindcss/utilities.css' layer(utilities);
+
+/* Feed the existing design tokens into the Tailwind theme. `inline` makes the
+   generated utilities reference the token vars directly (e.g. `bg-brand-red` →
+   `var(--c-red)`), so `styles/tokens.css` stays the single source of truth.
+   The full semantic colour/type/dimension taxonomy lands in Phase 1; this is the
+   minimal mapping proving the wiring. */
+@theme inline {
+  --font-head: var(--font-head);
+  --font-body: var(--font-body);
+
+  --color-brand-red: var(--c-red);
+  --color-brand-magenta: var(--c-magenta);
+  --color-brand-purple: var(--c-purple);
+  --color-primary: var(--c-text-primary);
+  --color-secondary: var(--c-text-secondary);
+  --color-surface: var(--c-bg-secondary);
+  --color-success: var(--c-success);
+  --color-divider: var(--c-divider);
+
+  --text-h3: var(--fs-h3);
+  --text-h2: var(--fs-h2);
+  --text-h4: var(--fs-h4);
+  --text-h5: var(--fs-h5);
+  --text-h6: var(--fs-h6);
+  --text-copy-xl: var(--fs-xl);
+  --text-copy-lg: var(--fs-lg);
+  --text-copy-md: var(--fs-md);
+  --text-copy-sm: var(--fs-sm);
+}
 
 *, *::before, *::after {
   box-sizing: border-box;
