@@ -585,7 +585,7 @@ export default function TariffPage() {
        card leaves last, with equal gaps between each */
     gsap.to(cards, {
       opacity: 0, x: 80, duration: 0.26, ease: 'power2.in',
-      stagger: { each: 0.07, from: 'end' },
+      stagger: { each: 0.05, from: 'end' },
       onComplete: () => {
         /* 2) background collapses (width + glow→red via CSS, faster + eased-out) */
         setComparing(false);
@@ -596,7 +596,7 @@ export default function TariffPage() {
            lands on the now-red panel, so its white text never flashes on light) */
         if (rec) {
           gsap.set(rec, { x: -48, opacity: 0 });
-          gsap.to(rec, { x: 0, opacity: 1, duration: 0.42, ease: 'power3.out', delay: 0.16,
+          gsap.to(rec, { x: 0, opacity: 1, duration: 0.42, ease: 'power3.out', delay: 0.1,
             clearProps: 'opacity,transform' });
         }
       },
