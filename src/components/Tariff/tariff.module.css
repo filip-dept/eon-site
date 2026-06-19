@@ -570,26 +570,14 @@
   overflow: hidden;
   transition: padding 0.46s var(--ease-out);
 }
-/* comparison open → clear the collapse chevron (the column handles the widening) */
+/* comparison open → clear the collapse chevron (the column handles the widening).
+   The panel keeps its red living-gradient in BOTH states (same as collapsed) so
+   the background stays consistent through the transition; the white recommended
+   card + beige alternatives read fine on top, and the header text / collapse
+   chevron keep their light (base) treatment. */
 .frameHero[data-comparing='true'] .panel {
   padding-left: 72px;          /* clear the collapse chevron + 8px breathing room */
 }
-/* comparison open → fade the red glow layer out (ease-out) to reveal the light
-   secondary base; collapse fades it back in fast (base rule below) */
-.frameHero[data-comparing='true'] .panelGlow {
-  opacity: 0;
-  transition: opacity 0.55s var(--ease-out);
-}
-/* header + collapse flip to dark ink on the light comparison panel */
-.frameHero[data-comparing='true'] .panelLabel { color: var(--c-red); }
-.frameHero[data-comparing='true'] .panelTitle { color: var(--c-text-primary); }
-.frameHero[data-comparing='true'] .panelSub   { color: var(--c-text-secondary); }
-.frameHero[data-comparing='true'] .compareCollapse {
-  background: rgba(38, 38, 38, 0.06);
-  border-color: rgba(38, 38, 38, 0.2);
-  color: var(--c-text-primary);
-}
-.frameHero[data-comparing='true'] .compareCollapse:hover { background: rgba(38, 38, 38, 0.12); }
 
 /* content rides above the blooms */
 .panel > * {
@@ -692,7 +680,6 @@
   font-size: clamp(14px, 1.4vw, 18px);
   line-height: 1.5;
   color: rgba(255,255,255,0.85);
-  max-width: 480px;
 }
 
 /* ─── Cards row: recommendation + (when comparing) two alternatives ───────── */
@@ -767,8 +754,8 @@
   opacity: 1;
   pointer-events: auto;
   max-height: 600px;
-  /* alternatives: white so they read against the secondary-bg panel */
-  background: var(--c-white);
+  /* alternatives: beige decorative surface (Figma) — reads against the white panel */
+  background: var(--c-bg-secondary);
 }
 /* …and the rec card stays a touch wider than the two alternatives so it stands
    out — the two extras keep flex-grow:1, so this ratio (1.06) makes it ~6% wider.
@@ -778,42 +765,11 @@
   z-index: 1;
 }
 
-/* ─── Expanded (comparison) colour scheme — Figma 1802:11576 ───────────────
-   The recommended card flips to a solid red fill with white content; the
-   alternatives stay light. Scoped to comparing so the initial-view rec card
-   keeps its white treatment. */
-.card[data-rec='true'][data-comparing='true'] {
-  /* same red living-gradient as the pre-comparison .panel, instead of flat red */
-  background: linear-gradient(138deg, #ea1b0a 0%, #e0190f 55%, #c11054 100%);
-  box-shadow: none;            /* the red-glow lift is only for the white panel card */
-}
-.card[data-rec='true'][data-comparing='true'] .cardName,
-.card[data-rec='true'][data-comparing='true'] .priceMain,
-.card[data-rec='true'][data-comparing='true'] .featureName {
-  color: var(--c-white);
-}
-.card[data-rec='true'][data-comparing='true'] .cardSub,
-.card[data-rec='true'][data-comparing='true'] .priceUnit,
-.card[data-rec='true'][data-comparing='true'] .featureDesc {
-  color: rgba(255, 255, 255, 0.8);
-}
-.card[data-rec='true'][data-comparing='true'] .cardDivider {
-  background: rgba(255, 255, 255, 0.28);
-}
-/* feature icons (hardcoded red strokes) → white on the red card */
-.card[data-rec='true'][data-comparing='true'] .feature svg circle,
-.card[data-rec='true'][data-comparing='true'] .feature svg path {
-  stroke: var(--c-white);
-}
-/* CTA: white fill, red text */
-.card[data-rec='true'][data-comparing='true'] .btnPrimary {
-  background: var(--c-white);
-  color: var(--c-red);
-  border: none;
-}
-.card[data-rec='true'][data-comparing='true'] .btnPrimary:hover {
-  background: rgba(255, 255, 255, 0.9);
-}
+/* ─── Expanded (comparison) colour scheme — Figma 1807:9677 ───────────────
+   Recommended card keeps the base white fill + red-glow lift (--shadow-rec),
+   dark content and the solid red CTA — it stands out via the glow + teal badge,
+   not a red fill. The two alternatives use the beige decorative surface with
+   outline CTAs (rules above). No rec-card colour overrides needed here. */
 
 /* ── Card header: name + sub (+ recommendation badge), then price ── */
 .cardHeader {

@@ -743,7 +743,7 @@
 .ctxRow {
   display: flex;
   align-items: center;
-  gap: 24px;
+  gap: 18px;
   flex-wrap: wrap;
   margin-bottom: 32px;
 }
