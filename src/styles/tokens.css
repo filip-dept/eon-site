@@ -10,6 +10,13 @@
   --c-chip-border: #e5e4e4;
   --c-black: #0a0a0a;
 
+  /* tariff cards (Figma "Idea" refined panel/comparison) */
+  --c-bg-secondary: #f8f5f2;    /* SCH background/decorative — secondary surface */
+  --c-divider: #d7d0cc;         /* grey/300 — in-card divider */
+  --c-success: #18a087;         /* UI system feedback/success — recommendation badge */
+  /* recommended card: red-tinted upward glow + soft drop shadow */
+  --shadow-rec: 0 -16px 34px 0 rgba(150, 17, 8, 0.4), 4px 20px 24px -8px rgba(0, 0, 0, 0.25);
+
   /* Hero brand gradient (red → magenta → purple), top-left origin */
   --hero-gradient: linear-gradient(135deg, #ea1b0a 0%, #ea1b0a 35%, #c11054 72%, #941481 100%);
 

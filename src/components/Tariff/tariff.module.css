@@ -451,14 +451,33 @@
   position: relative;
   overflow: hidden;
   border-radius: 6px;
-  transition: flex-basis 0.46s var(--ease-out), flex-grow 0.46s var(--ease-out);
+  /* collapse: faster than the expand, eased-out */
+  transition: flex-basis 0.4s var(--ease-out), flex-grow 0.4s var(--ease-out);
 }
 /* comparison open → the image grows to absorb all slack the capped panel
-   leaves, so image + panel always span the full frame (no side gutters) */
+   leaves, so image + panel always span the full frame (no side gutters).
+   expand: slower, eased-out, so the background glides open. */
 .frameHero[data-comparing='true'] .frameImage {
   flex: 1 1 0;
+  transition: flex-basis 0.55s var(--ease-out), flex-grow 0.55s var(--ease-out);
 }
-/* comparing → drop the social-proof card so the three tariff cards get full height */
+/* right column: red panel stacked above the social-proof strip (on white page).
+   Holds the column width the panel used to own, so image + column fill the frame. */
+.heroRight {
+  flex: 0 1 600px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  /* collapse: faster than the expand, eased-out */
+  transition: flex-basis 0.4s var(--ease-out), flex-grow 0.4s var(--ease-out);
+}
+.frameHero[data-comparing='true'] .heroRight {
+  flex: 0 1 1208px;            /* grows to hold the three capped cards */
+  /* expand: slower, eased-out — the comparison background glides open */
+  transition: flex-basis 0.55s var(--ease-out), flex-grow 0.55s var(--ease-out);
+}
+/* comparing → drop the social-proof strip so the three tariff cards get full height */
 .frameHero[data-comparing='true'] .socialProof {
   display: none;
 }
@@ -471,16 +490,14 @@
   object-position: top center;   /* fill, cropping evenly around the centre */
 }
 
-/* Social proof card — sits below the red panel in the right column */
+/* Social proof — plain content on the white page, below (outside) the red panel */
 .socialProof {
   flex-shrink: 0;
-  background: #fff;
-  border-radius: 6px;
-  padding: 12px 16px;
   display: flex;
   align-items: center;
   gap: 16px;
-  box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+  padding: 10px 12px;
+  background: #F8F5F2;
 }
 
 .avatars {
@@ -523,7 +540,7 @@
 .socialCta {
   font-family: var(--font-body);
   font-weight: 500;
-  font-size: 14px;
+  font-size: 16px;
   color: var(--c-red);
   text-decoration: underline;
   background: none;
@@ -537,32 +554,42 @@
    radial blooms orbit on independent paths/speeds over the red base */
 .panel {
   position: relative;
-  /* normal: 600px wide (no grow) so the single card never sprawls — width is
-     held by flex-basis (not max-width) so it transitions both ways symmetrically */
-  flex: 0 1 600px;
+  /* fills the right column above the social-proof strip; the column (.heroRight)
+     owns the width so image + column always span the frame with no gutter */
+  flex: 1 1 auto;
   min-width: 0;
   border-radius: 6px;
-  background: linear-gradient(138deg, #ea1b0a 0%, #e0190f 55%, #c11054 100%);
+  /* light base; the red living gradient lives on .panelGlow above it so it can
+     FADE (ease-out) when the comparison opens — gradient↔solid can't transition */
+  background: var(--c-bg-secondary);
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   padding: 16px 16px 16px 16px;
   gap: 16px;
   overflow: hidden;
-  transition:
-    flex-grow 0.46s var(--ease-out),
-    flex-basis 0.46s var(--ease-out),
-    padding 0.46s var(--ease-out);
+  transition: padding 0.46s var(--ease-out);
 }
-/* comparison open → the panel grows just enough to hold the three capped cards
-   (1120 row + 64 left for the chevron + 16 right), then stops — so it hugs its
-   content rather than sprawling across wide monitors */
+/* comparison open → clear the collapse chevron (the column handles the widening) */
 .frameHero[data-comparing='true'] .panel {
-  flex: 0 1 1208px;            /* basis grows the panel; image absorbs the rest */
   padding-left: 72px;          /* clear the collapse chevron + 8px breathing room */
 }
-/* comparison open → the gradient panel just fills the space left of the
-   comparison frame (which takes 65%) */
+/* comparison open → fade the red glow layer out (ease-out) to reveal the light
+   secondary base; collapse fades it back in fast (base rule below) */
+.frameHero[data-comparing='true'] .panelGlow {
+  opacity: 0;
+  transition: opacity 0.55s var(--ease-out);
+}
+/* header + collapse flip to dark ink on the light comparison panel */
+.frameHero[data-comparing='true'] .panelLabel { color: var(--c-red); }
+.frameHero[data-comparing='true'] .panelTitle { color: var(--c-text-primary); }
+.frameHero[data-comparing='true'] .panelSub   { color: var(--c-text-secondary); }
+.frameHero[data-comparing='true'] .compareCollapse {
+  background: rgba(38, 38, 38, 0.06);
+  border-color: rgba(38, 38, 38, 0.2);
+  color: var(--c-text-primary);
+}
+.frameHero[data-comparing='true'] .compareCollapse:hover { background: rgba(38, 38, 38, 0.12); }
 
 /* content rides above the blooms */
 .panel > * {
@@ -570,9 +597,22 @@
   z-index: 1;
 }
 
+/* red living-gradient layer — the panel's "colour". Sits behind the content and
+   fades out (ease-out) when the comparison opens; fast fade-in on collapse. */
+.panelGlow {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  border-radius: inherit;
+  background: linear-gradient(138deg, #ea1b0a 0%, #e0190f 55%, #c11054 100%);
+  pointer-events: none;
+  /* collapse: the red glow fades back in faster than it faded out, eased-out */
+  transition: opacity 0.4s var(--ease-out);
+}
+
 /* deep magenta→purple bloom — heavily blurred, wandering a closed,
    non-linear path along the bottom half of the panel */
-.panel::before {
+.panelGlow::before {
   content: '';
   position: absolute;
   z-index: 0;
@@ -590,7 +630,7 @@
 }
 
 /* hot orange flare, sweeping through the upper half in counter-phase */
-.panel::after {
+.panelGlow::after {
   content: '';
   position: absolute;
   z-index: 0;
@@ -621,8 +661,8 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .panel::before,
-  .panel::after { animation: none; }
+  .panelGlow::before,
+  .panelGlow::after { animation: none; }
 }
 
 .panelHeader { 
@@ -656,9 +696,11 @@
 }
 
 /* ─── Cards row: recommendation + (when comparing) two alternatives ───────── */
+/* top-align so each card hugs its own content height — the alternatives have no
+   badge, so they sit shorter than the recommended card (Figma: 525 vs 560) */
 .cards {
   display: flex;
-  align-items: stretch;
+  align-items: center;
   gap: 16px;
   min-width: 0;
 }
@@ -683,16 +725,29 @@
      transition so a React re-render dropping the inline value can't animate it
      back up and flash the card during collapse. Snappy (0.46s) so the rec card
      widens + its 2×2 features settle quickly on collapse. */
+  /* collapse: the recommendation card widens back FASTER than it narrowed open */
   transition:
-    flex-grow 0.46s var(--ease-out),
-    flex-basis 0.46s var(--ease-out),
-    margin-left 0.46s var(--ease-out),
-    max-height 0.46s var(--ease-out);
+    flex-grow 0.4s var(--ease-out),
+    flex-basis 0.4s var(--ease-out),
+    margin-left 0.4s var(--ease-out),
+    max-height 0.4s var(--ease-out);
 }
+/* expand: slower/smoother so the rec card eases into the row */
+.cards[data-comparing='true'] .card[data-rec='true'] {
+  transition:
+    flex-grow 0.55s var(--ease-out),
+    flex-basis 0.55s var(--ease-out),
+    margin-left 0.55s var(--ease-out),
+    max-height 0.55s var(--ease-out);
+}
+/* the two alternatives never animate their OWN box — their width is just their
+   flex share of the (eased) container; GSAP drives their move/fade in & out */
+.card[data-extra='true'] { transition: none; }
 /* the two alternatives are collapsed to zero width until comparing — the
    negative margin swallows the flex gap so the recommendation fills 100% */
+/* recommended card: white, lifted off the red gradient with a red-tinted glow */
 .card[data-rec='true'] {
-  filter: drop-shadow(0 8px 28px rgba(0, 0, 0, 0.18)) drop-shadow(0 2px 6px rgba(0, 0, 0, 0.10));
+  box-shadow: var(--shadow-rec);
 }
 
 .card[data-extra='true'] {
@@ -712,128 +767,128 @@
   opacity: 1;
   pointer-events: auto;
   max-height: 600px;
+  /* alternatives: white so they read against the secondary-bg panel */
+  background: var(--c-white);
 }
-/* the recommended card keeps a subtle red cap + lift while comparing */
-.card[data-rec='true'][data-comparing='true'] {
-  filter: drop-shadow(0 14px 34px rgba(0, 0, 0, 0.18)) drop-shadow(0 2px 6px rgba(0, 0, 0, 0.10));
-}
-/* …and it's a touch wider than the two alternatives so it stands out — the two
-   extras keep flex-grow:1, so this ratio (1.06) makes the rec card ~6% wider.
+/* …and the rec card stays a touch wider than the two alternatives so it stands
+   out — the two extras keep flex-grow:1, so this ratio (1.06) makes it ~6% wider.
    No vertical overhang: it stays within the panel so nothing spills the frame. */
 .cards[data-comparing='true'] .card[data-rec='true'] {
   flex-grow: 1.06;
   z-index: 1;
 }
 
-/* tags row (Figma comparison) — replaces the cardNav while comparing */
-.cardTags { display: flex; flex-wrap: wrap; gap: 8px; padding: 16px 16px 0; }
-.cardTag {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  background: #f1eeec;
-  border-radius: 6px;
-  padding: 4px 9px;
-  font-family: var(--font-body);
-  font-size: 14px;
-  line-height: 20px;
-  font-weight: 600;
-  color: var(--c-text-secondary);
+/* ─── Expanded (comparison) colour scheme — Figma 1802:11576 ───────────────
+   The recommended card flips to a solid red fill with white content; the
+   alternatives stay light. Scoped to comparing so the initial-view rec card
+   keeps its white treatment. */
+.card[data-rec='true'][data-comparing='true'] {
+  /* same red living-gradient as the pre-comparison .panel, instead of flat red */
+  background: linear-gradient(138deg, #ea1b0a 0%, #e0190f 55%, #c11054 100%);
+  box-shadow: none;            /* the red-glow lift is only for the white panel card */
 }
-.cardTag[data-green='true'] { background: #dcefe0; color: #1d6b3a; }
+.card[data-rec='true'][data-comparing='true'] .cardName,
+.card[data-rec='true'][data-comparing='true'] .priceMain,
+.card[data-rec='true'][data-comparing='true'] .featureName {
+  color: var(--c-white);
+}
+.card[data-rec='true'][data-comparing='true'] .cardSub,
+.card[data-rec='true'][data-comparing='true'] .priceUnit,
+.card[data-rec='true'][data-comparing='true'] .featureDesc {
+  color: rgba(255, 255, 255, 0.8);
+}
+.card[data-rec='true'][data-comparing='true'] .cardDivider {
+  background: rgba(255, 255, 255, 0.28);
+}
+/* feature icons (hardcoded red strokes) → white on the red card */
+.card[data-rec='true'][data-comparing='true'] .feature svg circle,
+.card[data-rec='true'][data-comparing='true'] .feature svg path {
+  stroke: var(--c-white);
+}
+/* CTA: white fill, red text */
+.card[data-rec='true'][data-comparing='true'] .btnPrimary {
+  background: var(--c-white);
+  color: var(--c-red);
+  border: none;
+}
+.card[data-rec='true'][data-comparing='true'] .btnPrimary:hover {
+  background: rgba(255, 255, 255, 0.9);
+}
+
+/* ── Card header: name + sub (+ recommendation badge), then price ── */
+.cardHeader {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 16px 24px;
+}
+.cardHeadRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+.cardHeadText {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1 1 0;
+  min-width: 0;
+}
 .cardName {
-  padding: 8px 16px 0;
   margin: 0;
   font-family: var(--font-body);
   font-weight: 700;
-  font-size: 18px;
-  line-height: 1.3;
+  font-size: 22px;            /* Headings/5 */
+  line-height: 30px;
   color: var(--c-text-primary);
 }
-
-/* ── Comparing: tighter card internals so three fit cleanly ── */
-.card[data-comparing='true'] .cardSub { padding: 2px 16px 0; }
-.card[data-comparing='true'] .cardBody { padding: 4px 16px 16px; gap: 14px; }
-.card[data-comparing='true'] .priceMain { font-size: 36px; }
-.card[data-comparing='true'] .featureName { font-size: 14px; line-height: 1.4; }
-.card[data-comparing='true'] .cardBtns { height: 44px; }
-.card[data-comparing='true'] .btnPrimary { font-size: 16px; border-radius: 10px; }
-
-.cardNav {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 16px 24px 5px;
-  gap: 12px;
-}
-
-.cardTitle {
+.cardSub {
+  margin: 0;
   font-family: var(--font-body);
-  font-weight: 700;
-  font-size: clamp(17px, 1.45vw, 20px);
-  line-height: 1.35;
-  color: var(--c-text-primary);
-  white-space: nowrap;
+  font-weight: 400;
+  font-size: 14px;            /* Copy/sm */
+  line-height: 21px;
+  color: var(--c-text-secondary);
 }
-
-/* "Besonders nachhaltig" — solid green pill, white text + leaf, lifted so it
-   pops off the white card (only shown when the eco checkbox is ticked) */
+/* green "Unsere Empfehlung für dich" pill — recommended card only */
 .cardBadge {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
   flex-shrink: 0;
-  background: #1ea354;
-  border-radius: 999px;
-  padding: 5px 13px 5px 11px;
+  height: 24px;
+  padding: 0 10px;
+  border-radius: 4px;
+  background: var(--c-success);
+  color: var(--c-white);
   font-family: var(--font-body);
+  font-weight: 500;
   font-size: 14px;
-  font-weight: 700;
-  color: #fff;
+  line-height: 21px;
   white-space: nowrap;
-  box-shadow: 0 4px 14px rgba(30, 163, 84, 0.35);
 }
-.cardBadge svg { flex-shrink: 0; }
-
-.cardSub {
-  padding: 0 24px 4px;
-  font-family: var(--font-body);
-  font-size: 14px;
-  color: var(--c-text-secondary);
+/* narrow comparison cards: the badge stacks above the name rather than beside it */
+.card[data-comparing='true'] .cardHeadRow {
+  flex-direction: column-reverse;
+  align-items: flex-start;
 }
 
-.cardBody {
-  padding: 4px 24px 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-
-.priceRow {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  padding-top: 10px;
-}
-
-.priceBlock {
+.cardPrice {
   display: flex;
   align-items: baseline;
   gap: 4px;
-  flex-shrink: 0;
 }
-
 .priceMain {
   font-family: var(--font-body);
   font-weight: 700;
-  font-size: 56px;
-  line-height: 1;
+  font-size: 48px;            /* Headings/1 */
+  line-height: 56px;
   color: var(--c-text-primary);
 }
-
 .priceUnit {
   font-family: var(--font-body);
+  font-weight: 400;
   font-size: 14px;
+  line-height: 21px;
   color: var(--c-text-secondary);
   white-space: nowrap;
 }
@@ -875,40 +930,29 @@
   flex-shrink: 1;
 }
 
-.divider {
-  height: 1px;
-  background: #f0ebe5;
-}
-
-/* 2×2 grid — Figma 904:10812 (the Neukunden-Bonus is the first cell) */
-/* @keyframes bonusSpin {
-  from { transform: rotate(0deg); }
-  to   { transform: rotate(360deg); }
-}
-.bonusIcon {
-  animation: bonusSpin 0.55s cubic-bezier(0.2, 0, 0.3, 1) 0.2s both;
-  transform-origin: center;
-} */
-
-.features {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  column-gap: 8px;
-  row-gap: 16px;
-}
-/* comparing → vertical stack (each of the three cards is narrow) */
-.features[data-comparing='true'] {
+/* ── Card body: divider, features, actions ── */
+.cardBody {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 24px;
+  padding: 0 24px 16px;
+}
+.cardDivider {
+  height: 1px;
+  border-radius: 1px;
+  background: var(--c-divider);
 }
 
-/* Phase 1 (0-25%): letter blurs in.
-   Phase 2 (25-100%): brand gradient (red→purple) sweeps to dark text. */
-@keyframes letterReveal {
-  0%   { filter: blur(10px); opacity: 0; background-position-x: 0%; }
-  25%  { filter: blur(0);    opacity: 1; background-position-x: 0%; }
-  100% { filter: blur(0);    opacity: 1; background-position-x: 100%; }
+/* features: 2×2 grid in the wide panel card, vertical list while comparing */
+.cardFeatures {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.cardFeatures[data-comparing='true'] {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
 .feature {
@@ -917,92 +961,84 @@
   gap: 10px;
   min-width: 0;
 }
-
-.card:not([data-extra]) .feature:first-child .featureNameLetter {
-  display: inline-block;
-  background: linear-gradient(90deg,
-    #EA1A1A 0%,
-    #9B27AF 25%,
-    #EA1A1A 50%,
-    var(--c-text-primary) 66%,
-    var(--c-text-primary) 100%
-  );
-  background-size: 300% 100%;
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  animation: letterReveal 1.8s ease-out calc(var(--i) * 0.04s) both;
+.feature svg {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
 }
-
-.featureText { display: flex; flex-direction: column; gap: 1px; }
-
+.featureText {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
 .featureName {
-  display: block;
   font-family: var(--font-body);
-  font-weight: 700;
+  font-weight: 700;          /* Copy/lg Medium */
   font-size: 16px;
+  line-height: 24px;
   color: var(--c-text-primary);
-  line-height: 1.5;
 }
-.featureNameLetter {
-  display: inline;
-}
-
 .featureDesc {
   font-family: var(--font-body);
-  font-size: 14px;
+  font-weight: 400;          /* Copy/md Regular */
+  font-size: 16px;
+  line-height: 24px;
   color: var(--c-text-secondary);
-  line-height: 1.4;
 }
 
-.cardBtns {
+/* ── Actions ── */
+.cardActions {
   display: flex;
+  flex-direction: row;
   gap: 8px;
-  height: 48px;
 }
-
 .btnPrimary {
-  flex: 1;
+  height: 48px;
+  flex: 1 1 0;
+  min-width: 0;
   background: var(--c-red);
-  color: #fff;
+  color: var(--c-white);
   border: none;
-  border-radius: 12px;
+  border-radius: 8px;
   font-family: var(--font-body);
   font-weight: 700;
   font-size: 18px;
+  line-height: 27px;
   cursor: pointer;
   transition: background 0.2s;
   white-space: nowrap;
 }
 .btnPrimary:hover { background: #cc1709; }
-
+/* alternative cards: outline button (white fill, red border + text) */
 .card[data-extra] .btnPrimary {
-  background: transparent;
+  background: var(--c-white);
   color: var(--c-red);
   border: 2px solid var(--c-red);
 }
-.card[data-extra] .btnPrimary:hover {
-  background: rgba(234, 27, 10, 0.06);
-}
+.card[data-extra] .btnPrimary:hover { background: rgba(234, 27, 10, 0.06); }
 
-.btnSecondary {
-  flex: 1;
-  background: #fff;
-  color: var(--c-text-primary);
-  border: none;
-  border-radius: 12px;
-  font-family: var(--font-body);
-  font-weight: 700;
-  font-size: 18px;
-  cursor: pointer;
+/* "Tarif vergleichen" — secondary outline entry into the comparison (panel only) */
+.btnCompare {
+  height: 48px;
+  flex: 1 1 0;
+  min-width: 0;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 6px;
+  background: transparent;
+  color: var(--c-red);
+  border: 2px solid var(--c-red);
+  border-radius: 8px;
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: 18px;
+  line-height: 27px;
+  cursor: pointer;
   transition: background 0.15s;
   white-space: nowrap;
 }
-.btnSecondary:hover { background: #f8f5f2; }
+.btnCompare:hover { background: rgba(234, 27, 10, 0.06); }
 
 /* ─── Shared editorial text block ────────────────────────────────────────── */
 .editorialContent {
@@ -1784,16 +1820,23 @@
   padding: 56px 16px;
 }
 
-/* ─── Stories images frame — cards parallax through at different speeds ───── */
+/* ─── Stories images frame — stage pins; cards rise through ──────────────── */
 .stories {
   position: relative;
-  height: 100vh;
+  /* 100vh visible stage + 30vh runway — kept tight so HEMS follows right as the
+     cards reach the top (no empty gradient tail) */
+  height: 80vh;
 }
 
+/* pinned via CSS sticky (NOT a ScrollTrigger pin — pinning would apply a
+   transform and break this exact same pattern further down on HEMS). Clips its
+   children, so the sweeping cards can never bleed into the HEMS frame below. */
 .storiesStage {
-  position: relative;
-  height: 100%;
-  overflow: hidden;
+  position: sticky;
+  top: 100px;
+  height: 70vh;
+  overflow: visible;
+  z-index: 1;
 }
 
 /* dark on the initial white background; flips to white once the gradient
@@ -1846,13 +1889,12 @@
   box-shadow: 0 18px 48px rgba(0, 0, 0, 0.22);
 }
 
-/* resting spots — a visible collage around the centred text (cards sit UNDER
-   the text, z-wise); 1 low-left, 2 lowest-centre, 3 high-right */
-/* all start near the top edge of the frame, each at a different spot, and all
-   fit within the viewport height before the parallax drifts them down */
-.storyCard1 { left: 9.3%;  top: 6%; }
-.storyCard2 { left: 38.1%; top: 19%; }
-.storyCard3 { left: 66.9%; top: 10%; }
+/* horizontal lanes only — the vertical position is driven entirely by the
+   per-card sweep (JS), which starts each card above the frame and sends it down
+   past the bottom across its own slice of the 200vh runway */
+.storyCard1 { left: 9.3%;  top: 0; }
+.storyCard2 { left: 38.1%; top: 0; }
+.storyCard3 { left: 66.9%; top: 0; }
 
 .storyMedia {
   position: absolute;

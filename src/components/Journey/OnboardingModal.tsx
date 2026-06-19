@@ -131,12 +131,25 @@ const EnterHint = () => (
   </span>
 );
 
-/* ─── Animated conversational sphere (transparent container, just the orb) ─── */
-const ConvSphere = () => (
-  <div className={styles.convSphere} aria-hidden="true">
-    <span className={styles.convOrb} />
-  </div>
-);
+/* ─── Animated conversational sphere — looping orb video (white bg dropped via
+   mix-blend-mode in CSS). Play is driven in JS so we can honour reduced-motion
+   and dodge React's muted-autoplay quirk. ─── */
+const ConvSphere = () => {
+  const ref = useRef<HTMLVideoElement>(null);
+  useEffect(() => {
+    const v = ref.current;
+    if (!v) return;
+    v.muted = true;
+    v.playbackRate = 2;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) { v.pause(); v.currentTime = 0; }
+    else v.play().catch(() => {});
+  }, []);
+  return (
+    <div className={styles.convSphere} aria-hidden="true">
+      <video ref={ref} className={styles.convOrb} src="/orb-anim.mp4" loop muted playsInline preload="auto" />
+    </div>
+  );
+};
 
 /* ─── Blurred-typewriter headline — words split for a staggered reveal ─────── */
 type Seg = { text: string; em?: boolean };
@@ -170,8 +183,7 @@ function Step1({ answers, setAnswers, goNext }: {
     <>
       <p className={styles.stepLabel}>Erstmal kalibrieren</p>
       <Typewriter lines={[
-        [{ text: 'Was ist dir bei deinem' }],
-        [{ text: 'Strom' }, { text: 'am wichtigsten?', em: true }],
+        [{ text: 'Was ist dir bei deinem Strom' }, { text: 'am wichtigsten?', em: true }],
       ]} />
       <div className={styles.optionGrid}>
         {PRIORITIES.map((p) => (
@@ -261,8 +273,7 @@ function Step2({ answers, setAnswers, goNext, goBack }: {
     <>
       <p className={styles.stepLabel}>Wo zuhause, mit wem</p>
       <Typewriter lines={[
-        [{ text: 'Erzähl mir kurz' }],
-        [{ text: 'von deinem Zuhause.', em: true }],
+        [{ text: 'Erzähl mir kurz' }, { text: 'von deinem Zuhause.', em: true }],
       ]} />
 
       <div className={styles.s2row}>
@@ -398,8 +409,7 @@ function Step3({ answers, setAnswers, onSubmit, goBack }: {
     <>
       <p className={styles.stepLabel}>Und wie viel Strom</p>
       <Typewriter lines={[
-        [{ text: 'Wie viel davon' }],
-        [{ text: 'brauchst du im Jahr?', em: true }],
+        [{ text: 'Wie viel davon' }, { text: 'brauchst du im Jahr?', em: true }],
       ]} />
 
       <div className={styles.kwhBlock} data-appear>
@@ -583,21 +593,23 @@ export default function OnboardingModal() {
     if (!outEl || !inEl) return;
 
     animating.current = true;
-    const dx = dir === 'fwd' ? -44 : 44;
+    /* vertical "scroll" motion: forward → current rises up & out, next rises in
+       from below; backward → the reverse. (.content clips the overflow) */
+    const dy = dir === 'fwd' ? -140 : 140;
 
     gsap.to(outEl, {
-      x: dx,
+      y: dy,
       opacity: 0,
       duration: 0.32,
       ease: 'eonReveal',
       onComplete: () => {
-        gsap.set(outEl, { display: 'none', x: 0 });
+        gsap.set(outEl, { display: 'none', y: 0 });
         setStep(nextStep);
         /* Let React render the new step, then animate it in */
         requestAnimationFrame(() => {
-          gsap.set(inEl, { display: 'flex', x: -dx, opacity: 0 });
+          gsap.set(inEl, { display: 'flex', y: -dy, opacity: 0 });
           gsap.to(inEl, {
-            x: 0,
+            y: 0,
             opacity: 1,
             duration: 0.42,
             ease: 'eonOut',
@@ -690,6 +702,9 @@ export default function OnboardingModal() {
           </svg>
         </button>
 
+        {/* Assistant orb — docked top-centre between the back/close buttons */}
+        <ConvSphere />
+
         {/* ── Body: centred conversational column (no side navigation) ── */}
         <div className={styles.modalBody}>
           <div className={styles.contentCol}>
@@ -700,7 +715,6 @@ export default function OnboardingModal() {
                 className={styles.stepPanel}
                 style={{ display: step === 1 ? 'flex' : 'none' }}
               >
-                <ConvSphere />
                 <Step1 answers={answers} setAnswers={setAnswers} goNext={goNext} />
               </div>
 
@@ -709,7 +723,6 @@ export default function OnboardingModal() {
                 className={styles.stepPanel}
                 style={{ display: step === 2 ? 'flex' : 'none' }}
               >
-                <ConvSphere />
                 <Step2 answers={answers} setAnswers={setAnswers} goNext={goNext} goBack={goBack} />
               </div>
 
@@ -718,7 +731,6 @@ export default function OnboardingModal() {
                 className={styles.stepPanel}
                 style={{ display: step === 3 ? 'flex' : 'none' }}
               >
-                <ConvSphere />
                 <Step3
                   answers={answers}
                   setAnswers={setAnswers}

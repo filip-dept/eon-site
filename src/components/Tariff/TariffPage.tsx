@@ -49,30 +49,6 @@ const BonusIcon = () => (
     />
   </svg>
 );
-/* tiny tag icons for the comparison cards */
-const BalanceIcon = () => (
-  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M12 3v18M5 7h14M5 7l-3 6a3 3 0 0 0 6 0l-3-6zM19 7l-3 6a3 3 0 0 0 6 0l-3-6zM8 21h8"/>
-  </svg>
-);
-const BoltIcon = () => (
-  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M13 2 4 14h7l-1 8 10-12h-7l1-8z"/>
-  </svg>
-);
-const ShieldIcon = () => (
-  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6l8-3z"/>
-  </svg>
-);
-
-/* ─── Comparison tags — one per family position (Flex | Ausgewogen | Sicher) ── */
-type CompareTag = { label: string; green?: boolean; icon?: React.ReactNode };
-const FAMILY_TAGS: CompareTag[] = [
-  { label: 'Maximal Flexibel', icon: <BoltIcon /> },
-  { label: 'Ausgewogen', icon: <BalanceIcon /> },
-  { label: 'Maximale Sicherheit', icon: <ShieldIcon /> },
-];
 const ChevronRight = () => (
   <svg width="10" height="14" viewBox="0 0 10 16" fill="none">
     <path d="M2 2l6 6-6 6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
@@ -102,13 +78,6 @@ const InfoIcon = () => (
 const HomeGreenIcon = () => (
   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#1ea354" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <path d="M3 10.5L12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/>
-  </svg>
-);
-/* leaf — "Besonders nachhaltig" badge */
-const LeafIcon = () => (
-  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M5 21c.5-4.5 2.5-8 7-10" />
-    <path d="M9 18c6.2 0 10.5-3.3 11-12V4h-4c-9 0-12 4-12 9 0 1 0 3 2 5h3z" />
   </svg>
 );
 const MicIcon = () => (
@@ -375,7 +344,7 @@ const HEMS_PINS = [
   { title: 'HEMS',       sub: 'Alles vernetzt · smart gesteuert', nx: 0.477, ny: 0.248, labelSide: 'right' },
   { title: 'Solar',      sub: '4,2 kWp · ~3.900 kWh/Jahr',        nx: 0.554, ny: 0.388, labelSide: 'right' },
   { title: 'Strom',      sub: '100 % Ökostrom · 3.200 kWh',       nx: 0.435, ny: 0.528, labelSide: 'left' },
-  { title: 'Wallbox',    sub: '11 kW · lädt mit Solar',           nx: 0.554, ny: 0.738, labelSide: 'right'  },
+  { title: 'Wallbox',    sub: '11 kW · lädt mit Solar',           nx: 0.674, ny: 0.738, labelSide: 'right'  },
   { title: 'Wärmepumpe', sub: 'COP 4,1 · ~60 % weniger Gas',      nx: 0.435, ny: 0.700, labelSide: 'left' },
 ];
 /* map a native-image fraction → container px under object-fit:cover (centered) */
@@ -577,50 +546,61 @@ export default function TariffPage() {
     setChatOpen(true);
   }, []);
 
-  /* fade the two extra cards' content in (staggered) after the panel widens */
+  /* Entrance: after the background has begun expanding + fading to light, ALL
+     THREE cards (recommendation first, then the two alternatives) move in from
+     the right out of 0 opacity, one after another. */
   useEffect(() => {
     if (!comparing) return;
     const el = panelRef.current;
     if (!el) return;
-    const extras = Array.from(el.querySelectorAll<HTMLElement>(`.${styles.card}[data-extra='true']`));
-    if (!extras.length) return;
-    /* the panel widens left→right; the alternatives slide in from the right and
-       fade up. Fixed-px x (mirror of the collapse fly-out), and a duration that
-       runs alongside the width transition so they glide into place rather than
-       snapping when the flex layout settles. */
-    gsap.set(extras, { opacity: 0, x: 90 });
-    const tl = gsap.timeline({ delay: 0.04 });
-    tl.to(extras, { opacity: 1, x: 0, duration: 0.48, ease: 'power3.out', stagger: 0.08,
-      clearProps: 'opacity,transform' }, 0);
-    /* only kill the entrance timeline on cleanup — do NOT clear inline props
-       here, or it would wipe the collapse fly-out tween when comparing flips */
+    const cards = Array.from(el.querySelectorAll<HTMLElement>(`.${styles.card}`));
+    if (!cards.length) return;
+    gsap.set(cards, { opacity: 0, x: 80 });
+    const tl = gsap.timeline({ delay: 0.1 });   /* let the bg expand/recolour lead */
+    tl.to(cards, {
+      opacity: 1, x: 0, duration: 0.4, ease: 'power3.out',
+      stagger: 0.1,                              /* one after another */
+      clearProps: 'opacity,transform',
+    }, 0);
     return () => { tl.kill(); };
   }, [comparing]);
 
-  /* Collapse, mirroring the entrance:
-       1. the two alternatives FLY OUT to the right and fade (full width kept,
-          comparing still true → no width-shrink, exactly the inverse of their
-          slide-in);
-       2. then flip to solo so the recommendation + panel run the width
-          transition in reverse;
-       3. once the card has widened, rearrange the features into the 2×2 grid
-          (so the grid appears in a wide card, the way it left one on expand). */
+  /* Collapse = the entrance played backwards:
+       1. all three cards fade + slide out to the right, one after another
+          (reverse order — right-most first), at full size (comparing stays true
+          so nothing width-shrinks);
+       2. THEN the background collapses — the panel narrows + the red glow fades
+          back in (CSS, same eased duration as the expand), and the recommendation
+          card fades back in as the panel content as the red returns. */
   const closeCompare = useCallback(() => {
     const el = panelRef.current;
-    const extras = el
-      ? Array.from(el.querySelectorAll<HTMLElement>(`.${styles.card}[data-extra='true']`))
-      : [];
-    /* Flip to solo IMMEDIATELY so the recommendation card widens + its features
-       reflow to the 2×2 grid from t0 — the exact reverse of the expand (which
-       narrows from t0), so the card's animation matches in both directions.
-       The alternatives fade out fast (masking their width-collapse) and slide
-       to the right — the inverse of their slide-in entrance. */
-    setComparing(false);
-    if (!extras.length) return;
-    gsap.set(extras, { opacity: 1, x: 0 });
-    gsap.to(extras, { opacity: 0, duration: 0.16, ease: 'power1.in', stagger: { each: 0.04, from: 'end' } });
-    gsap.to(extras, { x: 90, duration: 0.45, ease: 'power3.in', stagger: { each: 0.04, from: 'end' },
-      clearProps: 'opacity,transform' });
+    const cards = el ? Array.from(el.querySelectorAll<HTMLElement>(`.${styles.card}`)) : [];
+    const rec = el?.querySelector<HTMLElement>(`.${styles.card}[data-rec='true']`) ?? null;
+    if (!cards.length) { setComparing(false); return; }
+
+    gsap.killTweensOf(cards);
+    gsap.set(cards, { opacity: 1, x: 0 });
+    /* 1) cards leave first — the 3rd (right-most) card moves the instant the
+       button is clicked (no delay); the stagger then ripples left, so the 1st
+       card leaves last, with equal gaps between each */
+    gsap.to(cards, {
+      opacity: 0, x: 80, duration: 0.26, ease: 'power2.in',
+      stagger: { each: 0.07, from: 'end' },
+      onComplete: () => {
+        /* 2) background collapses (width + glow→red via CSS, faster + eased-out) */
+        setComparing(false);
+        const extras = cards.filter((c) => c !== rec);
+        gsap.set(extras, { clearProps: 'opacity,transform' });
+        /* final beat: once the panel has closed back to red, the single
+           recommendation card glides IN FROM THE LEFT after a slight delay (it
+           lands on the now-red panel, so its white text never flashes on light) */
+        if (rec) {
+          gsap.set(rec, { x: -48, opacity: 0 });
+          gsap.to(rec, { x: 0, opacity: 1, duration: 0.42, ease: 'power3.out', delay: 0.16,
+            clearProps: 'opacity,transform' });
+        }
+      },
+    });
   }, []);
 
   const toggleEco = () => {
@@ -933,23 +913,35 @@ export default function TariffPage() {
     const stories    = page.querySelector<HTMLElement>(`.${styles.stories}`)!;
     const storyCards = Array.from(stories.querySelectorAll<HTMLElement>(`.${styles.storyCard}`));
 
-    /* per-card scroll speed, all < 1.0 ⇒ each lags the page by (1 - speed) */
-    const SPEEDS = [0.75, 0.85, 0.63];
-    /* the parallax only begins once the section is in view (start 'top center');
-       before that the cards ride in at their designed collage positions */
+    /* The cards rise UP through the frame (scroll down → cards float up and exit
+       the top). Entry is anchored to the SAME point as the background switch:
+       the stories text crossing the middle of the viewport (so cards start
+       appearing exactly as the background flips and the text reaches the upper
+       half). They keep rising — at pronounced, per-card speeds — across the run,
+       then the stage clips (overflow:hidden) so none reaches the HEMS frame. */
+    const cardEntry = page.querySelector<HTMLElement>(`.${styles.storiesText}`)!;
+    const vh = () => window.innerHeight;
+    /* base rise distance over the run — tuned so the last card reaches the top
+       right as the run ends (and the pin releases into HEMS), no empty tail */
+    const RISE = () => vh() * 0.9;
+    /* per-card rise rate — a WIDE spread for pronounced layered depth */
+    const CARD_SPEED = [0.72, 1.28, 1.0];
+    /* start height below the frame top (×vh); staggers each card's entry so they
+       feed in from the bottom one after another (smaller = appears sooner) */
+    const CARD_START = [0.20, 0.85, 0.50];
     const cardParallax = storyCards.map((card, i) => {
-      const speed = SPEEDS[i % SPEEDS.length];
+      const speed = CARD_SPEED[i % CARD_SPEED.length];
+      const start = CARD_START[i % CARD_START.length];
       return gsap.fromTo(
         card,
-        { y: 0 },
+        { y: () => start * vh() },                       /* below the frame */
         {
-          /* total lag over the active window = (1 - speed) × its scroll distance */
-          y: () => (1 - speed) * (stories.offsetHeight + window.innerHeight * 0.5),
+          y: () => start * vh() - speed * RISE(),        /* risen up past the top */
           ease: 'none',
           scrollTrigger: {
-            trigger: stories,
-            start: 'top center',
-            end: 'bottom top',
+            trigger: cardEntry,            /* the stories text — same as the bg switch */
+            start: 'center 50%',           /* text centre crosses mid-viewport */
+            end: () => `+=${vh() * 1.1}`,  /* run length (≈ to where the pin releases) */
             scrub: true,
             invalidateOnRefresh: true,
           },
@@ -1118,17 +1110,35 @@ export default function TariffPage() {
       if (pinEls) HEMS_PINS.forEach((p, i) => {
         const c = C[p.title], el = pinEls[i];
         if (!el) return;
-        el.style.left = `${c.x - DOT}px`;
-        el.style.top = `${c.y - DOT}px`;
-        /* cap each label to the room available toward its side, so it stays on a
-           single line when it fits and only wraps once it would overflow/clip */
+        /* size the label to its natural single line, but never wider than the room
+           a fully-edge-clamped dot could give it — only then does it wrap */
         const label = el.querySelector<HTMLElement>(`.${styles.hemsPinLabel}`);
+        let labelW = 0;
         if (label) {
-          const room = p.labelSide === 'left'
-            ? c.x - DOT - GAP - EDGE                /* dot → left edge */
-            : W - (c.x + DOT + GAP) - EDGE;         /* dot → right edge */
-          label.style.maxWidth = `${Math.max(80, Math.round(room))}px`;
+          const prevWS = label.style.whiteSpace;
+          label.style.maxWidth = 'none';
+          label.style.whiteSpace = 'nowrap';
+          const natural = label.offsetWidth;        /* widest single-line width */
+          label.style.whiteSpace = prevWS;           /* back to wrapping-allowed */
+          const maxRoom = W - 2 * EDGE - 2 * DOT - GAP;
+          labelW = Math.max(60, Math.min(natural, maxRoom));
+          label.style.maxWidth = `${Math.round(labelW)}px`;
         }
+        /* Clamp the dot inward so the dot + gap + label always stay inside the
+           photo frame. The wires route to this clamped centre, so a line CONTRACTS
+           rather than running off-screen when its label would leave the frame
+           (e.g. the Wallbox on narrow widths). On wide screens nothing is clamped
+           and every dot sits exactly on its feature. */
+        let cx = c.x;
+        if (p.labelSide === 'left') {
+          cx = Math.min(Math.max(cx, EDGE + labelW + GAP + DOT), W - EDGE - DOT);
+        } else {
+          cx = Math.max(Math.min(cx, W - EDGE - labelW - GAP - DOT), EDGE + DOT);
+        }
+        const cy = Math.min(Math.max(c.y, EDGE + DOT), H - EDGE - DOT);
+        C[p.title] = { x: cx, y: cy };               /* wires read this → they re-route */
+        el.style.left = `${cx - DOT}px`;
+        el.style.top = `${cy - DOT}px`;
       });
       /* hub → device wires, routed from one dot centre to the next */
       const hub = C[HEMS_HUB.title];
@@ -1331,10 +1341,13 @@ export default function TariffPage() {
           {/* ═══ Frame 1: Hero + Tariff card ═══ */}
           <div className={`${styles.frame} ${styles.frameHero}`} data-comparing={comparing}>
             <div className={styles.frameImage} data-aimg>
-              <img src="/newhouse.png" alt="E.ON Kundin" />
+              <video src="/newhousevideo.mp4" aria-label="E.ON Kundin" autoPlay loop muted playsInline />
             </div>
 
+            <div className={styles.heroRight}>
             <div className={styles.panel} ref={panelRef}>
+              {/* red living-gradient layer — fades out as the comparison opens */}
+              <div className={styles.panelGlow} aria-hidden="true" />
               {/* collapse chevron — left edge, vertically centred, only while comparing */}
               {comparing && (
                 <button
@@ -1358,7 +1371,7 @@ export default function TariffPage() {
                     </>
                   ) : (
                     <>
-                      <h1 className={styles.panelTitle}>Dein Stromtarif,<br />in 15 Sekunden</h1>
+                      <h1 className={styles.panelTitle}>Dein Stromtarif, in 15 Sekunden</h1>
                       <p className={styles.panelSub}>Ehrlich erklärt, was deinen Tarif besonders macht – und warum du mit E.ON richtig liegst.</p>
                     </>
                   )}
@@ -1374,83 +1387,68 @@ export default function TariffPage() {
                   {[
                     { t: tariff, isRec: true, k: 'rec' },
                     ...family.filter((t) => t.id !== tariff.id).map((t) => ({ t, isRec: false, k: t.id })),
-                  ].map(({ t, isRec, k }) => {
-                    const tag = FAMILY_TAGS[family.indexOf(t)];
-                    return (
-                      <div
-                        key={k}
-                        className={styles.card}
-                        data-comparing={comparing}
-                        data-rec={isRec ? 'true' : 'false'}
-                        data-extra={isRec ? undefined : 'true'}
-                        data-au={isRec ? '' : undefined}
-                        ref={isRec ? cardRef : undefined}
-                      >
-                        {comparing ? (
-                          <div className={styles.cardTags}>
-                            <span className={styles.cardTag}>{tag.icon}{tag.label}</span>
-                            {isRec && <span className={styles.cardTag} data-green="true">Beste Wahl für dich</span>}
+                  ].map(({ t, isRec, k }) => (
+                    <div
+                      key={k}
+                      className={styles.card}
+                      data-comparing={comparing}
+                      data-rec={isRec ? 'true' : 'false'}
+                      data-extra={isRec ? undefined : 'true'}
+                      data-au={isRec ? '' : undefined}
+                      ref={isRec ? cardRef : undefined}
+                    >
+                      {/* Header: name + sub (+ recommendation badge on the rec card), price */}
+                      <div className={styles.cardHeader}>
+                        <div className={styles.cardHeadRow}>
+                          <div className={styles.cardHeadText}>
+                            <p className={styles.cardName}>{t.name}</p>
+                            <p className={styles.cardSub}>{t.sub}</p>
                           </div>
-                        ) : (
-                          <div className={styles.cardNav}>
-                            <span className={styles.cardTitle}>{t.name}</span>
-                            {eco && (
-                              <span className={styles.cardBadge}><LeafIcon /> Besonders nachhaltig</span>
-                            )}
-                          </div>
-                        )}
-                        {comparing && <p className={styles.cardName}>{t.name}</p>}
-                        <p className={styles.cardSub}>{t.sub}</p>
-                        <div className={styles.cardBody}>
-                          <div className={styles.priceRow}>
-                            <div className={styles.priceBlock}>
-                              <span className={styles.priceMain}>{t.price}</span>
-                              <span className={styles.priceUnit}>€ pro Monat</span>
-                            </div>
-                          </div>
-                          <div className={styles.divider} />
-                          {/* 2×2 grid normally; a vertical stack while comparing */}
-                          <div className={styles.features} data-comparing={comparing}>
-                            <div className={styles.feature}>
-                              <BonusIcon />
-                              <div className={styles.featureText}>
-                                <span key={tariff.id} className={styles.featureName}>
-                                  {t.bonus.split('').map((char, i) => (
-                                    <span
-                                      key={i}
-                                      className={styles.featureNameLetter}
-                                      style={{ '--i': i } as React.CSSProperties}
-                                    >{char}</span>
-                                  ))}
-                                </span>
-                                <span className={styles.featureDesc}>{t.bonusUntil}</span>
-                              </div>
-                            </div>
-                            {t.features.map(([name, desc]) => (
-                              <div key={name + desc} className={styles.feature}>
-                                <CheckCircleIcon />
-                                <div className={styles.featureText}>
-                                  <span className={styles.featureName}>{name}</span>
-                                  <span className={styles.featureDesc}>{desc}</span>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                          <div className={styles.cardBtns}>
-                            <button className={styles.btnPrimary} onClick={startCheckout}>Tarif auswählen</button>
-                            {isRec && !comparing && (
-                              <button className={styles.btnSecondary} onClick={openCompare}>
-                                Tarif vergleichen <ChevronRight />
-                              </button>
-                            )}
-                          </div>
+                          {isRec && <span className={styles.cardBadge}>Unsere Empfehlung für dich</span>}
+                        </div>
+                        <div className={styles.cardPrice}>
+                          <span className={styles.priceMain}>{t.price}</span>
+                          <span className={styles.priceUnit}>€ pro Monat</span>
                         </div>
                       </div>
-                    );
-                  })}
+
+                      {/* Body: divider, features (2×2 grid in panel · list while comparing), actions */}
+                      <div className={styles.cardBody}>
+                        <div className={styles.cardDivider} />
+                        <div className={styles.cardFeatures} data-comparing={comparing}>
+                          <div className={styles.feature}>
+                            <BonusIcon />
+                            <div className={styles.featureText}>
+                              <span className={styles.featureName}>{t.bonus}</span>
+                              <span className={styles.featureDesc}>{t.bonusUntil}</span>
+                            </div>
+                          </div>
+                          {t.features.map(([name, desc]) => (
+                            <div key={name + desc} className={styles.feature}>
+                              <CheckCircleIcon />
+                              <div className={styles.featureText}>
+                                <span className={styles.featureName}>{name}</span>
+                                <span className={styles.featureDesc}>{desc}</span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                        <div className={styles.cardActions}>
+                          <button className={styles.btnPrimary} onClick={startCheckout}>Tarif auswählen</button>
+                          {isRec && !comparing && (
+                            <button className={styles.btnCompare} onClick={openCompare}>
+                              Tarif vergleichen <ChevronRight />
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>{/* /panelNormal */}
+            </div>{/* /panel */}
 
+              {/* Social proof — sits BELOW the red panel, on the white page */}
               <div className={styles.socialProof}>
                 <div className={styles.avatars}>
                   {[
@@ -1467,7 +1465,7 @@ export default function TariffPage() {
                 </div>
                 <button className={styles.socialCta}>Mehr entdecken</button>
               </div>
-            </div>{/* /panel */}
+            </div>{/* /heroRight */}
           </div>
 
           {/* ═══ Frame 2: Editorial "28 cent" intro — the ONE travelling headline.

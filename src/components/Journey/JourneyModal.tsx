@@ -82,6 +82,13 @@ const MicIcon = () => (
     <rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10v1a7 7 0 0 0 14 0v-1M12 18v4"/>
   </svg>
 );
+/* reward / bonus glyph — star-in-circle, mirrors the tariff card's bonus icon */
+const RewardIcon = () => (
+  <svg className={styles.tpBonusIcon} width="22" height="22" viewBox="0 0 28 28" fill="none" aria-hidden="true">
+    <circle cx="14" cy="14" r="13" stroke="currentColor" strokeWidth="1.5"/>
+    <path d="M14 7.5l1.9 3.85 4.25.62-3.08 3 .73 4.23L14 17.2l-3.8 2 .73-4.23-3.08-3 4.25-.62L14 7.5z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/>
+  </svg>
+);
 const LocationIcon = () => (
   <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
     <path d="M12 21c-4-4-7-7.3-7-10a7 7 0 1 1 14 0c0 2.7-3 6-7 10z"/><circle cx="12" cy="11" r="2"/>
@@ -95,6 +102,11 @@ const PersonsIcon = () => (
 const PlugIcon = () => (
   <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
     <path d="M12 2v6M8 6h8M7 12h10l-1 7H8l-1-7z"/><path d="M12 19v3"/>
+  </svg>
+);
+const TickIcon = () => (
+  <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+    <path d="M2 6.2l2.6 2.6L10 3" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
   </svg>
 );
 
@@ -184,6 +196,7 @@ export default function JourneyModal() {
   const [open, setOpen]       = useState(false);
   const [step, setStep]       = useState(1);
   const [answers, setAnswers] = useState<Answers>(INITIAL_ANSWERS);
+  const [eco, setEco]         = useState(true);   // "Besonders nachhaltig" toggle
 
   const overlayRef = useRef<HTMLDivElement>(null);
   const modalRef   = useRef<HTMLDivElement>(null);
@@ -346,28 +359,46 @@ export default function JourneyModal() {
     setTimeout(goNext, 240);
   };
 
+  /* Context toolbar (PLZ/persons/kWh + preference + eco). Inline on the Review
+     step; relocated to the top-centre bar (between back/close) on every later
+     step. */
+  const contextToolbar = () => (
+    <div className={styles.ctxRow}>
+      <span className={styles.ctxChip}><LocationIcon />81245</span>
+      <span className={styles.ctxSep} />
+      <span className={styles.ctxChip}><PersonsIcon />2 Pers.</span>
+      <span className={styles.ctxSep} />
+      <span className={styles.ctxChip}><PlugIcon />3.200 kWh</span>
+      <a className={styles.ctxEdit} href="#" onClick={(e) => e.preventDefault()}>Ändern</a>
+      <span className={styles.ctxSep} />
+      <span className={styles.miniPrefLabel}>Ich lege Wert auf</span>
+      <span className={styles.miniPref}>
+        <span className={styles.miniPrefSides}><span>Flexibilität</span><span>Sicherheit</span></span>
+        <span className={styles.miniTrack}><span className={styles.miniFill} /><span className={styles.miniDot} /></span>
+      </span>
+      <span className={styles.ctxSep} />
+      <button
+        type="button"
+        className={styles.checkItem}
+        role="switch"
+        aria-checked={eco}
+        onClick={() => setEco((v) => !v)}
+      >
+        <span className={styles.checkBox} data-checked={eco ? 'true' : 'false'}><TickIcon /></span>
+        Besonders nachhaltig
+      </button>
+    </div>
+  );
+
   const panels: React.ReactNode[] = [
     /* ── 1 · Overview (Figma) ── */
     <>
       <p className={styles.stepLabel}>Review</p>
-      <h2 className={styles.stepHeadline}>Bereit für deine neue Energie? Los geht's!</h2>
+      <h2 className={styles.stepHeadline}>Bereit für deine neue Energie? Wir schon.</h2>
 
-      <div className={styles.ctxRow}>
-        <span className={styles.ctxChip}><LocationIcon />81245</span>
-        <span className={styles.ctxSep} />
-        <span className={styles.ctxChip}><PersonsIcon />2 Pers.</span>
-        <span className={styles.ctxSep} />
-        <span className={styles.ctxChip}><PlugIcon />3.200 kWh</span>
-        <a className={styles.ctxEdit} href="#" onClick={(e) => e.preventDefault()}>Ändern</a>
-        <span className={styles.ctxSep} />
-        <span className={styles.miniPrefLabel}>Ich lege Wert auf</span>
-        <span className={styles.miniPref}>
-          <span className={styles.miniPrefSides}><span>Flexibilität</span><span>Sicherheit</span></span>
-          <span className={styles.miniTrack}><span className={styles.miniFill} /><span className={styles.miniDot} /></span>
-        </span>
-      </div>
+      {contextToolbar()}
 
-      <p className={styles.selLabel}>Dein auswahl</p>
+      <p className={styles.selLabel}>Deine Auswahl</p>
       <div className={styles.tariffPreview}>
         <img src="/tariff-hero.png" alt="" className={styles.tpPhoto} />
         <div className={styles.tpFooter}>
@@ -378,7 +409,7 @@ export default function JourneyModal() {
           <span className={styles.tpSub}>12 Mo | Solar DE</span>
           <div className={styles.tpPriceRow}>
             <span className={styles.tpPrice}><strong>55,80</strong> € pro Monat</span>
-            <span className={styles.tpBonus}>75 € Neukunden-Bonus <em>bis 20.04.2026</em></span>
+            <span className={styles.tpBonus}><RewardIcon />75 € Neukunden-Bonus <em>bis 20.04.2026</em></span>
           </div>
         </div>
       </div>
@@ -646,6 +677,9 @@ export default function JourneyModal() {
             <path d="M5 5l14 14M19 5L5 19" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round"/>
           </svg>
         </button>
+
+        {/* From step 2 on, the context toolbar docks top-centre between the buttons */}
+        {step > 1 && <div className={styles.topBar}>{contextToolbar()}</div>}
 
         {/* ── Body: left categories + centered content ── */}
         <div className={styles.modalBody}>
