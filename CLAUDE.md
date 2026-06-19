@@ -17,7 +17,20 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Stack
 
-Next.js 16 App Router · React 19 · TypeScript · CSS Modules · **GSAP 3 + ScrollTrigger + CustomEase** · **Lenis** smooth scroll. No CSS framework; styling is plain CSS Modules + design tokens. Path alias `@/` → `src/`.
+Next.js 16 App Router · React 19 · TypeScript · **Tailwind CSS v4** (migrating off CSS Modules) · **GSAP 3 + ScrollTrigger + CustomEase** · **Framer Motion** (component-level motion) · **Lenis** smooth scroll · **date-fns**. Path alias `@/` → `src/`.
+
+> **Styling migration (see `docs/design-system.md` + `docs/refactor-plan.md`).** Tailwind v4 is wired in `src/app/globals.css` via `@theme inline`, with the design tokens in `styles/tokens.css` as the single source of truth (utilities like `bg-brand-red`/`text-h2` resolve to `var(--c-red)`/`var(--fs-h2)`). Tailwind's **Preflight reset is intentionally not imported** during the migration so existing CSS-Module components are unaffected; the cascade order is `@layer theme, base, components, utilities`. CSS Modules and Tailwind coexist — components migrate to Tailwind as they're touched, and their `.module.css` is deleted in the same change. Class composition: `clsx` + `tailwind-merge`; component variants: `tailwind-variants`.
+
+## Conventions (target architecture — full detail in `docs/` → start at `docs/README.md`)
+
+The codebase is mid-refactor toward the structure below. **New and changed code follows these rules; migrate areas as you touch them** (and delete the old `.module.css` in the same change).
+
+- **Layering & dependency direction:** `app/` (routes, thin — no logic) → `components/` (feature composites) → `ui/` (dumb primitives) · `hooks/` · `lib/` → `styles/` (tokens). Dependencies point **downward only** — `ui/` never imports a feature; features never import a route. Keep files small (~<200 lines) and **co-located** (component + styles + story + types per folder). Data → `data/`, shared types → `types/`.
+- **Tokens only — no magic numbers.** Every colour / spacing / radius / shadow / border / z-index / duration is a token in `styles/`, surfaced as a Tailwind utility (`gap-4 p-card rounded-md shadow-rec text-h2 z-modal`). No raw hex/px, no `gap-[14px]` arbitrary escapes (lint-enforced). Tokens are **sourced from Figma** (`scripts/sync-tokens.ts`) — edit at the source, then re-sync.
+- **One primitive per UI concept** (`ui/`): `Button` (incl. `iconOnly`), `Icon` (Figma registry — **no inline `<svg>`**), `Text`/`Heading` (the type scale — **never hand-assemble fonts**), `Badge`/`Chip`/`Tag`/`Label` (kept distinct), `Card`, `Input`/`Field`/`Dropdown`, `Slider`, `Toggle`, `SegmentedControl`, `Stepper`, `Price`, `Logo`, `Link`, `Avatar`. Compose these — don't re-style buttons/inputs/cards ad-hoc.
+- **Consolidated composites:** AI chat = one **`AiChat`** (`variant: full|bare|voice`, orb on the left) built on **`AiOrb`**; **`ContextBar`** is one shared composite (used by both tariff page + journey via `placement`); the **two journeys share `JourneyWizard`** + `useStepWizard` and only *configure* steps.
+- **Animation is a system** (see `docs/animation.md`): **Framer Motion** for component motion (named variants in `lib/motion/`, `<Reveal>`/`<Stagger>` wrappers); **GSAP + ScrollTrigger** only for the pinned scroll track (timelines in `hooks/`, eases in `lib/gsap.ts`); shared **motion tokens**; **one** reduced-motion switch.
+- **Branding:** E.ON palette + **EON Brix Sans** (body) / EON Head (display) only — never off-brand values.
 
 ## Architecture
 
