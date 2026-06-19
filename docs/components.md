@@ -86,7 +86,24 @@ Today the chat/orb is implemented **three times** (hero `ChatWidget`, the `orbFl
 When extracting, **name components for what they *are*, not the old CSS-class/variable name.** Several current names are wrong or misleading and must be reconsidered:
 
 - **`Hems`** is the biggest offender: **HEMS is a *product*** (Home Energy Management System) — *one* of the items in that house showcase (alongside **Solar, Strom, Wallbox, Wärmepumpe**). So the *section* should NOT be called `Hems`. Rename the section to what it depicts — e.g. **`ConnectedHome`** / **`EnergyHome`** (the smart-home stage) — and keep HEMS as one **product entry** in `data/` rendered by a generic `ProductHotspot` / `ProductCategory`. (Names above like `HemsCategory`/`HemsHotspot` are placeholders pending this rename.)
-- Audit the rest the same way: prefer **domain/intent names** (`ConnectedHome`, `RecommendationCard`, `PreferenceSlider`) over implementation leftovers (`orbFloat`, `ctxBar`, `redZone`, `panelGlow`). Pick names a newcomer (or designer in Figma) would recognise; align with the Figma layer names where possible.
+- Audit the rest the same way: prefer **domain/intent names** over implementation leftovers. Pick names a newcomer (or designer in Figma) would recognise; align with the Figma layer names where possible.
+
+Concrete offenders found (rename as part of extraction):
+
+**Components / internal names**
+- **`JourneyModal`** → `CheckoutJourney`/`CheckoutWizard` — it's the *checkout* wizard, but the name is generic and collides conceptually with `OnboardingModal` (both are "journeys"). Pair them as `OnboardingJourney` / `CheckoutJourney`.
+- **`ConvSphere` / `convOrb`** → `AiOrb` — "Conv"(ersational) is an opaque abbreviation.
+- **`PrefSlider`** → `PreferenceSlider`. **`Feature`** (in TariffPage) → `TariffFeature` (too generic). Local **`Icon`/`Field`/`Step`** helpers collide with the planned `ui/` primitives — fold into those.
+- **Icons named by appearance** — `CheckRed`, `TickSmall`, `HomeGreenIcon` — rename **semantically** (`check`, `checkSm`, `homeEco`); colour/size belong to props, not the name. (All become the Figma `<Icon name>` set anyway.)
+
+**Data / constants**
+- **`HEMS_PINS` / `HEMS_HUB` / `HEMS_IMG_W` / `HEMS_LINKS` / `HEMS_N`** → product/home naming (`HOME_PRODUCTS`, `PRODUCT_HOTSPOTS`, …) — same HEMS-is-a-product issue.
+- **Cryptic scroll/geometry consts** in `TariffPage` — `ROT`, `MORPH`, `RISE`, `POS`, `DOT`, `FILLET`, `SPEED`, `CARD_SPEED/START`, `CLIP_HIDDEN/VISIBLE`, `HR_HIDDEN/SHOWN` — give descriptive names (`ROTATE_PHASE`, `MORPH_PHASE`, `CLIP_*`→`reveal/hide`…) when they move into `hooks/usePinnedTrack`.
+
+**Sections / CSS concepts** (most dissolve into Tailwind + `ui/`, but the *section/wrapper* concepts need real names)
+- **`redZone`** → the fixed gradient backdrop section (`StoriesBackdrop`/`RedSection`). **`panelGlow`** → `panelGradient`.
+- **`ctx*`** (`ctxBar/ctxRow/ctxChip/ctxSliders/…`) → fold into `ContextBar`. **`float*`** (`floatTariff*/floatLabel`) → drop the impl `float` prefix.
+- **`frameEditorial` / `frameBars`** → name by content (`frameCostBreakdown` / `frameTransparency`). **`hems*`** classes → connected-home/product naming.
 
 ## `hooks/`
 - **usePinnedTrack** (GSAP master pin + phases) · **useStepWizard** · **useCompareTransition** · **useReveal** (`data-au/al/ar` entrance) · **useScrollLock** · **useIdle** (orb auto-open) · **useChatOrb** · **useReducedMotion**.
