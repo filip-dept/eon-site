@@ -82,6 +82,12 @@ Today the chat/orb is implemented **three times** (hero `ChatWidget`, the `orbFl
 - **Hems** — sticky category stage → **HemsCategory** (selector item), **HemsHotspot** (pin + pulse + label, one per `HEMS_PINS`), **HemsWires** (scroll-drawn SVG connectors).
 - **Faq** + **FaqItem**. **Proof** — social-proof strip → composes **AvatarGroup**.
 
+## ⚠️ Naming — don't carry over legacy/ambiguous names
+When extracting, **name components for what they *are*, not the old CSS-class/variable name.** Several current names are wrong or misleading and must be reconsidered:
+
+- **`Hems`** is the biggest offender: **HEMS is a *product*** (Home Energy Management System) — *one* of the items in that house showcase (alongside **Solar, Strom, Wallbox, Wärmepumpe**). So the *section* should NOT be called `Hems`. Rename the section to what it depicts — e.g. **`ConnectedHome`** / **`EnergyHome`** (the smart-home stage) — and keep HEMS as one **product entry** in `data/` rendered by a generic `ProductHotspot` / `ProductCategory`. (Names above like `HemsCategory`/`HemsHotspot` are placeholders pending this rename.)
+- Audit the rest the same way: prefer **domain/intent names** (`ConnectedHome`, `RecommendationCard`, `PreferenceSlider`) over implementation leftovers (`orbFloat`, `ctxBar`, `redZone`, `panelGlow`). Pick names a newcomer (or designer in Figma) would recognise; align with the Figma layer names where possible.
+
 ## `hooks/`
 - **usePinnedTrack** (GSAP master pin + phases) · **useStepWizard** · **useCompareTransition** · **useReveal** (`data-au/al/ar` entrance) · **useScrollLock** · **useIdle** (orb auto-open) · **useChatOrb** · **useReducedMotion**.
 
