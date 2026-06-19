@@ -601,13 +601,13 @@ export default function TariffPage() {
       const cont = cardsRef.current;
       const cards = cont ? Array.from(cont.querySelectorAll<HTMLElement>(`.${styles.card}`)) : [];
       if (!cards.length) { animatingCards.current = false; return; }
-      /* Snappy, energetic cascade: each card pops up + fades with a slight
-         overshoot; tight stagger, 3rd card first → 2nd → 1st. */
-      gsap.set(cards, { opacity: 0, y: 30, scale: 0.9 });
+      /* Smooth slide-in from the right (x:80, fade from 0); tight stagger so the
+         three read as one fluid motion — 3rd card first → 2nd → 1st. */
+      gsap.set(cards, { opacity: 0, x: 80 });
       gsap.to(cards, {
-        opacity: 1, y: 0, scale: 1,
-        duration: 0.4, ease: 'back.out(1.6)',
-        stagger: { each: 0.08, from: 'end' },
+        opacity: 1, x: 0,
+        duration: 0.5, ease: 'power3.out',
+        stagger: { each: 0.06, from: 'end' },
         delay: 0.14,
         clearProps: 'opacity,transform',
         onComplete: () => { animatingCards.current = false; },
