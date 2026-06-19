@@ -637,6 +637,8 @@ export default function OnboardingModal() {
       persons: String(answers.persons ?? 2),
       kwh:     String(answers.kwh     ?? 3200),
     });
+    /* play the branded intro splash on the tariff page after the journey */
+    try { sessionStorage.setItem('eon:intro-tariff', '1'); } catch {}
     router.push(`/tariff?${q.toString()}`);
   }, [answers, router]);
 
