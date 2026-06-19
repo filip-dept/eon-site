@@ -451,12 +451,15 @@
   position: relative;
   overflow: hidden;
   border-radius: 6px;
-  transition: flex-basis 0.46s var(--ease-out), flex-grow 0.46s var(--ease-out);
+  /* collapse: faster than the expand, eased-out */
+  transition: flex-basis 0.4s var(--ease-out), flex-grow 0.4s var(--ease-out);
 }
 /* comparison open → the image grows to absorb all slack the capped panel
-   leaves, so image + panel always span the full frame (no side gutters) */
+   leaves, so image + panel always span the full frame (no side gutters).
+   expand: slower, eased-out, so the background glides open. */
 .frameHero[data-comparing='true'] .frameImage {
   flex: 1 1 0;
+  transition: flex-basis 0.55s var(--ease-out), flex-grow 0.55s var(--ease-out);
 }
 /* right column: red panel stacked above the social-proof strip (on white page).
    Holds the column width the panel used to own, so image + column fill the frame. */
@@ -466,10 +469,13 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
-  transition: flex-basis 0.46s var(--ease-out), flex-grow 0.46s var(--ease-out);
+  /* collapse: faster than the expand, eased-out */
+  transition: flex-basis 0.4s var(--ease-out), flex-grow 0.4s var(--ease-out);
 }
 .frameHero[data-comparing='true'] .heroRight {
   flex: 0 1 1208px;            /* grows to hold the three capped cards */
+  /* expand: slower, eased-out — the comparison background glides open */
+  transition: flex-basis 0.55s var(--ease-out), flex-grow 0.55s var(--ease-out);
 }
 /* comparing → drop the social-proof strip so the three tariff cards get full height */
 .frameHero[data-comparing='true'] .socialProof {
@@ -534,7 +540,7 @@
 .socialCta {
   font-family: var(--font-body);
   font-weight: 500;
-  font-size: 14px;
+  font-size: 16px;
   color: var(--c-red);
   text-decoration: underline;
   background: none;
@@ -553,8 +559,9 @@
   flex: 1 1 auto;
   min-width: 0;
   border-radius: 6px;
-  /* initial view: red living gradient (comparison flips it to flat secondary bg) */
-  background: linear-gradient(138deg, #ea1b0a 0%, #e0190f 55%, #c11054 100%);
+  /* light base; the red living gradient lives on .panelGlow above it so it can
+     FADE (ease-out) when the comparison opens — gradient↔solid can't transition */
+  background: var(--c-bg-secondary);
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -566,12 +573,12 @@
 /* comparison open → clear the collapse chevron (the column handles the widening) */
 .frameHero[data-comparing='true'] .panel {
   padding-left: 72px;          /* clear the collapse chevron + 8px breathing room */
-  /* comparison view: flat secondary surface instead of the red living gradient */
-  background: var(--c-bg-secondary);
 }
-.frameHero[data-comparing='true'] .panel::before,
-.frameHero[data-comparing='true'] .panel::after {
-  display: none;               /* kill the orange/magenta blooms on the light panel */
+/* comparison open → fade the red glow layer out (ease-out) to reveal the light
+   secondary base; collapse fades it back in fast (base rule below) */
+.frameHero[data-comparing='true'] .panelGlow {
+  opacity: 0;
+  transition: opacity 0.55s var(--ease-out);
 }
 /* header + collapse flip to dark ink on the light comparison panel */
 .frameHero[data-comparing='true'] .panelLabel { color: var(--c-red); }
@@ -590,9 +597,22 @@
   z-index: 1;
 }
 
+/* red living-gradient layer — the panel's "colour". Sits behind the content and
+   fades out (ease-out) when the comparison opens; fast fade-in on collapse. */
+.panelGlow {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  border-radius: inherit;
+  background: linear-gradient(138deg, #ea1b0a 0%, #e0190f 55%, #c11054 100%);
+  pointer-events: none;
+  /* collapse: the red glow fades back in faster than it faded out, eased-out */
+  transition: opacity 0.4s var(--ease-out);
+}
+
 /* deep magenta→purple bloom — heavily blurred, wandering a closed,
    non-linear path along the bottom half of the panel */
-.panel::before {
+.panelGlow::before {
   content: '';
   position: absolute;
   z-index: 0;
@@ -610,7 +630,7 @@
 }
 
 /* hot orange flare, sweeping through the upper half in counter-phase */
-.panel::after {
+.panelGlow::after {
   content: '';
   position: absolute;
   z-index: 0;
@@ -641,8 +661,8 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .panel::before,
-  .panel::after { animation: none; }
+  .panelGlow::before,
+  .panelGlow::after { animation: none; }
 }
 
 .panelHeader { 
@@ -705,12 +725,24 @@
      transition so a React re-render dropping the inline value can't animate it
      back up and flash the card during collapse. Snappy (0.46s) so the rec card
      widens + its 2×2 features settle quickly on collapse. */
+  /* collapse: the recommendation card widens back FASTER than it narrowed open */
   transition:
-    flex-grow 0.46s var(--ease-out),
-    flex-basis 0.46s var(--ease-out),
-    margin-left 0.46s var(--ease-out),
-    max-height 0.46s var(--ease-out);
+    flex-grow 0.4s var(--ease-out),
+    flex-basis 0.4s var(--ease-out),
+    margin-left 0.4s var(--ease-out),
+    max-height 0.4s var(--ease-out);
 }
+/* expand: slower/smoother so the rec card eases into the row */
+.cards[data-comparing='true'] .card[data-rec='true'] {
+  transition:
+    flex-grow 0.55s var(--ease-out),
+    flex-basis 0.55s var(--ease-out),
+    margin-left 0.55s var(--ease-out),
+    max-height 0.55s var(--ease-out);
+}
+/* the two alternatives never animate their OWN box — their width is just their
+   flex share of the (eased) container; GSAP drives their move/fade in & out */
+.card[data-extra='true'] { transition: none; }
 /* the two alternatives are collapsed to zero width until comparing — the
    negative margin swallows the flex gap so the recommendation fills 100% */
 /* recommended card: white, lifted off the red gradient with a red-tinted glow */
@@ -751,7 +783,8 @@
    alternatives stay light. Scoped to comparing so the initial-view rec card
    keeps its white treatment. */
 .card[data-rec='true'][data-comparing='true'] {
-  background: var(--c-red);
+  /* same red living-gradient as the pre-comparison .panel, instead of flat red */
+  background: linear-gradient(138deg, #ea1b0a 0%, #e0190f 55%, #c11054 100%);
   box-shadow: none;            /* the red-glow lift is only for the white panel card */
 }
 .card[data-rec='true'][data-comparing='true'] .cardName,
@@ -1787,16 +1820,23 @@
   padding: 56px 16px;
 }
 
-/* ─── Stories images frame — cards parallax through at different speeds ───── */
+/* ─── Stories images frame — stage pins; cards rise through ──────────────── */
 .stories {
   position: relative;
-  height: 100vh;
+  /* 100vh visible stage + 30vh runway — kept tight so HEMS follows right as the
+     cards reach the top (no empty gradient tail) */
+  height: 80vh;
 }
 
+/* pinned via CSS sticky (NOT a ScrollTrigger pin — pinning would apply a
+   transform and break this exact same pattern further down on HEMS). Clips its
+   children, so the sweeping cards can never bleed into the HEMS frame below. */
 .storiesStage {
-  position: relative;
-  height: 100%;
-  overflow: hidden;
+  position: sticky;
+  top: 100px;
+  height: 70vh;
+  overflow: visible;
+  z-index: 1;
 }
 
 /* dark on the initial white background; flips to white once the gradient
@@ -1849,13 +1889,12 @@
   box-shadow: 0 18px 48px rgba(0, 0, 0, 0.22);
 }
 
-/* resting spots — a visible collage around the centred text (cards sit UNDER
-   the text, z-wise); 1 low-left, 2 lowest-centre, 3 high-right */
-/* all start near the top edge of the frame, each at a different spot, and all
-   fit within the viewport height before the parallax drifts them down */
-.storyCard1 { left: 9.3%;  top: 6%; }
-.storyCard2 { left: 38.1%; top: 19%; }
-.storyCard3 { left: 66.9%; top: 10%; }
+/* horizontal lanes only — the vertical position is driven entirely by the
+   per-card sweep (JS), which starts each card above the frame and sends it down
+   past the bottom across its own slice of the 200vh runway */
+.storyCard1 { left: 9.3%;  top: 0; }
+.storyCard2 { left: 38.1%; top: 0; }
+.storyCard3 { left: 66.9%; top: 0; }
 
 .storyMedia {
   position: absolute;

@@ -67,6 +67,41 @@
   .modal::before, .modal::after { animation: none; }
 }
 
+/* ── Onboarding screen only: plain white base with two faint orange shapes.
+   Reuses the shared drifting ::before/::after layers (inset, blur, animation all
+   inherited from .modal) — just recolours each to a single soft orange blob and
+   pins them to opposite corners so the centre stays clear of the content. ── */
+.modalConv { background: #fff; }
+/* centres sit inside the visible band (the ::before/::after layer is inset -50%,
+   so the modal maps to 25–75% of it) → the blobs read at the top-left and
+   bottom-right, and travel obviously while squashing/stretching as they go.
+   Note: translate % is relative to the layer's own size (200% of the modal),
+   so translateX 25% ≈ half the screen width. */
+.modalConv::before {
+  background: radial-gradient(11% 13% at 29% 28%, rgba(255, 99, 54, 0.26), transparent 60%);
+  animation: convBlobA 16s ease-in-out infinite alternate;
+}
+.modalConv::after {
+  background: radial-gradient(22% 26% at 71% 72%, rgba(255, 120, 60, 0.24), transparent 60%);
+  animation: convBlobB 19s ease-in-out infinite alternate;
+}
+/* upper shape — roams + morphs */
+@keyframes convBlobA {
+  0%   { transform: translate(0%, 0%)   scale(1, 1); }
+  50%  { transform: translate(14%, 9%)  scale(1.35, 0.78); }
+  100% { transform: translate(-8%, 14%) scale(0.82, 1.28); }
+}
+/* lower shape — sweeps across the horizontal axis up to ~50% of the screen
+   (translateX -25% of the 200%-wide layer) while changing shape */
+@keyframes convBlobB {
+  0%   { transform: translate(0%, 0%)    scale(1, 1); }
+  50%  { transform: translate(-25%, 6%)  scale(1.45, 0.72); }
+  100% { transform: translate(-4%, -6%)  scale(0.8, 1.3); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .modalConv::before, .modalConv::after { animation: none; }
+}
+
 /* ─── Corner buttons (back / close) — discreet beige rounded squares ───────── */
 .cornerBtn {
   position: absolute;
@@ -88,6 +123,24 @@
 .cornerBtn[data-pos='back']  { left: clamp(20px, 4vw, 62px); }
 .cornerBtn[data-pos='close'] { right: clamp(20px, 4vw, 32px); }
 
+/* ── Context toolbar docked top-centre (steps 2+), between back/close ── */
+.topBar {
+  position: absolute;
+  top: 34px;
+  left: 50%;
+  transform: translateX(-50%);
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  max-width: calc(100% - 260px);   /* stay clear of the back/close buttons */
+  z-index: 6;
+}
+.topBar .ctxRow {
+  margin-bottom: 0;
+  flex-wrap: nowrap;
+}
+
 
 /* ─── Body — left categories + centred content (above the gradient) ───────── */
 .modalBody {
@@ -96,53 +149,43 @@
   flex: 1;
   min-height: 0;
   display: flex;
+  gap: 80px;
   align-items: stretch;
 }
 
-/* Left categories nav — vertically centred, red active indicator */
+/* Left categories nav — vertically centred; each item carries the rail
+   segment (Figma: continuous 2px left border, active segment red) */
 .sidebar {
   flex: 0 0 auto;
-  width: clamp(176px, 18vw, 236px);
+  width: clamp(200px, 18vw, 236px);
   align-self: center;
   padding-left: clamp(20px, 4vw, 62px);
   display: flex;
   flex-direction: column;
-  border-left: 1px solid rgba(0, 0, 0, 0.279);
-  gap: 8px;
 }
 
 .sideItem {
   position: relative;
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
   height: 52px;
-  padding: 0 8px 0 20px;
+  padding: 14px 24px 18px 20px;
   background: none;
   border: none;
+  border-left: 2px solid #e5e0dc;   /* rail segment */
   text-align: left;
   font-family: var(--font-body);
-  color: var(--c-text-secondary);
-  transition: color 0.15s ease, opacity 0.15s ease;
+  color: var(--c-text-primary);
+  transition: color 0.15s ease, opacity 0.15s ease, border-color 0.2s ease;
 }
-.sideItem[data-state='active'] { color: var(--c-text-primary); cursor: default; }
-.sideItem[data-state='done']   { cursor: pointer; }
-.sideItem[data-state='done']:hover { color: var(--c-text-primary); }
+.sideItem[data-state='active'] { border-left-color: var(--c-red); cursor: default; }
+.sideItem[data-state='done']   { cursor: pointer; opacity: 0.75; }
+.sideItem[data-state='done']:hover { opacity: 1; }
 .sideItem[data-state='todo']   { opacity: 0.5; cursor: default; }
 
-.sideIndicator {
-  position: absolute;
-  left: 0;
-  top: 50%;
-  width: 3px;
-  height: 26px;
-  border-radius: 2px;
-  background: var(--c-red);
-  transform: translateY(-50%) scaleY(0);
-  transform-origin: center;
-  transition: transform 0.28s var(--ease-out);
-}
-.sideItem[data-state='active'] .sideIndicator { transform: translateY(-50%) scaleY(1); }
+/* indicator superseded by the per-item left border */
+.sideIndicator { display: none; }
 
 .sideIcon {
   flex-shrink: 0;
@@ -153,9 +196,9 @@
   justify-content: center;
 }
 .sideLabel {
-  font-size: 16px;
-  font-weight: 500;
-  line-height: 1;
+  font-size: 18px;
+  font-weight: 400;
+  line-height: 27px;
   white-space: nowrap;
 }
 
@@ -174,32 +217,37 @@
   min-height: 0;
   overflow: hidden;
 }
+/* first journey (onboarding) — narrower content measure */
+.modalConv .content { max-width: 800px; }
 
 /* ─── Step panel ──────────────────────────────────────────────────────────── */
 .stepPanel {
   position: absolute;
   inset: 0;
-  padding: 88px 24px 40px; /* top clears the corner buttons; top spacing preserved */
+  padding: 88px 24px 40px; /* top clears the corner buttons / docked toolbar */
   display: flex;
   flex-direction: column;
+  justify-content: safe center; /* question content sits vertically centred; falls back to top-aligned + scroll when too tall */
+  overflow-y: auto;
 }
 
 /* ─── Step header ─────────────────────────────────────────────────────────── */
 .stepLabel {
   font-family: var(--font-body);
-  font-size: 16px;
-  font-weight: 700;
+  font-size: 18px;
+  font-weight: 500;
+  line-height: 27px;
   letter-spacing: 0;
   text-transform: none;
   color: var(--c-red);            /* UI text/decorative/brand headline */
-  margin-bottom: 8px;
+  margin-bottom: 16px;
 }
 
 .stepHeadline {
   font-family: var(--font-body);
   font-weight: 700;
-  font-size: clamp(56px, 3.4vw, 40px); /* Headings/2: 40 / 48 */
-  line-height: 100%;
+  font-size: clamp(30px, 3.4vw, 40px); /* Headings/2: 40 / 48 */
+  line-height: 1.2;
   color: var(--c-text-primary);
   margin-bottom: 40px;
 }
@@ -212,8 +260,8 @@
 /* inspirational glass cards laid out in a single horizontal row */
 .optionGrid {
   display: flex;
-  gap: 12px;
-  margin-bottom: auto;
+  flex-direction: column;
+  gap: 8px;
 }
 
 /* ── Glass answer card — transparent, frosted, icon on top, text below ── */
@@ -223,29 +271,29 @@
   background: rgba(255, 255, 255, 0.14);
   backdrop-filter: blur(18px) saturate(150%);
   -webkit-backdrop-filter: blur(18px) saturate(150%);
-  border: 1px solid rgba(255, 255, 255, 0.5);
-  border-radius: 4px;
-  padding: 22px 18px 20px;
+  border: 1px solid #dcdad8;
+  border-radius: 12px;
+  padding: 16px 24px;
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 18px;
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
   cursor: pointer;
   text-align: left;
-  box-shadow: 0 10px 30px rgba(120, 20, 40, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.55);
+  /*box-shadow: 0 10px 30px rgba(120, 20, 40, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.55); */
   transition: transform 0.22s var(--ease-out), box-shadow 0.22s ease, border-color 0.22s ease, background 0.22s ease;
   position: relative;
 }
 .optionCard:hover {
   transform: translateY(-3px);
   background: rgba(255, 255, 255, 0.24);
-  border-color: rgba(255, 255, 255, 0.75);
-  box-shadow: 0 18px 42px rgba(120, 20, 40, 0.14), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  border-color: rgba(147, 147, 147, 0.75);
+  box-shadow: 0 10px 12px rgba(120, 20, 40, 0.04), inset 0 1px 0 rgba(255, 255, 255, 0.0);
 }
 .optionCard[data-selected='true'] {
   border-color: rgba(234, 27, 10, 0.6);
   background: rgba(255, 255, 255, 0.34);
-  box-shadow: 0 0 0 2px rgba(234, 27, 10, 0.22), 0 18px 42px rgba(234, 27, 10, 0.16);
+  /*box-shadow: 0 0 0 2px rgba(234, 27, 10, 0.22), 0 18px 42px rgba(234, 27, 10, 0.16);*/
 }
 
 /* orange tile — echoes the AI sphere */
@@ -283,8 +331,7 @@
   font-family: var(--font-body);
   font-size: 16px;
   color: var(--c-text-secondary);
-  margin-top: auto;
-  padding-top: 4px;
+  margin-top: 24px;
 }
 
 /* ─── Step 2 — PLZ + Persons ──────────────────────────────────────────────── */
@@ -584,27 +631,26 @@
   background: rgba(255, 255, 255, 0.14);
   backdrop-filter: blur(18px) saturate(150%);
   -webkit-backdrop-filter: blur(18px) saturate(150%);
-  border: 1px solid rgba(255, 255, 255, 0.5);
-  border-radius: 4px;
+  border: 1px solid #dcdad8;
+  border-radius: 12px;
   padding: 18px 16px 16px;
   text-align: left;
   cursor: pointer;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 8px;
   /*box-shadow: 0 10px 30px rgba(120, 20, 40, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.55); */
   transition: transform 0.22s var(--ease-out), box-shadow 0.22s ease, border-color 0.22s ease, background 0.22s ease;
 }
 .presetCard:hover {
   transform: translateY(-3px);
   background: rgba(255, 255, 255, 0.24);
-  border-color: rgba(255, 255, 255, 0.75);
-  box-shadow: 0 18px 42px rgba(120, 20, 40, 0.14), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  border-color: rgba(147, 147, 147, 0.75);
+  box-shadow: 0 10px 12px rgba(120, 20, 40, 0.04), inset 0 1px 0 rgba(255, 255, 255, 0.0);
 }
 .presetCard[data-selected='true'] {
   border-color: rgba(234, 27, 10, 0.6);
   background: rgba(255, 255, 255, 0.34);
-  box-shadow: 0 0 0 2px rgba(234, 27, 10, 0.22), 0 18px 42px rgba(234, 27, 10, 0.16);
 }
 
 .presetIcon {
@@ -640,14 +686,14 @@
   align-items: center;
   gap: 10px;
   height: 48px;
-  padding: 0 28px;
+  padding: 0 32px;
   background: var(--c-red);
   color: #fff;
   border: none;
   border-radius: 8px;
   font-family: var(--font-body);
   font-weight: 700;
-  font-size: 16px;
+  font-size: 18px;
   cursor: pointer;
   transition: background 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease;
   margin-top: auto;
@@ -697,7 +743,7 @@
 .ctxRow {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 24px;
   flex-wrap: wrap;
   margin-bottom: 32px;
 }
@@ -713,8 +759,9 @@
 .ctxSep { width: 1px; height: 20px; background: #e0dedd; }
 .ctxEdit {
   font-family: var(--font-body);
-  font-size: 14px;
-  color: var(--c-red);
+  font-size: 16px;
+  font-weight: 500;
+  color: #5c5c5c;
   text-decoration: underline;
   white-space: nowrap;
 }
@@ -747,46 +794,92 @@
   box-shadow: 0 0 0 1px #0075c2;
 }
 
+/* ── "Besonders nachhaltig" toggle — plain checkbox + label, no button chrome ── */
+.checkItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-body);
+  font-size: 14px;
+  color: var(--c-text-primary);
+  white-space: nowrap;
+  cursor: pointer;
+  flex-shrink: 0;
+  background: none;
+  border: none;
+  padding: 0;
+}
+.checkBox {
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  background: #0075c2;
+  border: 1.5px solid #0075c2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: background 0.18s ease, border-color 0.18s ease;
+}
+.checkBox svg { display: block; transition: opacity 0.15s ease; }
+.checkBox[data-checked='false'] { background: transparent; border-color: #b5b4b3; }
+.checkBox[data-checked='false'] svg { opacity: 0; }
+
 /* ── Overview: tariff preview card ── */
 .selLabel {
   font-family: var(--font-body);
-  font-size: 14px;
+  font-size: 18px;
   color: var(--c-text-secondary);
   margin-bottom: 10px;
 }
 .tariffPreview {
-  max-width: 640px;
-  border-radius: 12px;
+  position: relative;
+  max-width: 668px;
+  height: 400px;
+  border-radius: 4px;
   overflow: hidden;
-  border: 1px solid #ece9e7;
-  background: #fff;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
 }
-.tpPhoto { display: block; width: 100%; height: 350px; object-fit: cover; object-position: center top; }
-.tpFooter { display: flex; flex-direction: column; gap: 4px; padding: 14px 18px 16px; }
+/* photo fills the whole frame; the info card floats over its bottom */
+.tpPhoto { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center top; }
+.tpFooter {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px 24px;
+  background: #fff;
+  border: 1px solid #f8f5f2;
+  border-radius: 4px;
+}
 .tpNameRow { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .tpName {
   font-family: var(--font-body);
   font-weight: 700;
-  font-size: 18px;
+  font-size: 22px;
+  line-height: 30px;
   color: var(--c-text-primary);
 }
 .tpBadge {
   font-family: var(--font-body);
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 500;
-  color: #1d6b3a;
-  background: #e3f4e6;
-  border-radius: 999px;
-  padding: 4px 10px;
+  color: #fff;
+  background: #18a087;            /* ui-system-feedback/success */
+  border-radius: 4px;
+  padding: 1px 10px;
   white-space: nowrap;
 }
-.tpSub { font-family: var(--font-body); font-size: 13px; color: var(--c-text-secondary); }
-.tpPriceRow { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-top: 4px; }
-.tpPrice { font-family: var(--font-body); font-size: 13px; color: var(--c-text-secondary); }
-.tpPrice strong { font-size: 19px; font-weight: 700; color: var(--c-text-primary); margin-right: 2px; }
-.tpBonus { font-family: var(--font-body); font-size: 13px; font-weight: 500; color: #8215b4; }
-.tpBonus em { font-style: normal; font-weight: 400; color: #b07cc7; }
+.tpSub { font-family: var(--font-body); font-size: 14px; color: var(--c-text-secondary); }
+.tpPriceRow { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 4px; }
+.tpPrice { font-family: var(--font-body); font-size: 14px; color: var(--c-text-secondary); }
+.tpPrice strong { font-size: 24px; font-weight: 700; color: var(--c-text-primary); margin-right: 4px; }
+.tpBonus { display: inline-flex; align-items: center; gap: 4px; font-family: var(--font-body); font-size: 14px; font-weight: 500; color: var(--c-text-primary); }
+.tpBonus em { font-style: normal; font-weight: 400; color: rgba(38, 38, 38, 0.6); }
+.tpBonusIcon { flex-shrink: 0; color: var(--c-red); }
 
 /* ── Start row: red button + Enter hint + voice box ── */
 .startRow {
@@ -834,12 +927,12 @@
   position: relative;
   display: flex;
   align-items: flex-start;
-  gap: 14px;
+  gap: 24px;
   text-align: left;
   background: #fff;
   border: 1.5px solid #e0dedd;
-  border-radius: 12px;
-  padding: 18px 20px;
+  border-radius: 8px;
+  padding: 44px 24px;
   cursor: pointer;
   font-family: var(--font-body);
   transition: border-color 0.18s ease, box-shadow 0.18s ease, transform 0.12s ease;
@@ -857,15 +950,14 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  margin-top: 1px;
   transition: background 0.15s ease, border-color 0.15s ease;
 }
 .abCheckbox svg { opacity: 0; transition: opacity 0.15s ease; }
 .abBox[data-selected='true'] .abCheckbox { background: #0075c2; border-color: #0075c2; }
 .abBox[data-selected='true'] .abCheckbox svg { opacity: 1; }
 
-.abTitle { display: block; font-weight: 700; font-size: 16px; color: var(--c-text-primary); }
-.abSub   { display: block; font-size: 13px; color: var(--c-text-secondary); margin-top: 3px; }
+.abTitle { display: block; font-weight: 700; font-size: 18px; color: var(--c-text-primary); }
+.abSub   { display: block; font-size: 16px; color: var(--c-text-secondary); margin-top: 3px; }
 
 /* corner-check variant (Datum) — red check at the right, no checkbox square */
 .abCorner { padding-right: 52px; }
@@ -988,47 +1080,32 @@
 .modalConv .assistantLabel { left: calc(clamp(20px, 4vw, 40px) + 64px); }
 
 /* ── Conversational sphere — animated, transparent container ── */
+/* Assistant orb — docked top-centre between the back/close buttons (48×48).
+   Positioned relative to the modal (centred via margin, not transform, so the
+   orb video's pulse/transform stays intact). */
 .convSphere {
-  position: relative;
-  align-self: center;
-  width: 96px;
-  height: 96px;
+  position: absolute;
+  top: 32px;
+  left: 50%;
+  margin-left: -24px;
+  width: 80px;
+  height: 80px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: transparent;          /* no box behind the orb */
-  margin-bottom: 30px;
+  /* white local backdrop so the orb video's white bg multiplies away */
+  background: #fff;
   flex-shrink: 0;
+  z-index: 6;
 }
+/* orb-anim video — fills the square; its white background is multiplied away
+   against the light modal, leaving just the orb + its baked-in glow */
 .convOrb {
-  width: 72px;
-  height: 72px;
-  border-radius: 50%;
-  background: radial-gradient(circle at 38% 32%, #ffc6a0 0%, #ff6336 34%, #ea1b0a 66%, #b3155a 100%);
-  box-shadow: 0 8px 30px rgba(234, 27, 10, 0.38);
-  animation: convOrbPulse 3.4s ease-in-out infinite;
-}
-.convSphere::after {
-  content: '';
-  position: absolute;
-  width: 110px;
-  height: 110px;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(255, 99, 54, 0.35), transparent 68%);
-  filter: blur(10px);
-  animation: convOrbHalo 3.4s ease-in-out infinite;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  mix-blend-mode: multiply;
   pointer-events: none;
-}
-@keyframes convOrbPulse {
-  0%, 100% { transform: scale(1) translateY(0); }
-  50%      { transform: scale(1.07) translateY(-2px); }
-}
-@keyframes convOrbHalo {
-  0%, 100% { opacity: 0.5; transform: scale(1); }
-  50%      { opacity: 0.85; transform: scale(1.12); }
-}
-@media (prefers-reduced-motion: reduce) {
-  .convOrb, .convSphere::after { animation: none; }
 }
 
 /* ── Blurred-typewriter words ── */
