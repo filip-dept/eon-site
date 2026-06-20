@@ -36,6 +36,18 @@
   align-items: center;
   justify-content: space-between;
 }
+/* The nav sits BARE over the light tariff page (dark text, no white pill). The
+   solid pill only appears once the page background shifts to the gradient at the
+   stories section (data-nav-solid, set with the bg switch) — so dark nav text
+   stays readable over the dark gradient. Overrides Navbar's .solid background. */
+.topBar .nav {
+  background: transparent;
+  box-shadow: none;
+}
+.page[data-nav-solid='true'] .topBar .nav {
+  background: #fff;
+  box-shadow: 0 10px 34px rgba(0, 0, 0, 0.08);
+}
 
 .navLeft {
   display: flex;
