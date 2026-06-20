@@ -16,8 +16,9 @@ import { IconButton } from '@/ui/IconButton';
 import { Toggle } from '@/ui/Toggle';
 import type { Tariff } from '@/types/Tariff';
 import { TARIFFS, stopsFor, snapTo, tariffFor } from '@/data/tariffs';
-import { HEMS_CATS, HEMS_PINS, hemsCover, HEMS_HUB, HEMS_LINKS } from '@/data/hems';
+import { HEMS_CATS } from '@/data/hems';
 import { useStoriesParallax } from '@/hooks/useStoriesParallax';
+import { useHemsStage } from '@/hooks/useHemsStage';
 import { Proof } from './sections/Proof';
 import { Faq } from './sections/Faq';
 import { ConnectedHome } from './sections/ConnectedHome';
@@ -468,9 +469,6 @@ export default function TariffPage() {
     }
   }, [tariff.id]);
 
-  /* stories parallax + bg switch — extracted from the scroll engine (capstone slice 1) */
-  useStoriesParallax(pageRef);
-
   useEffect(() => {
     const page    = pageRef.current;
     const section = sectionRef.current;
@@ -763,94 +761,6 @@ export default function TariffPage() {
 
     /* ── HEMS: house unmask on entry, then a sticky stage you scroll through
        category by category ── */
-    const hems = page.querySelector<HTMLElement>(`.${styles.hems}`)!;
-    /* pre-clip the house to its top-right corner so it never flashes in before
-       the reveal fires (the dark hemsRight backing covers the gap meanwhile) */
-    const hemsPhotoEl = hems.querySelector<HTMLElement>(`.${styles.hemsPhoto}`);
-    const hemsShadeEl = hems.querySelector<HTMLElement>(`.${styles.hemsShade}`);
-    gsap.set([hemsPhotoEl, hemsShadeEl].filter(Boolean) as HTMLElement[],
-      { clipPath: 'inset(0% 0% 100% 100% round 8px)' });
-    if (hemsPhotoEl) gsap.set(hemsPhotoEl, { scale: 1.3 });
-    const hemsST = ScrollTrigger.create({
-      trigger: hems,
-      start: 'top 80%',
-      once: true,
-      onEnter: () => {
-        gsap.fromTo(hems.querySelector(`.${styles.hemsLeft}`),
-          { x: -48, opacity: 0 }, { x: 0, opacity: 1, duration: 0.9, ease: 'expo.out' });
-
-        /* the house unmasks from the top-right corner (eonReveal wipe + image
-           zoom) — same media reveal we use on the horizontal frames */
-        const HR_HIDDEN = 'inset(0% 0% 100% 100% round 8px)';  /* only top-right corner */
-        const HR_SHOWN  = 'inset(0% 0% 0% 0% round 8px)';
-        gsap.fromTo([hemsPhotoEl, hemsShadeEl].filter(Boolean) as HTMLElement[],
-          { clipPath: HR_HIDDEN },
-          { clipPath: HR_SHOWN, duration: 1.6, ease: 'eonReveal', clearProps: 'clipPath' });
-        if (hemsPhotoEl) gsap.fromTo(hemsPhotoEl, { scale: 1.3 }, { scale: 1, duration: 1.6, ease: 'eonReveal' });
-
-        /* pins fade to their state once the house is mostly revealed (CSS owns
-           the per-pin opacity via data-ready / data-dim) */
-        setTimeout(() => setHemsPinsReady(true), 850);
-      },
-    });
-
-    /* auto-open the chat once the user has been INACTIVE (not scrolling) for 3s
-       while the HEMS category (and ONLY HEMS — not Solar/Strom/…) is active. Any
-       scroll within the section re-arms the timer, so it only fires when the user
-       actually pauses; the category is re-checked at fire time. Once per visit. */
-    let hemsIdle: ReturnType<typeof setTimeout> | undefined;
-    let hemsAutoOpened = false;
-    let hemsActiveNow = false;
-    const armHemsIdle = () => {
-      clearTimeout(hemsIdle);
-      if (!hemsActiveNow || hemsAutoOpened) return;
-      hemsIdle = setTimeout(() => {
-        if (hemsIdxRef.current !== 0) return;   /* only the first (HEMS) category */
-        hemsAutoOpened = true;
-        setChatOpen(true);
-      }, 3000);
-    };
-
-    /* sticky scroll-through: progress across the tall section selects the
-       active category (the stage itself stays pinned via CSS position:sticky) */
-    const HEMS_N = HEMS_CATS.length;
-    const hemsScrubST = ScrollTrigger.create({
-      trigger: hems,
-      start: 'top top',
-      end: 'bottom bottom',
-      invalidateOnRefresh: true,
-      onUpdate: (self) => {
-        /* draw the hub→device wires progressively (load-bar fill). Each of the
-           HEMS_N-1 segments fills over one slide transition, so a wire completes
-           just as its category becomes active. */
-        const svg = hemsLinesRef.current;
-        if (svg) {
-          const groups = svg.children;
-          for (let j = 0; j < groups.length; j++) {
-            const d = Math.max(0, Math.min(1, self.progress * (HEMS_N - 1) - j));
-            (groups[j] as SVGGElement).style.setProperty('--draw', d.toFixed(4));
-          }
-        }
-        const idx = Math.min(HEMS_N - 1, Math.round(self.progress * (HEMS_N - 1)));
-        if (idx !== hemsIdxRef.current) { hemsIdxRef.current = idx; setHemsActive(idx); }
-        /* scrolling = active → push the idle auto-open back out */
-        armHemsIdle();
-      },
-    });
-    hemsSTRef.current = hemsScrubST;
-
-    /* track whether the HEMS slide is on screen; entering arms the idle timer,
-       leaving cancels it (see armHemsIdle / hemsScrubST onUpdate above) */
-    const hemsChatST = ScrollTrigger.create({
-      trigger: hems,
-      start: 'top top',
-      end: 'bottom bottom',
-      onToggle: (self) => {
-        hemsActiveNow = self.isActive;
-        if (self.isActive) armHemsIdle();
-        else clearTimeout(hemsIdle);
-      },
-    });
 
     /* FAQ entrance + the "approaching FAQ → collapse orb" trigger now live inside
        <Faq> (it receives collapseChatToDefault as onApproach). */
@@ -866,72 +776,8 @@ export default function TariffPage() {
        fonts and images (e.g. the HEMS house) load AFTER the first measure and
        shift the pin positions — which left the redZone pin / HEMS sticky stage
        mismeasured until a manual refresh. Refresh on each of those events. */
-    /* Build the hub→device wires as rounded-corner elbows in pixel space, so the
-       corners are truly circular and the ends meet the dot centres regardless of
-       the (non-square) photo aspect. pathLength=1 keeps the scroll-fill math
-       resolution-independent. Re-run whenever the layout settles / resizes. */
-    const buildHemsPaths = () => {
-      const svg = hemsLinesRef.current;
-      if (!svg) return;
-      const W = svg.clientWidth, H = svg.clientHeight;
-      if (!W || !H) return;
-      svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
-      const DOT = 20, R = 18;                       /* dot half-size / corner radius */
-      /* dot-centre px for every hotspot, anchored to the photo content */
-      const C: Record<string, { x: number; y: number }> = {};
-      HEMS_PINS.forEach((p) => { C[p.title] = hemsCover(W, H, p.nx, p.ny); });
-      /* place the pins on their features (left/top = the dot's top-left corner) */
-      const GAP = 16, EDGE = 12;                    /* dot→label gap / container breathing room */
-      const pinEls = svg.parentElement?.querySelectorAll<HTMLElement>(`.${styles.hemsPin}`);
-      if (pinEls) HEMS_PINS.forEach((p, i) => {
-        const c = C[p.title], el = pinEls[i];
-        if (!el) return;
-        /* size the label to its natural single line, but never wider than the room
-           a fully-edge-clamped dot could give it — only then does it wrap */
-        const label = el.querySelector<HTMLElement>(`.${styles.hemsPinLabel}`);
-        let labelW = 0;
-        if (label) {
-          const prevWS = label.style.whiteSpace;
-          label.style.maxWidth = 'none';
-          label.style.whiteSpace = 'nowrap';
-          const natural = label.offsetWidth;        /* widest single-line width */
-          label.style.whiteSpace = prevWS;           /* back to wrapping-allowed */
-          const maxRoom = W - 2 * EDGE - 2 * DOT - GAP;
-          labelW = Math.max(60, Math.min(natural, maxRoom));
-          label.style.maxWidth = `${Math.round(labelW)}px`;
-        }
-        /* Clamp the dot inward so the dot + gap + label always stay inside the
-           photo frame. The wires route to this clamped centre, so a line CONTRACTS
-           rather than running off-screen when its label would leave the frame
-           (e.g. the Wallbox on narrow widths). On wide screens nothing is clamped
-           and every dot sits exactly on its feature. */
-        let cx = c.x;
-        if (p.labelSide === 'left') {
-          cx = Math.min(Math.max(cx, EDGE + labelW + GAP + DOT), W - EDGE - DOT);
-        } else {
-          cx = Math.max(Math.min(cx, W - EDGE - labelW - GAP - DOT), EDGE + DOT);
-        }
-        const cy = Math.min(Math.max(c.y, EDGE + DOT), H - EDGE - DOT);
-        C[p.title] = { x: cx, y: cy };               /* wires read this → they re-route */
-        el.style.left = `${cx - DOT}px`;
-        el.style.top = `${cy - DOT}px`;
-      });
-      /* hub → device wires, routed from one dot centre to the next */
-      const hub = C[HEMS_HUB.title];
-      const groups = svg.children;
-      for (let i = 0; i < groups.length; i++) {
-        const c = C[HEMS_LINKS[i].title];
-        const hx = hub.x, hy = hub.y, dx = c.x, dy = c.y;
-        const sy = dy > hy ? 1 : -1, sx = dx > hx ? 1 : -1;
-        const rr = Math.max(0, Math.min(R, Math.abs(dy - hy) - 1, Math.abs(dx - hx) - 1));
-        /* down the central trunk from the hub, round the corner, branch out to
-           the device — a tidy circuit-trace route */
-        const d = `M ${hx} ${hy} L ${hx} ${dy - sy * rr} Q ${hx} ${dy} ${hx + sx * rr} ${dy} L ${dx} ${dy}`;
-        groups[i].querySelectorAll('path').forEach((pa) => pa.setAttribute('d', d));
-      }
-    };
 
-    const refresh = () => { setFrameWidth(); buildHemsPaths(); ScrollTrigger.refresh(); };
+    const refresh = () => { setFrameWidth(); ScrollTrigger.refresh(); };
     requestAnimationFrame(refresh);
     const settle  = setTimeout(refresh, 500);
     const settle2 = setTimeout(refresh, 1200);
@@ -939,33 +785,14 @@ export default function TariffPage() {
     const lateImgs = Array.from(page.querySelectorAll('img')).filter((im) => !im.complete);
     lateImgs.forEach((im) => im.addEventListener('load', refresh, { once: true }));
     window.addEventListener('load', refresh);
-    /* re-anchor pins + re-route wires + re-cap labels whenever the layout changes
-       size, so the image-fraction hotspots stay glued to the re-cropped photo at
-       every viewport width. Direct resize listener (rAF-coalesced) — don't rely on
-       ScrollTrigger's debounced refresh alone. The 'refresh' hook covers the other
-       settle events (fonts/images/load). */
-    let resizeRaf = 0;
-    const onHemsResize = () => {
-      cancelAnimationFrame(resizeRaf);
-      resizeRaf = requestAnimationFrame(buildHemsPaths);
-    };
-    window.addEventListener('resize', onHemsResize);
-    ScrollTrigger.addEventListener('refresh', buildHemsPaths);
 
     return () => {
       clearTimeout(settle);
       clearTimeout(settle2);
       window.removeEventListener('load', refresh);
-      ScrollTrigger.removeEventListener('refresh', buildHemsPaths);
-      cancelAnimationFrame(resizeRaf);
-      window.removeEventListener('resize', onHemsResize);
       lateImgs.forEach((im) => im.removeEventListener('load', refresh));
       window.removeEventListener('resize', setFrameWidth);
-      clearTimeout(hemsIdle);
       orbCenterST.kill();
-      hemsChatST.kill();
-      hemsST.kill();
-      hemsScrubST.kill();
       stateST.kill();
       rotST.kill();
       morphST.kill();
@@ -980,6 +807,21 @@ export default function TariffPage() {
       pinST.kill();
     };
   }, []);
+
+  /* Scroll-engine slices extracted into hooks. Declared AFTER the pin effect so
+     their ScrollTriggers are created after pinST — ScrollTrigger measures/refreshes
+     in creation order, and these sections sit BELOW the pin, so the pin's spacer
+     must exist first or they mismeasure (progress pins at 1). */
+  useStoriesParallax(pageRef); // story-card parallax + white→gradient bg switch (slice 1)
+  useHemsStage({               // connected-home reveal + scrub category-select + wires + idle (slice 2)
+    pageRef,
+    linesRef: hemsLinesRef,
+    idxRef: hemsIdxRef,
+    scrubRef: hemsSTRef,
+    setActive: setHemsActive,
+    setPinsReady: setHemsPinsReady,
+    onIdleOpen: () => setChatOpen(true),
+  });
 
   return (
     <div className={styles.page} ref={pageRef}>
