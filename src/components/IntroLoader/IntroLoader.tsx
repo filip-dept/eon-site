@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { gsap } from '@/lib/gsap';
+import { emitEon } from '@/lib/eventBus';
 import styles from './IntroLoader.module.css';
 
 /* module-level so the home intro plays once per app session (on a fresh load),
@@ -20,13 +21,18 @@ export default function IntroLoader({ variant }: { variant: 'home' | 'tariff' })
   const rowRef = useRef<HTMLDivElement>(null);
   const barRef = useRef<HTMLDivElement>(null);
   const decided = useRef(false);
+  const cued = useRef(false);
+
+  /* tell the Hero the splash is clearing (once). When this instance won't play,
+     fire it right away so the from-the-top entrance doesn't wait on a dead cue. */
+  const cueHero = () => { if (cued.current) return; cued.current = true; emitEon('eon:intro-done'); };
 
   /* decide whether this instance should actually play (client-only) */
   useEffect(() => {
     if (decided.current) return;
     decided.current = true;
     if (variant === 'home') {
-      if (homePlayed) { setShow(false); return; }   // already shown this session
+      if (homePlayed) { setShow(false); cueHero(); return; }   // already shown this session
       homePlayed = true;
     } else {
       const flagged = sessionStorage.getItem('eon:intro-tariff') === '1';
@@ -50,7 +56,7 @@ export default function IntroLoader({ variant }: { variant: 'home' | 'tariff' })
         { opacity: 1, y: 0, duration: 0.5, ease: 'eonOut' }, 0.1)
       .fromTo(barRef.current, { scaleX: 0 },
         { scaleX: 1, duration: 1.1, ease: 'power1.inOut' }, 0.25)
-      .to(root, { yPercent: -100, duration: 0.6, ease: 'eonOut' }, '+=0.12');
+      .to(root, { yPercent: -100, duration: 0.75, ease: 'power3.out', onStart: cueHero }, '+=0.12');
 
     return () => { tl.kill(); document.body.style.overflow = ''; };
   }, [show]);

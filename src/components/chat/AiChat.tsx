@@ -159,7 +159,7 @@ export function AiChat({
     return (
       <div ref={ref as Ref<HTMLDivElement>} className={cn(styles.card, styles.block, className)} {...rest}>
         <InputRow prompt={prompt} open showSend onSend={onSend} onMic={onMic} />
-        <div className={styles.suggestions}>
+        <div className={styles.suggestions} data-ai-suggestions>
           {suggestions.map((s) => (
             <Chip
               key={s.id}
