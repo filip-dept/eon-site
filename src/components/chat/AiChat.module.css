@@ -1,0 +1,255 @@
+/* ───────────────────────────────────────────────────────────────────────────
+   AiChat — the E.ON assistant bubble. One component, four visual variants
+   (Figma "AI chat" 1877:3106):
+     • pill          small resting bubble (orb + mic)          128 × 68
+     • bar           full input bar (orb + prompt + mic+send)  465 × 68
+     • suggestions   bar + quick-prompt chips (hero/homepage)  596 × 168
+     • answer        assistant reply card + input row (HEMS)   596 × 314
+
+   Hexes below come straight from the Figma file; the ones that recur are
+   candidates for tokenisation (see Chip.tsx for the same #e5e4e4 note).
+   ─────────────────────────────────────────────────────────────────────────── */
+
+/* shared shell — every variant is a white rounded card with the same border + shadow */
+.card {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  background: #fff;
+  border: 1px solid #f9f9f9;
+  border-radius: 12px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+/* fills a sized parent (hero wrapper); the floating answer is content-width so
+   GSAP can grow it from the pill footprint, so it does NOT get .block */
+.block { width: 100%; }
+
+/* answer card is the growable box: pin the inner to the bottom-left so, while
+   GSAP grows width+height from the pill footprint, the input row stays put and
+   the header/answer unfold upward (overflow clips the not-yet-revealed top). */
+.card[data-ai-card] {
+  justify-content: flex-end;
+  align-items: flex-start;
+  max-width: calc(100vw - 32px);
+}
+
+/* ── Input row ("Content wrapper") — orb · prompt · actions ─────────────────── */
+/* No flex `gap`: spacing is via margins so the collapsed reveal adds no phantom
+   gap — the pill stays exactly orb + 10 + actions (Figma small = 128px wide). */
+.row {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 12px 16px;
+  border-radius: 12px;
+  /* the pill renders this as a <button>: strip the UA chrome so it measures
+     exactly like the div rows (no 2px border, no native appearance) */
+  border: 0;
+  background: none;
+  appearance: none;
+  text-align: left;
+  color: inherit;
+}
+/* the clickable pill is a standalone <button> (the card's InputRow is a <div>),
+   so unlike the in-card row it needs its own white surface + border + shadow */
+button.row {
+  background: var(--white);
+  border: var(--border-1) solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-chat);
+}
+.row[data-open='false'] { cursor: pointer; } /* the clickable pill */
+
+/* the orb itself — our existing animated orb (gradient + video), sized 44 */
+.orb {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  position: relative;
+  overflow: hidden;
+  background: radial-gradient(circle at 32% 28%, #f9c8b8 0%, #ee7e9d 45%, #c46be0 100%);
+  object-fit: cover;
+}
+.orb::before,
+.orb::after {
+  content: '';
+  position: absolute;
+  inset: -40%;
+  will-change: transform;
+  pointer-events: none;
+}
+.orb::before {
+  background:
+    radial-gradient(circle at 32% 30%, #ffd6ad 0%, rgba(255, 214, 173, 0) 55%),
+    radial-gradient(circle at 72% 58%, #ff6fae 0%, rgba(255, 111, 174, 0) 55%);
+  animation: orbFlowA 7s linear infinite;
+}
+.orb::after {
+  background:
+    radial-gradient(circle at 40% 72%, #b66ce6 0%, rgba(182, 108, 230, 0) 55%),
+    radial-gradient(circle at 28% 32%, #ff9a6b 0%, rgba(255, 154, 107, 0) 50%);
+  mix-blend-mode: screen;
+  animation: orbFlowB 9s linear infinite;
+}
+@keyframes orbFlowA {
+  0%   { transform: rotate(0deg)   translate(6%, -4%); }
+  100% { transform: rotate(360deg) translate(6%, -4%); }
+}
+@keyframes orbFlowB {
+  0%   { transform: rotate(360deg) translate(-5%, 5%); }
+  100% { transform: rotate(0deg)   translate(-5%, 5%); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .orb::before, .orb::after { animation: none; }
+}
+
+/* prompt label — fills the bar, pushing the actions to the right (Figma #535252/18) */
+.prompt {
+  flex: 1 0 0;
+  min-width: 0;
+  font-family: var(--font-body);
+  font-size: 18px;
+  line-height: normal;
+  color: #535252;
+  opacity: 0.7;
+  text-align: left;
+  word-break: break-word;
+}
+
+/* reveal wrapper — holds the prompt; collapsed in the pill, GSAP grows it on
+   hover (width 0 → scrollWidth). The open card shows it via [data-open]. */
+.reveal {
+  display: flex;
+  align-items: center;
+  flex: 0 0 auto;
+  width: 0;
+  opacity: 0;
+  overflow: hidden;
+}
+.reveal .prompt { margin-left: 10px; white-space: nowrap; } /* 10px gap from the orb */
+.row[data-open='true'] .reveal { flex: 1 0 0; width: auto; opacity: 1; overflow: visible; }
+
+/* actions ("Actions wrapper") — 10px gap from the prompt, divider rule, then mic [+ send] */
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  margin-left: 10px;
+  padding-left: 6px;
+  border-left: 1px solid #dcdcdc;
+}
+
+/* mic — 36 round, slightly dimmed (Figma opacity .75) */
+.iconBtn {
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: none;
+  border-radius: 24px;
+  color: #262626;
+  opacity: 0.75;
+  cursor: pointer;
+  transition: background 0.15s ease, opacity 0.15s ease;
+}
+.iconBtn:hover { opacity: 1; background: #f3f3f3; }
+.iconBtn svg { width: 22px; height: 22px; display: block; }
+
+/* send — 36 round, brand red, white paper-plane (Figma #ea1b0a) */
+.send {
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 24px;
+  background: var(--red-500, #ea1b0a);
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.15s ease;
+}
+.send:hover { background: var(--red-600, #c41708); }
+.send svg { width: 19px; height: 19px; display: block; }
+
+/* ── Suggestions ("Suggestion wrapper") — quick-prompt chips ────────────────── */
+.suggestions {
+  display: flex;
+  flex-wrap: wrap;
+  align-content: flex-start;
+  align-items: flex-start;
+  gap: 8px 7px;
+  width: 100%;
+  padding: 12px 16px;
+}
+
+/* ── Answer ("Chat heading" + "Answer wrapper") — assistant reply ───────────── */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 12px 16px;
+  background: #fffdfc;
+  backdrop-filter: blur(2px);
+}
+.assistant {
+  font-family: var(--font-body);
+  font-weight: 500;
+  font-size: 16px;
+  line-height: 21px;
+  color: #262626;
+  opacity: 0.8;
+}
+.close {
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: none;
+  border-radius: 10px;
+  color: #262626;
+  opacity: 0.75;
+  cursor: pointer;
+  transition: background 0.15s ease, opacity 0.15s ease;
+}
+.close:hover { background: #f3efec; opacity: 1; }
+.close svg { display: block; }
+
+.answer {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  padding: 12px 16px 24px;
+  border-radius: 6px;
+}
+.answerHeading {
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: 18px;
+  line-height: 24px;
+  color: #262626;
+  width: 100%;
+}
+.answerBody {
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 24px;
+  color: #262626;
+  opacity: 0.75;
+  width: 100%;
+  white-space: pre-wrap;
+  word-break: break-word;
+}

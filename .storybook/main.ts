@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url';
 const here = dirname(fileURLToPath(import.meta.url));
 
 const config: StorybookConfig = {
-  stories: ['../src/ui/**/*.stories.tsx'],
+  stories: ['../src/ui/**/*.stories.tsx', '../src/components/**/*.stories.tsx'],
   addons: [],
   framework: { name: '@storybook/react-vite', options: {} },
   staticDirs: ['../public'], // serves the EON fonts (@font-face in fonts.css)
