@@ -1,6 +1,7 @@
 'use client';
 
 import { forwardRef } from 'react';
+import { Chip } from '@/ui/Chip';
 import styles from './hero.module.css';
 
 /* First chip is the journey-starter — styled like the rest, still clickable */
@@ -47,15 +48,14 @@ const ChatWidget = forwardRef<HTMLDivElement>((_, ref) => {
       {/* Suggestion chips — only the first triggers the journey */}
       <div className={styles.chatChips}>
         {CHIPS.map((chip, i) => (
-          <button
+          <Chip
             key={chip.id}
-            className={styles.chip}
             onClick={i === 0 ? () => handleChipClick(chip.id) : undefined}
+            interactive={i === 0}
             data-chip
-            data-inactive={i !== 0 ? true : undefined}
           >
             {chip.label}
-          </button>
+          </Chip>
         ))}
       </div>
     </div>

@@ -8,6 +8,12 @@ const useIsoLayoutEffect = typeof window !== 'undefined' ? useLayoutEffect : use
 import { gsap, ScrollTrigger } from '@/lib/gsap';
 import Navbar from '@/components/Navbar/Navbar';
 import JourneyModal from '@/components/Journey/JourneyModal';
+import { Button } from '@/ui/Button';
+import { Badge } from '@/ui/Badge';
+import { Link } from '@/ui/Link';
+import { Icon } from '@/ui/Icon';
+import { IconButton } from '@/ui/IconButton';
+import { Toggle } from '@/ui/Toggle';
 import styles from './tariff.module.css';
 
 /* the red "Tarif auswählen" CTAs open the conversational checkout journey */
@@ -36,27 +42,7 @@ const PlugIcon = () => (
     <path d="M12 2v6M8 6h8M7 12h10l-1 7H8l-1-7z"/><path d="M12 19v3"/>
   </svg>
 );
-const CheckCircleIcon = () => (
-  <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
-    <circle cx="14" cy="14" r="13" stroke="#ea1b0a" strokeWidth="1.5"/>
-    <path d="M8 14l4 4 8-8" stroke="#ea1b0a" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
-  </svg>
-);
-/* "reward program" seal — red star badge for the Neukunden-Bonus cell */
-const BonusIcon = () => (
-  <svg className={styles.bonusIcon} width="28" height="28" viewBox="0 0 28 28" fill="none">
-    <circle cx="14" cy="14" r="13" stroke="#ea1b0a" strokeWidth="1.5"/>
-    <path
-      d="M14 7.5l1.9 3.85 4.25.62-3.08 3 .73 4.23L14 17.2l-3.8 2 .73-4.23-3.08-3 4.25-.62L14 7.5z"
-      stroke="#ea1b0a" strokeWidth="1.5" strokeLinejoin="round"
-    />
-  </svg>
-);
-const ChevronRight = () => (
-  <svg width="10" height="14" viewBox="0 0 10 16" fill="none">
-    <path d="M2 2l6 6-6 6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
-  </svg>
-);
+/* CheckCircleIcon / BonusIcon / ChevronRight → <Icon name="check-circle|bonus|chevron-right"/> */
 /* one feature row — shared by the solo card (grid) and the comparison cards (list) */
 function Feature({ icon, name, desc }: { icon: React.ReactNode; name: string; desc: string }) {
   return (
@@ -79,12 +65,7 @@ const DocIcon = () => (
     <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>
   </svg>
 );
-const CartIcon = () => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-    <circle cx="9" cy="21" r="1.4"/><circle cx="19" cy="21" r="1.4"/>
-    <path d="M1 1h4l2.6 13.4a2 2 0 0 0 2 1.6h9.7a2 2 0 0 0 2-1.6L23 6H6"/>
-  </svg>
-);
+/* CartIcon → <Icon name="cart"/> */
 const InfoIcon = () => (
   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
     <circle cx="12" cy="12" r="10"/><path d="M12 16v-5M12 8h.01"/>
@@ -100,11 +81,7 @@ const MicIcon = () => (
     <rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10v1a7 7 0 0 0 14 0v-1M12 18v4"/>
   </svg>
 );
-const TickIcon = () => (
-  <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-    <path d="M2 6.2l2.6 2.6L10 3" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
-  </svg>
-);
+/* TickIcon → <Icon name="check"/> (inside <Toggle>) */
 const ChevronDown = () => (
   <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
     <path d="M3 6l5 5 5-5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
@@ -1253,7 +1230,7 @@ export default function TariffPage() {
           </div>
           {/* floating state: summary label */}
           <span className={styles.floatLabel}>Deine Eingaben</span>
-          <a href="/" className={styles.contextEdit}>Ändern</a>
+          <Link href="/" className="px-3 py-2">Ändern</Link>
           {/* spreads the groups apart at rest, collapses in the pill */}
           <div className={styles.ctxGap} />
           <div className={`${styles.floatDivider} ${styles.midDivider}`} />
@@ -1267,16 +1244,7 @@ export default function TariffPage() {
               onCommit={(p) => setPref(snapTo(p, stopsFor(eco)))}
             />
             <div className={styles.contextSep} />
-            <button
-              type="button"
-              className={styles.checkItem}
-              role="switch"
-              aria-checked={eco}
-              onClick={toggleEco}
-            >
-              <span className={styles.checkBox} data-checked={eco ? 'true' : 'false'}><TickIcon /></span>
-              Besonders nachhaltig
-            </button>
+            <Toggle checked={eco} onChange={toggleEco} label="Besonders nachhaltig" className="shrink-0" />
           </div>
           {/* floating state: tariff + cart */}
           <div className={styles.floatTariff}>
@@ -1285,7 +1253,7 @@ export default function TariffPage() {
               <span className={styles.floatTariffName}>{tariff.name}</span>
               <span className={styles.floatTariffPrice}>{tariff.price} € pro Monat</span>
             </div>
-            <button className={styles.cartBtn} aria-label="Zum Warenkorb" onClick={startCheckout}><CartIcon /></button>
+            <IconButton variant="primary" aria-label="Zum Warenkorb" onClick={startCheckout}><Icon name="cart" /></IconButton>
           </div>
         </div>
       </div>
@@ -1417,13 +1385,9 @@ export default function TariffPage() {
                             <p className={styles.cardSub}>{tariff.sub}</p>
                           </div>
                           {eco && (
-                            <span className={styles.cardBadge}>
-                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                                <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10z"/>
-                                <path d="M2 21c0-3 1.85-5.36 5.08-6"/>
-                              </svg>
+                            <Badge tone="success" iconLeft={<Icon name="leaf" />}>
                               Besonders nachhaltig
-                            </span>
+                            </Badge>
                           )}
                         </div>
                         <div className={styles.cardPrice}>
@@ -1434,16 +1398,16 @@ export default function TariffPage() {
                       <div className={styles.cardBody}>
                         <div className={styles.cardDivider} />
                         <div className={styles.cardFeatures}>
-                          <Feature icon={<BonusIcon />} name={tariff.bonus} desc={tariff.bonusUntil} />
+                          <Feature icon={<Icon name="bonus" className="text-brand-red shrink-0" />} name={tariff.bonus} desc={tariff.bonusUntil} />
                           {tariff.features.map(([name, desc]) => (
-                            <Feature key={name + desc} icon={<CheckCircleIcon />} name={name} desc={desc} />
+                            <Feature key={name + desc} icon={<Icon name="check-circle" className="text-brand-red" />} name={name} desc={desc} />
                           ))}
                         </div>
                         <div className={styles.cardActions}>
-                          <button className={styles.btnPrimary} onClick={startCheckout}>Tarif auswählen</button>
-                          <button className={styles.btnCompare} onClick={openCompare}>
-                            Tarif vergleichen <ChevronRight />
-                          </button>
+                          <Button variant="primary" fullWidth onClick={startCheckout}>Tarif auswählen</Button>
+                          <Button variant="outline" fullWidth iconRight={<Icon name="chevron-right" />} onClick={openCompare}>
+                            Tarif vergleichen
+                          </Button>
                         </div>
                       </div>
                     </div>
@@ -1466,7 +1430,7 @@ export default function TariffPage() {
                               <p className={styles.cardName}>{t.name}</p>
                               <p className={styles.cardSub}>{t.sub}</p>
                             </div>
-                            {isRec && <span className={styles.cardBadge}>Unsere Empfehlung für dich</span>}
+                            {isRec && <Badge tone="brand">Unsere Empfehlung für dich</Badge>}
                           </div>
                           <div className={styles.cardPrice}>
                             <span className={styles.priceMain}>{t.price}</span>
@@ -1476,13 +1440,15 @@ export default function TariffPage() {
                         <div className={styles.cardBody}>
                           <div className={styles.cardDivider} />
                           <div className={styles.cardFeatures} data-comparing="true">
-                            <Feature icon={<BonusIcon />} name={t.bonus} desc={t.bonusUntil} />
+                            <Feature icon={<Icon name="bonus" className="text-brand-red shrink-0" />} name={t.bonus} desc={t.bonusUntil} />
                             {t.features.map(([name, desc]) => (
-                              <Feature key={name + desc} icon={<CheckCircleIcon />} name={name} desc={desc} />
+                              <Feature key={name + desc} icon={<Icon name="check-circle" className="text-brand-red" />} name={name} desc={desc} />
                             ))}
                           </div>
                           <div className={styles.cardActions}>
-                            <button className={styles.btnPrimary} onClick={startCheckout}>Tarif auswählen</button>
+                            <Button variant={isRec ? 'primary' : 'outline'} fullWidth onClick={startCheckout}>
+                              Tarif auswählen
+                            </Button>
                           </div>
                         </div>
                       </div>
@@ -1507,7 +1473,7 @@ export default function TariffPage() {
                   <p className={styles.socialPct}>68% der Haushalte</p>
                   <p className={styles.socialDesc}>mit ähnlichem Verbrauch wählen diesen Tarif</p>
                 </div>
-                <button className={styles.socialCta}>Mehr entdecken</button>
+                <Link as="button" weight="medium" className="shrink-0">Mehr entdecken</Link>
               </div>
             </div>{/* /heroRight */}
           </div>
@@ -1542,7 +1508,7 @@ export default function TariffPage() {
                   <div className={styles.hubCardLeft}>
                     <div className={styles.articleTag}><DocIcon /> Energie Hub</div>
                     <p className={styles.articleTitle}>Vergleichbares Projekt ansehen und CO2 Ersparnis verstehen</p>
-                    <button className={styles.articleLink}><ChevronRight /> Mehr lesen</button>
+                    <Link as="button" tone="inverse" underline={false} iconLeft={<Icon name="chevron-right" />}>Mehr lesen</Link>
                   </div>
                   <img src="/tariff-man.png" className={styles.hubThumb} alt="" />
                 </div>
@@ -1837,7 +1803,7 @@ export default function TariffPage() {
                 <span className={styles.proofStatNum}>94%</span>
                 <span className={styles.proofStatLabel}>würden wieder wechseln</span>
               </div>
-              <button className={styles.proofStatsBtn}>Mehr Erfahrungen</button>
+              <Button variant="primary" className="ml-auto shrink-0 rounded-button">Mehr Erfahrungen</Button>
             </div>
           </div>
         </section>

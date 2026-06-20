@@ -160,38 +160,4 @@
   gap: 8px;
 }
 
-.chip {
-  display: inline-flex;
-  align-items: center;
-  height: 32px;
-  padding: 4px 12px;
-  border-radius: 16px;
-  border: 1px solid var(--c-chip-border);
-  background: var(--c-chip-bg);
-  font-family: var(--font-body);
-  font-size: var(--fs-chip);
-  line-height: var(--lh-chip);
-  color: var(--c-text-primary);
-  white-space: nowrap;
-  cursor: pointer;
-  transition: border-color 0.2s ease, background 0.2s ease, color 0.2s ease;
-  will-change: transform, opacity;
-}
-.chip:hover {
-  border-color: var(--c-red);
-  background: var(--c-red);
-  color: var(--c-white);
-}
-.chip[data-inactive='true'] {
-  cursor: default;
-  pointer-events: none;
-}
-
-/* New journey-starter chip */
-.chipPrimary {
-  border-color: var(--c-red);
-  background: #fdeceb;
-  color: var(--c-red);
-  font-weight: 500;
-}
-.chipPrimary:hover { background: #fbdedb; }
+/* .chip → <Chip> (ui/Chip); .chipPrimary was dead code, removed. */

@@ -1,0 +1,77 @@
+/* ──────────────────────────────────────────────────────────────────────────
+   colors.css — SEMANTIC colour tokens (grouped by role), built on `palette.css`.
+
+   These are the ONLY colour names components/utilities should use going forward
+   (`bg-page`, `text-primary`, `border-default`, `text-brand`, `bg-success` …).
+   Swapping this layer is also what unlocks dark mode later.
+
+   The `--c-*` block at the bottom is the FROZEN legacy layer: every value is the
+   exact pixel-for-pixel colour components use today. It is preserved so the
+   migration is behaviour-preserving; each `--c-*` alias is deleted when the last
+   component using it moves to the semantic tokens (phases 2–4).
+   ────────────────────────────────────────────────────────────────────────── */
+:root {
+  /* ── Background ── */
+  --bg-page: var(--white);        /* #ffffff */
+  --bg-surface: var(--grey-100);  /* #f8f5f2 — beige secondary surface */
+  --bg-muted: #ebebeb;            /* chip / inert surface */
+  --bg-brand: var(--red-500);     /* #ea1b0a */
+  --bg-inverse: var(--grey-900);  /* #262626 */
+
+  /* ── Foreground / text ── */
+  --fg-primary: var(--grey-900);   /* #262626 */
+  --fg-secondary: var(--grey-700); /* #5c5c5c (Figma `UI text/…/secondary`) */
+  --fg-muted: var(--grey-600);     /* #767676 */
+  --fg-inverse: var(--white);      /* #ffffff */
+  --fg-brand: var(--red-500);      /* #ea1b0a */
+
+  /* ── Border ── */
+  --border-subtle: var(--grey-200);  /* #f0ebe5 */
+  --border-default: var(--grey-300); /* #d7d0cc */
+  --border-strong: var(--grey-600);  /* #767676 */
+
+  /* ── Feedback ── */
+  --success: #18a087;            /* recommendation badge (E.ON green) */
+  --info: var(--blue-700);       /* #0075c2 */
+  --warning: #ffc940;            /* Figma `UI system feedback/warning` */
+  --error: var(--red-400);       /* #f05b48 (Figma `…/error`) */
+
+  /* ── Brand ── */
+  --brand-red: var(--red-500);            /* #ea1b0a */
+  --brand-magenta: var(--gradient-magenta); /* #c11054 */
+  --brand-purple: var(--gradient-purple);   /* #941481 */
+
+  /* ── Interactive ── */
+  --btn-primary: var(--red-500);   /* #ea1b0a */
+  --btn-primary-hover: #cc1709;    /* current/site + design-system.md (Figma exposes no hover var) */
+  --btn-disabled-bg: #e9e7e6;      /* disabled CTA fill */
+  --btn-disabled-fg: #a3a2a1;      /* disabled CTA text */
+  --focus-ring: var(--blue-700);   /* #0075c2 */
+
+  /* ── Decorative ── */
+  /* Hero brand gradient (red → magenta → purple), top-left origin */
+  --hero-gradient: linear-gradient(
+    135deg,
+    var(--gradient-red) 0%,
+    var(--gradient-red) 35%,
+    var(--gradient-magenta) 72%,
+    var(--gradient-purple) 100%
+  );
+
+  /* ════════════════════════════════════════════════════════════════════════
+     LEGACY (frozen) — exact values components reference today. Do not change;
+     remove each alias as its consumers migrate to the semantic tokens above.
+     ════════════════════════════════════════════════════════════════════════ */
+  --c-red: #ea1b0a;
+  --c-magenta: #c11054;
+  --c-purple: #941481;
+  --c-white: #ffffff;
+  --c-black: #0a0a0a;
+  --c-text-primary: #262626;
+  --c-text-secondary: #535252; /* NB: legacy value (#535252) ≠ new --fg-secondary (#5c5c5c) */
+  --c-chip-bg: #ebebeb;
+  --c-chip-border: #e5e4e4;
+  --c-bg-secondary: #f8f5f2;
+  --c-divider: #d7d0cc;
+  --c-success: #18a087;
+}

@@ -218,17 +218,7 @@
   background: rgba(217,217,217,0.9);
 }
 
-.contextEdit {
-  font-family: var(--font-body);
-  font-size: 16px;
-  color: var(--c-red);
-  text-decoration: underline;
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 8px 12px;
-  white-space: nowrap;
-}
+/* .contextEdit ("Ändern") → <Link href className="px-3 py-2"> */
 
 /* slider + checkbox group — labels collapse when floating, whole group in compact.
    max-width must clear the FULL content (label + slider + checkbox ≈ 620px) or the
@@ -242,7 +232,7 @@
   flex-shrink: 0;   /* don't squeeze the slider+checkbox group (clips "Besonders nachhaltig") */
   transition: max-width 0.8s var(--ease-out), opacity 0.5s ease;
 }
-.ctxSliders .checkItem { flex-shrink: 0; }
+/* .checkItem/.checkBox → <Toggle> (className="shrink-0" in ctxSliders) */
 .compact .ctxSliders { max-width: 0; opacity: 0; }
 .ctxSliders .prefSlider { flex-shrink: 0; }
 
@@ -252,39 +242,6 @@
 .compact.scrolled .midDivider { width: 0; opacity: 0; }
 
 /* "Besonders nachhaltig" checkbox — interactive (switches the tariff family) */
-.checkItem {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  font-family: var(--font-body);
-  font-size: 16px;
-  color: var(--c-text-primary);
-  white-space: nowrap;
-  cursor: pointer;
-  flex-shrink: 0;
-  background: none;
-  border: none;
-  padding: 0;
-}
-
-.checkBox {
-  width: 22px;
-  height: 22px;
-  border-radius: 4px;
-  background: #0075c2;
-  border: 1.5px solid #0075c2;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  transition: background 0.2s ease, border-color 0.2s ease;
-}
-.checkBox svg { display: block; transition: opacity 0.15s ease; }
-.checkBox[data-checked='false'] {
-  background: transparent;
-  border-color: #b5b4b3;
-}
-.checkBox[data-checked='false'] svg { opacity: 0; }
 
 .prefItem {
   display: flex;
@@ -397,21 +354,7 @@
   color: var(--c-text-secondary);
 }
 
-.cartBtn {
-  width: 48px;
-  height: 48px;
-  border-radius: 12px;
-  border: none;
-  background: var(--c-red);
-  color: #fff;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background 0.2s;
-  flex-shrink: 0;
-}
-.cartBtn:hover { background: #cc1709; }
+/* .cartBtn → <IconButton variant="primary"> (shape square = radius 12) */
 
 /* ─── Pinned horizontal section ──────────────────────────────────────────── */
 .scrollSection {
@@ -537,18 +480,7 @@
   line-height: 1.35;
 }
 
-.socialCta {
-  font-family: var(--font-body);
-  font-weight: 500;
-  font-size: 16px;
-  color: var(--c-red);
-  text-decoration: underline;
-  background: none;
-  border: none;
-  cursor: pointer;
-  white-space: nowrap;
-  flex-shrink: 0;
-}
+/* .socialCta ("Mehr entdecken") → <Link as="button" weight="medium" className="shrink-0"> */
 
 /* Red gradient panel — "WebGL-style" living gradient: two off-center
    radial blooms orbit on independent paths/speeds over the red base */
@@ -806,27 +738,7 @@
   line-height: 21px;
   color: var(--c-text-secondary);
 }
-/* green "Unsere Empfehlung für dich" pill — recommended card only */
-.cardBadge {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  flex-shrink: 0;
-  height: 24px;
-  padding: 0 10px;
-  border-radius: 4px;
-  background: var(--c-success);
-  color: var(--c-white);
-  font-family: var(--font-body);
-  font-weight: 500;
-  font-size: 14px;
-  line-height: 21px;
-  white-space: nowrap;
-}
-/* comparison view: the "Unsere Empfehlung für dich" badge is purple */
-.card[data-comparing='true'] .cardBadge {
-  background: var(--c-purple);
-}
+/* .cardBadge (green eco / purple recommendation) → <Badge tone="success|brand"> */
 /* narrow comparison cards: the badge stacks above the name rather than beside it */
 .card[data-comparing='true'] .cardHeadRow {
   flex-direction: column-reverse;
@@ -865,11 +777,7 @@
   min-width: 0;
 }
 
-.bonusIcon {
-  width: 28px;
-  height: 28px;
-  flex-shrink: 0;
-}
+/* .bonusIcon → <Icon name="bonus" className="text-brand-red shrink-0" /> */
 
 .bonusText {
   font-family: var(--font-body);
@@ -953,53 +861,8 @@
   flex-direction: row;
   gap: 8px;
 }
-.btnPrimary {
-  height: 48px;
-  flex: 1 1 0;
-  min-width: 0;
-  background: var(--c-red);
-  color: var(--c-white);
-  border: none;
-  border-radius: 8px;
-  font-family: var(--font-body);
-  font-weight: 700;
-  font-size: 18px;
-  line-height: 27px;
-  cursor: pointer;
-  transition: background 0.2s;
-  white-space: nowrap;
-}
-.btnPrimary:hover { background: #cc1709; }
-/* alternative cards: outline button (white fill, red border + text) */
-.card[data-extra] .btnPrimary {
-  background: var(--c-white);
-  color: var(--c-red);
-  border: 2px solid var(--c-red);
-}
-.card[data-extra] .btnPrimary:hover { background: rgba(234, 27, 10, 0.06); }
-
-/* "Tarif vergleichen" — secondary outline entry into the comparison (panel only) */
-.btnCompare {
-  height: 48px;
-  flex: 1 1 0;
-  min-width: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  background: transparent;
-  color: var(--c-red);
-  border: 2px solid var(--c-red);
-  border-radius: 8px;
-  font-family: var(--font-body);
-  font-weight: 700;
-  font-size: 18px;
-  line-height: 27px;
-  cursor: pointer;
-  transition: background 0.15s;
-  white-space: nowrap;
-}
-.btnCompare:hover { background: rgba(234, 27, 10, 0.06); }
+/* Card CTAs (.btnPrimary / .card[data-extra] .btnPrimary / .btnCompare) migrated
+   to <Button variant="primary|outline" fullWidth /> — see TariffPage.tsx. */
 
 /* ─── Shared editorial text block ────────────────────────────────────────── */
 .editorialContent {
@@ -1179,18 +1042,7 @@
   margin: 0;
 }
 
-.articleLink {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  background: none;
-  border: none;
-  cursor: pointer;
-  font-family: var(--font-body);
-  font-size: 16px;
-  color: #fff;
-  padding: 0;
-}
+/* .articleLink ("Mehr lesen") → <Link as="button" tone="inverse" underline={false} iconLeft> */
 
 /* Right beige panel */
 .barsPanel {
@@ -2487,22 +2339,7 @@
   opacity: 0.75;
 }
 
-.proofStatsBtn {
-  margin-left: auto;
-  flex-shrink: 0;
-  height: 48px;
-  padding: 0 32px;
-  border: none;
-  border-radius: 14px;
-  background: var(--c-red);
-  color: #fff;
-  font-family: var(--font-body);
-  font-weight: 700;
-  font-size: 18px;
-  cursor: pointer;
-  transition: background 0.2s;
-}
-.proofStatsBtn:hover { background: #cc1709; }
+/* .proofStatsBtn → <Button variant="primary" className="ml-auto shrink-0 rounded-button" /> */
 
 /* ═══ Tarif vergleichen — expanding comparison (Figma 1093:4573) ═══════════ */
 
