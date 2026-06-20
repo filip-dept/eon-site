@@ -2,6 +2,7 @@
 
 import type { ReactNode, RefObject } from 'react';
 import { createPortal } from 'react-dom';
+import { Icon } from '@/ui/Icon';
 import styles from './journey.module.css';
 
 /**
@@ -48,14 +49,10 @@ export function JourneyWizard({
         aria-label={ariaLabel}
       >
         <button className={styles.cornerBtn} data-pos="back" onClick={onBack} aria-label="Zurück">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <path d="M15 5l-7 7 7 7" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
+          <Icon name="chevron-left" size={18} />
         </button>
         <button className={styles.cornerBtn} data-pos="close" onClick={onClose} aria-label="Schließen">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <path d="M5 5l14 14M19 5L5 19" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" />
-          </svg>
+          <Icon name="close" size={18} />
         </button>
 
         {children}

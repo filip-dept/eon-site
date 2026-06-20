@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, type KeyboardEvent } from 'react';
 import { suggestPlz } from '@/lib/germanPlz';
 import { Field } from '@/ui/Field';
+import { Icon } from '@/ui/Icon';
 import css from './PlzField.module.css';
 
 /**
@@ -83,15 +84,8 @@ export function PlzField({ value, onChange }: PlzFieldProps) {
               aria-expanded={suggestions.length > 0}
             />
             {city && <span className={css.plzCity}>{city}</span>}
-            {plzValid && (
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#22a053" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
-                <path d="M5 13l4 4L19 7" />
-              </svg>
-            )}
-            <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#9e9d9c" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginLeft: 'auto' }}>
-              <path d="M12 21c-4-4-7-7.3-7-10a7 7 0 1 1 14 0c0 2.7-3 6-7 10z" />
-              <circle cx="12" cy="11" r="2" />
-            </svg>
+            {plzValid && <Icon name="check" size={20} className="shrink-0 text-[#22a053]" />}
+            <Icon name="location" size={34} className="ml-auto shrink-0 text-[#9e9d9c]" />
           </div>
 
           {suggestions.length > 0 && (

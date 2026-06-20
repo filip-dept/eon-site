@@ -1,12 +1,5 @@
+import { Icon } from '@/ui/Icon';
 import css from './TariffPreview.module.css';
-
-/* star-in-circle bonus glyph (mirrors the tariff card's bonus icon) */
-const RewardIcon = () => (
-  <svg className={css.tpBonusIcon} width="22" height="22" viewBox="0 0 28 28" fill="none" aria-hidden="true">
-    <circle cx="14" cy="14" r="13" stroke="currentColor" strokeWidth="1.5" />
-    <path d="M14 7.5l1.9 3.85 4.25.62-3.08 3 .73 4.23L14 17.2l-3.8 2 .73-4.23-3.08-3 4.25-.62L14 7.5z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
-  </svg>
-);
 
 /**
  * TariffPreview — the selected-tariff card shown on the checkout Review step
@@ -26,7 +19,7 @@ export function TariffPreview() {
         <span className={css.tpSub}>12 Mo | Solar DE</span>
         <div className={css.tpPriceRow}>
           <span className={css.tpPrice}><strong>55,80</strong> € pro Monat</span>
-          <span className={css.tpBonus}><RewardIcon />75 € Neukunden-Bonus <em>bis 20.04.2026</em></span>
+          <span className={css.tpBonus}><Icon name="bonus" size={22} className={css.tpBonusIcon} />75 € Neukunden-Bonus <em>bis 20.04.2026</em></span>
         </div>
       </div>
     </div>

@@ -38,22 +38,8 @@ const DEFAULT_PILL_W = 145;   /* 16 + orb 44 + 16 + divider 1 + 16 + mic 36 + 16
 const PILL_H = 62;
 
 /* ─── Icons ──────────────────────────────────────────────────────────────── */
-const LocationIcon = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{opacity:.75}}>
-    <path d="M12 21c-4-4-7-7.3-7-10a7 7 0 1 1 14 0c0 2.7-3 6-7 10z"/><circle cx="12" cy="11" r="2"/>
-  </svg>
-);
-const PersonsIcon = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{opacity:.75}}>
-    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>
-  </svg>
-);
-const PlugIcon = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{opacity:.75}}>
-    <path d="M12 2v6M8 6h8M7 12h10l-1 7H8l-1-7z"/><path d="M12 19v3"/>
-  </svg>
-);
-/* CheckCircleIcon / BonusIcon / ChevronRight → <Icon name="check-circle|bonus|chevron-right"/> */
+/* Location/Persons/Plug, Doc, Info, HomeGreen, CheckCircle, Bonus, ChevronRight, Cart,
+   Menu → real <Icon name=…/>. Only MicIcon stays inline (no microphone in the library). */
 /* one feature row — shared by the solo card (grid) and the comparison cards (list) */
 function Feature({ icon, name, desc }: { icon: React.ReactNode; name: string; desc: string }) {
   return (
@@ -66,27 +52,6 @@ function Feature({ icon, name, desc }: { icon: React.ReactNode; name: string; de
     </div>
   );
 }
-const MenuIcon = () => (
-  <svg width="18" height="14" viewBox="0 0 18 14" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
-    <path d="M1 1h16M1 7h16M1 13h16"/>
-  </svg>
-);
-const DocIcon = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>
-  </svg>
-);
-/* CartIcon → <Icon name="cart"/> */
-const InfoIcon = () => (
-  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
-    <circle cx="12" cy="12" r="10"/><path d="M12 16v-5M12 8h.01"/>
-  </svg>
-);
-const HomeGreenIcon = () => (
-  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#1ea354" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M3 10.5L12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/>
-  </svg>
-);
 const MicIcon = () => (
   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
     <rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10v1a7 7 0 0 0 14 0v-1M12 18v4"/>
@@ -442,11 +407,11 @@ export default function TariffPage() {
         <div className={styles.ctxBar}>
           {/* initial state: user inputs */}
           <div className={styles.ctxItems}>
-            <span className={styles.contextItem}><LocationIcon />{plz}</span>
+            <span className={styles.contextItem}><Icon name="location" size={16} className="opacity-75" />{plz}</span>
             <div className={styles.contextSep} />
-            <span className={styles.contextItem}><PersonsIcon />{persons} Pers.</span>
+            <span className={styles.contextItem}><Icon name="persons" size={16} className="opacity-75" />{persons} Pers.</span>
             <div className={styles.contextSep} />
-            <span className={styles.contextItem}><PlugIcon />{kwhFormatted} kWh</span>
+            <span className={styles.contextItem}><Icon name="plug" size={16} className="opacity-75" />{kwhFormatted} kWh</span>
             <div className={styles.contextSep} />
           </div>
           {/* floating state: summary label */}
@@ -727,7 +692,7 @@ export default function TariffPage() {
               <div className={styles.hubWrap}>
                 <div className={styles.hubCard}>
                   <div className={styles.hubCardLeft}>
-                    <div className={styles.articleTag}><DocIcon /> Energie Hub</div>
+                    <div className={styles.articleTag}><Icon name="file" size={16} /> Energie Hub</div>
                     <p className={styles.articleTitle}>Vergleichbares Projekt ansehen und CO2 Ersparnis verstehen</p>
                     <Link as="button" tone="inverse" underline={false} iconLeft={<Icon name="chevron-right" />}>Mehr lesen</Link>
                   </div>
@@ -806,9 +771,9 @@ export default function TariffPage() {
                           role="note"
                           data-tip="3 von deinen 28 Cent fließen direkt in den Ausbau neuer Wind- und Solar-Anlagen in Deutschland – nicht in Marge."
                           aria-label="3 von deinen 28 Cent fließen direkt in den Ausbau neuer Wind- und Solar-Anlagen in Deutschland – nicht in Marge."
-                        ><InfoIcon /></span>
+                        ><Icon name="info" size={14} /></span>
                       </span>
-                      <span className={styles.lineValGreen}><span className={styles.greenChip}><HomeGreenIcon /></span> 3,00 ct</span>
+                      <span className={styles.lineValGreen}><span className={styles.greenChip}><Icon name="home" size={13} className="text-[#1ea354]" /></span> 3,00 ct</span>
                     </div>
                   </div>
                   <div className={styles.lineItemCol}>
