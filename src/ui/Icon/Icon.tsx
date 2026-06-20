@@ -82,6 +82,56 @@ const icons = {
       <path d="M2 6.2l2.6 2.6L10 3" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" />
     ),
   },
+  'arrow-right': {
+    viewBox: '0 0 16 16',
+    width: 16,
+    height: 16,
+    content: (
+      <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" />
+    ),
+  },
+  location: {
+    viewBox: '0 0 24 24',
+    width: 16,
+    height: 16,
+    content: (
+      <g stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+        <path d="M12 21c-4-4-7-7.3-7-10a7 7 0 1 1 14 0c0 2.7-3 6-7 10z" />
+        <circle cx="12" cy="11" r="2" />
+      </g>
+    ),
+  },
+  'chevron-down': {
+    viewBox: '0 0 16 16',
+    width: 14,
+    height: 14,
+    content: (
+      <path d="M3 6l5 5 5-5" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" />
+    ),
+  },
+  persons: {
+    viewBox: '0 0 24 24',
+    width: 15,
+    height: 15,
+    content: (
+      <g stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+        <circle cx="9" cy="7" r="4" />
+        <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
+      </g>
+    ),
+  },
+  plug: {
+    viewBox: '0 0 24 24',
+    width: 15,
+    height: 15,
+    content: (
+      <g stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+        <path d="M12 2v6M8 6h8M7 12h10l-1 7H8l-1-7z" />
+        <path d="M12 19v3" />
+      </g>
+    ),
+  },
 } satisfies Record<string, IconDef>;
 
 export type IconName = keyof typeof icons;

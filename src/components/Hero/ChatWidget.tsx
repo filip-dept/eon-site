@@ -2,6 +2,7 @@
 
 import { forwardRef } from 'react';
 import { Chip } from '@/ui/Chip';
+import { emitEon } from '@/lib/eventBus';
 import styles from './hero.module.css';
 
 /* First chip is the journey-starter — styled like the rest, still clickable */
@@ -13,9 +14,7 @@ const CHIPS = [
 ];
 
 function handleChipClick(id: string) {
-  document.dispatchEvent(
-    new CustomEvent('eon:journey-start', { detail: { type: id } })
-  );
+  emitEon('eon:journey-start', { type: id });
 }
 
 const ChatWidget = forwardRef<HTMLDivElement>((_, ref) => {

@@ -84,7 +84,7 @@ export function Button({
   type = 'button',
   ...rest
 }: ButtonProps) {
-  const nudge = variant === 'primary' && !!iconRight && !iconOnly;
+  const nudge = variant === 'primary' && !!iconRight && !iconOnly && !disabled && !loading;
   return (
     <button
       type={type}

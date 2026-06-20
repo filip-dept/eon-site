@@ -5,9 +5,20 @@ Motion is treated like colour/type: a **system** with tokens + shared, named def
 > **Target feel:** **zoox.com-style** motion — smooth, scroll-driven, cinematic reveals (specified per section in Phase 4; informs the GSAP scroll choreography + Framer Motion easings/durations).
 
 ## Framer Motion vs GSAP — the split
-- **Framer Motion** owns **component-level motion** — card stagger (`staggerChildren`), modal/journey-step transitions (`AnimatePresence`), the intro splash, badge/hover. Replaces today's per-component GSAP + CSS keyframes.
-- **GSAP + ScrollTrigger** stays **only** for the pinned horizontal track and the breakdown morph (scroll-scrubbed timelines Framer can't do well).
+- **Framer Motion** owns **component-level motion** — card stagger (`staggerChildren`), the intro splash, badge/hover. Use it for NEW declarative component motion (the `<Reveal>`/`<Stagger>` wrappers).
+- **GSAP + ScrollTrigger** stays for the pinned horizontal track and the breakdown morph (scroll-scrubbed timelines Framer can't do well) **— and for the journey wizard transitions** (see decision below).
 - So component CSS shrinks to layout/type/colour (Tailwind); little-to-no keyframe CSS remains — except a couple of ambient effects (the gradient blobs), which stay as CSS or move to Framer.
+
+> **Decision (Phase 3, 2026-06): journey transitions stay on GSAP-in-a-hook.** The
+> original plan put the modal/step transitions on Framer Motion (`AnimatePresence`).
+> In practice the choreography — the clip-path `inset()` reveal, the y±140 step
+> slide with the custom `eonReveal`/`eonOut` eases, the blur-typewriter stagger, the
+> `display`-toggle + `animating` guard — is intricate, **verified behaviour-preserving**,
+> and now cleanly **isolated inside `hooks/useStepWizard`** (the real architectural
+> goal — no animation inline in components). Rewriting it into `AnimatePresence` is a
+> high-risk regression for low architectural gain. So GSAP stays here; Framer Motion is
+> adopted for genuinely new declarative motion (Phase 4 cards/badges). Revisit only if
+> the wizard transitions need capabilities GSAP-in-hook can't give.
 
 ## Where it lives
 

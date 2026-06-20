@@ -1,0 +1,56 @@
+/* TariffPreview (checkout Review card) — moved out of journey.module.css.
+   Raw legacy values kept verbatim; fold into tokens later. */
+.tariffPreview {
+  position: relative;
+  max-width: 668px;
+  height: 400px;
+  border-radius: 4px;
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
+}
+.tpPhoto {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center top;
+}
+.tpFooter {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px 24px;
+  background: #fff;
+  border: 1px solid #f8f5f2;
+  border-radius: 4px;
+}
+.tpNameRow { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.tpName {
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: 22px;
+  line-height: 30px;
+  color: var(--c-text-primary);
+}
+.tpBadge {
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 500;
+  color: #fff;
+  background: #18a087;
+  border-radius: 4px;
+  padding: 1px 10px;
+  white-space: nowrap;
+}
+.tpSub { font-family: var(--font-body); font-size: 14px; color: var(--c-text-secondary); }
+.tpPriceRow { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 4px; }
+.tpPrice { font-family: var(--font-body); font-size: 14px; color: var(--c-text-secondary); }
+.tpPrice strong { font-size: 24px; font-weight: 700; color: var(--c-text-primary); margin-right: 4px; }
+.tpBonus { display: inline-flex; align-items: center; gap: 4px; font-family: var(--font-body); font-size: 14px; font-weight: 500; color: var(--c-text-primary); }
+.tpBonus em { font-style: normal; font-weight: 400; color: rgba(38, 38, 38, 0.6); }
+.tpBonusIcon { flex-shrink: 0; color: var(--c-red); }

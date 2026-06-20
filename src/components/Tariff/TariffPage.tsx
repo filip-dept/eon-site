@@ -7,18 +7,29 @@ import { useSearchParams } from 'next/navigation';
 const useIsoLayoutEffect = typeof window !== 'undefined' ? useLayoutEffect : useEffect;
 import { gsap, ScrollTrigger } from '@/lib/gsap';
 import Navbar from '@/components/Navbar/Navbar';
-import JourneyModal from '@/components/Journey/JourneyModal';
+import CheckoutJourney from '@/components/Journey/CheckoutJourney';
 import { Button } from '@/ui/Button';
 import { Badge } from '@/ui/Badge';
 import { Link } from '@/ui/Link';
 import { Icon } from '@/ui/Icon';
 import { IconButton } from '@/ui/IconButton';
 import { Toggle } from '@/ui/Toggle';
+import type { Tariff } from '@/types/Tariff';
+import { TARIFFS, stopsFor, snapTo, tariffFor } from '@/data/tariffs';
+import { HEMS_CATS } from '@/data/hems';
+import { usePinnedTrack } from '@/hooks/usePinnedTrack';
+import { useStoriesParallax } from '@/hooks/useStoriesParallax';
+import { useHemsStage } from '@/hooks/useHemsStage';
+import { Proof } from './sections/Proof';
+import { Faq } from './sections/Faq';
+import { ConnectedHome } from './sections/ConnectedHome';
+import { Stories } from './sections/Stories';
+import { AiOrb } from '@/components/chat/AiOrb';
+import { emitEon } from '@/lib/eventBus';
 import styles from './tariff.module.css';
 
 /* the red "Tarif auswählen" CTAs open the conversational checkout journey */
-const startCheckout = () =>
-  document.dispatchEvent(new CustomEvent('eon:checkout-start'));
+const startCheckout = () => emitEon('eon:checkout-start');
 
 /* AI-chat orb: one easing for every transition (default↔hover↔open) so they
    all feel the same. `back.out(n)`: higher n = more bounce. */
@@ -82,101 +93,9 @@ const MicIcon = () => (
   </svg>
 );
 /* TickIcon → <Icon name="check"/> (inside <Toggle>) */
-const ChevronDown = () => (
-  <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-    <path d="M3 6l5 5 5-5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
-  </svg>
-);
-const PlayCarrierIcon = () => (
-  <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
-    <circle cx="20" cy="20" r="15" stroke="currentColor" strokeWidth="2"/>
-    <path d="M17 14.5l9 5.5-9 5.5z" fill="currentColor"/>
-  </svg>
-);
+/* ChevronDown → <Icon name="chevron-down"/> (inside <Faq>) */
+/* PlayCarrierIcon → moved into sections/Stories.tsx */
 
-/* ─── Tariff catalogue (slider picks within a family, checkbox switches the
-       family: Standard ↔ Zukunft "besonders nachhaltig") ───────────────────── */
-interface Tariff {
-  id: string;
-  name: string;
-  sub: string;
-  price: string;     // € pro Monat
-  bonus: string;
-  bonusUntil: string;
-  ct: string;        // ct/kWh — feeds the Stromtransparenz Gesamtpreis
-  features: [string, string][];
-}
-
-const TARIFFS: { standard: Tariff[]; zukunft: Tariff[] } = {
-  /* slider: Flexibilität → Sicherheit */
-  standard: [
-    {
-      id: 'oeko-flex', name: 'E.ON ÖkoStrom Flex', sub: 'Flex | Standard',
-      price: '57,50', bonus: '30 € Neukunden-Bonus', bonusUntil: 'bis 20.04.2026', ct: '30,50',
-      features: [
-        ['Keine Mindestlaufzeit', 'sofort kündbar'],
-        ['100% Ökostrom', 'aus erneuerbaren Quellen'],
-        ['Volle Flexibilität', 'bei Tarif-Wechsel'],
-      ],
-    },
-    {
-      id: 'oeko-extra-12', name: 'E.ON ÖkoStrom Extra 12', sub: '12 Mo | Standard',
-      price: '53,11', bonus: '60 € Neukunden-Bonus', bonusUntil: 'bis 20.04.2026', ct: '28,13',
-      features: [
-        ['12 Monate Preisgarantie', 'gute Balance'],
-        ['100% Ökostrom', 'aus erneuerbaren Quellen'],
-        ['Monatlich kündbar', 'nach der Mindestlaufzeit'],
-      ],
-    },
-    {
-      id: 'festpreis-24', name: 'E.ON Festpreis 24', sub: '24 Mo | Standard',
-      price: '47,90', bonus: '90 € Neukunden-Bonus', bonusUntil: 'bis 20.04.2026', ct: '25,40',
-      features: [
-        ['24 Monate Preisgarantie', 'kein Schwanken'],
-        ['100% Ökostrom', 'aus erneuerbaren Quellen'],
-        ['Pünktliche Verlängerung', 'faire Konditionen'],
-      ],
-    },
-  ],
-  zukunft: [
-    {
-      id: 'zukunft-flex', name: 'E.ON ZukunftsStrom Flex', sub: 'Flex | Zukunft',
-      price: '62,80', bonus: '50 € Neukunden-Bonus', bonusUntil: 'bis 20.04.2026', ct: '33,20',
-      features: [
-        ['Keine Mindestlaufzeit', 'sofort kündbar'],
-        ['100% Strom', 'aus neuen Wind- und Solar-Anlagen'],
-        ['Dein Beitrag', 'finanziert den Anlagen-Ausbau'],
-      ],
-    },
-    {
-      id: 'zukunft-extra-12', name: 'E.ON ZukunftsStrom Extra 12', sub: '12 Mo | Zukunft',
-      price: '58,40', bonus: '85 € Neukunden-Bonus', bonusUntil: 'bis 20.04.2026', ct: '30,90',
-      features: [
-        ['12 Monate Preisgarantie', 'gute Balance'],
-        ['100% Strom', 'aus neuen Wind- und Solar-Anlagen'],
-        ['Dein Beitrag', 'finanziert den Anlagen-Ausbau'],
-      ],
-    },
-    {
-      id: 'zukunft-festpreis-24', name: 'E.ON ZukunftsStrom Festpreis 24', sub: '24 Mo | Zukunft',
-      price: '54,30', bonus: '120 € Neukunden-Bonus', bonusUntil: 'bis 20.04.2026', ct: '28,80',
-      features: [
-        ['24 Monate Preisgarantie', 'kein Schwanken'],
-        ['100% Strom', 'aus neuen Wind- und Solar-Anlagen'],
-        ['Dein Beitrag', 'finanziert den Anlagen-Ausbau'],
-      ],
-    },
-  ],
-};
-
-/* slider snap stops — Flexibilität | Mitte | Sicherheit (both families have 3) */
-const stopsFor = (_eco: boolean) => [6, 50, 94];
-const snapTo = (p: number, stops: number[]) =>
-  stops.reduce((a, b) => (Math.abs(b - p) < Math.abs(a - p) ? b : a));
-const tariffFor = (eco: boolean, p: number) => {
-  const list = eco ? TARIFFS.zukunft : TARIFFS.standard;
-  return list[p < 33 ? 0 : p < 67 ? 1 : 2];
-};
 
 /* ─── Preference slider (interactive: click or drag along the rail) ───────── */
 function PrefSlider({ groupLabel, left, right, value, onChange, onCommit }: {
@@ -229,130 +148,7 @@ function PrefSlider({ groupLabel, left, right, value, onChange, onCommit }: {
 // data-aimg  = hero-style media appear: the wrapper unmasks top→bottom while
 //              the image inside zooms 1.3 → 1 (mask static, eonReveal, 1.6s)
 
-const CLIP_HIDDEN  = 'inset(0% 0% 100% 0%)';
-const CLIP_VISIBLE = 'inset(0% 0% 0% 0%)';
 
-function qa(frame: HTMLElement, sel: string) {
-  return Array.from(frame.querySelectorAll(sel)) as HTMLElement[];
-}
-
-function setHidden(frame: HTMLElement) {
-  const al = qa(frame, '[data-al]');
-  const ar = qa(frame, '[data-ar]');
-  const ad = qa(frame, '[data-ad]');
-  const au = qa(frame, '[data-au]');
-  const ah = qa(frame, '[data-ahero]');
-  const ai = qa(frame, '[data-aimg]');
-  /* the frame itself unmasks like the hero — except the bars frame, which just
-     slides in horizontally with the track (data-noclip) */
-  if (!frame.hasAttribute('data-noclip')) gsap.set(frame, { clipPath: CLIP_HIDDEN });
-  if (al.length) gsap.set(al, { x: -56, opacity: 0 });
-  if (ar.length) gsap.set(ar, { x: 56, opacity: 0 });
-  if (ad.length) gsap.set(ad, { y: -44, opacity: 0 });
-  if (au.length) gsap.set(au, { y: 36, opacity: 0 });
-  if (ah.length) gsap.set(ah, { y: 70, opacity: 0 });
-  ai.forEach((w) => {
-    gsap.set(w, { clipPath: CLIP_HIDDEN });
-    const img = w.querySelector('img');
-    if (img) gsap.set(img, { scale: 1.3 });
-  });
-}
-
-function revealFrame(frame: HTMLElement) {
-  const tl = gsap.timeline({ defaults: { ease: 'expo.out', duration: 0.8 } });
-  const al = qa(frame, '[data-al]');
-  const ar = qa(frame, '[data-ar]');
-  const ad = qa(frame, '[data-ad]');
-  const au = qa(frame, '[data-au]');
-  const ah = qa(frame, '[data-ahero]');
-  const ai = qa(frame, '[data-aimg]');
-  /* hero media settings: unmask wipe top→bottom, eonReveal, 1.6s — the clip is
-     cleared on complete so it never interferes with later transforms. The bars
-     frame opts out (data-noclip): it just slides in with the track. */
-  if (!frame.hasAttribute('data-noclip')) {
-    tl.fromTo(frame, { clipPath: CLIP_HIDDEN },
-      { clipPath: CLIP_VISIBLE, duration: 1.6, ease: 'eonReveal', clearProps: 'clipPath' }, 0);
-  }
-  ai.forEach((w, i) => {
-    const img = w.querySelector('img');
-    tl.fromTo(w, { clipPath: CLIP_HIDDEN },
-      { clipPath: CLIP_VISIBLE, duration: 1.6, ease: 'eonReveal', clearProps: 'clipPath' }, 0.08 * i);
-    if (img) tl.fromTo(img, { scale: 1.3 }, { scale: 1, duration: 1.6, ease: 'eonReveal' }, 0.08 * i);
-  });
-  if (al.length) tl.to(al, { x: 0, opacity: 1, stagger: 0.07 }, 0.04);
-  if (ar.length) tl.to(ar, { x: 0, opacity: 1, stagger: 0.07 }, 0.1);
-  if (ad.length) tl.to(ad, { y: 0, opacity: 1, stagger: 0.1, duration: 0.65 }, 0);
-  if (au.length) tl.to(au, { y: 0, opacity: 1, stagger: 0.06, duration: 0.55 }, 0.4);
-  /* hero content settings: y 70 → 0, opacity 0 → 1, eonAppear, 1s, 0.2s delay */
-  if (ah.length) tl.to(ah, { y: 0, opacity: 1, duration: 1, ease: 'eonAppear' }, 0.2);
-}
-
-/* ─── HEMS: scroll-through categories (first one is the HEMS overview) ─────── */
-interface HemsCat {
-  key: string;
-  menu: string;
-  title: React.ReactNode;
-  desc: string;
-  pin: string | null;   /* which hotspot lights up (null = overview, none) */
-}
-const HEMS_CATS: HemsCat[] = [
-  {
-    key: 'hems', menu: 'HEMS',
-    title: <>Deine Energie.<br />Deine Freiheit</>,
-    desc: 'Intelligente Lösungen für ein nachhaltiges Zuhause – alles vernetzt, alles unter Kontrolle.',
-    pin: 'HEMS',
-  },
-  {
-    key: 'solar', menu: 'Solar',
-    title: <>Sonne, die sich<br />auszahlt.</>,
-    desc: 'Erzeuge deinen eigenen Strom direkt vom Dach – und mach dich unabhängiger vom Netz.',
-    pin: 'Solar',
-  },
-  {
-    key: 'strom', menu: 'Strom',
-    title: <>Strom, der<br />zu dir passt.</>,
-    desc: '100 % Ökostrom, fair erklärt und intelligent gesteuert – passend zu deinem Verbrauch.',
-    pin: 'Strom',
-  },
-  {
-    key: 'waerme', menu: 'Wärmepumpe',
-    title: <>Wärme aus<br />der Umwelt.</>,
-    desc: 'Heize effizient und klimafreundlich – mit Strom statt Öl und Gas.',
-    pin: 'Wärmepumpe',
-  },
-  {
-    key: 'wallbox', menu: 'Wallbox',
-    title: <>Lädt, während<br />du schläfst.</>,
-    desc: 'Lade dein E-Auto bequem zuhause – schnell, sicher und am besten mit eigenem Solarstrom.',
-    pin: 'Wallbox',
-  },
-];
-
-/* Hotspots are anchored as fractions of the source image (1600×893), not as
-   container percentages — so each dot sticks to its physical feature regardless
-   of how object-fit:cover crops the portrait frame at different viewport widths. */
-const HEMS_IMG_W = 1600, HEMS_IMG_H = 893;
-const HEMS_PINS = [
-  { title: 'HEMS',       sub: 'Alles vernetzt · smart gesteuert', nx: 0.477, ny: 0.248, labelSide: 'right' },
-  { title: 'Solar',      sub: '4,2 kWp · ~3.900 kWh/Jahr',        nx: 0.554, ny: 0.388, labelSide: 'right' },
-  { title: 'Strom',      sub: '100 % Ökostrom · 3.200 kWh',       nx: 0.435, ny: 0.528, labelSide: 'left' },
-  { title: 'Wallbox',    sub: '11 kW · lädt mit Solar',           nx: 0.674, ny: 0.738, labelSide: 'right'  },
-  { title: 'Wärmepumpe', sub: 'COP 4,1 · ~60 % weniger Gas',      nx: 0.435, ny: 0.700, labelSide: 'left' },
-];
-/* map a native-image fraction → container px under object-fit:cover (centered) */
-const hemsCover = (cw: number, ch: number, nx: number, ny: number) => {
-  const s = Math.max(cw / HEMS_IMG_W, ch / HEMS_IMG_H);
-  const rw = HEMS_IMG_W * s, rh = HEMS_IMG_H * s;
-  return { x: (cw - rw) / 2 + nx * rw, y: (ch - rh) / 2 + ny * rh };
-};
-
-/* HEMS is the hub that connects every device. As the user scrolls through the
-   stage the wires draw outward from the hub (load-bar fill) with a travelling
-   electric charge. Links are ordered to match the slide order so each wire
-   completes just as its category becomes active. */
-const HEMS_HUB = HEMS_PINS[0];
-const HEMS_LINKS = ['Solar', 'Strom', 'Wärmepumpe', 'Wallbox']
-  .map((t) => HEMS_PINS.find((p) => p.title === t)!);
 
 /* ─── Main page ──────────────────────────────────────────────────────────── */
 export default function TariffPage() {
@@ -617,596 +413,21 @@ export default function TariffPage() {
     }
   }, [tariff.id]);
 
-  useEffect(() => {
-    const page    = pageRef.current;
-    const section = sectionRef.current;
-    const track   = trackRef.current;
-    if (!page || !section || !track) return;
 
-    const frames = Array.from(track.children) as HTMLElement[];
-    const revealed = frames.map((_, i) => i === 0);
-    frames.forEach((f, i) => (i === 0 ? revealFrame(f) : setHidden(f)));
-
-    /* Size frames off clientWidth (excludes scrollbar) so the track lands flush */
-    const setFrameWidth = () =>
-      track.style.setProperty('--fw', `${document.documentElement.clientWidth - 32}px`);
-    setFrameWidth();
-    window.addEventListener('resize', setFrameWidth);
-
-    /* +16 = trailing track padding that scrollWidth doesn't report */
-    const getDist = () => track.scrollWidth + 16 - document.documentElement.clientWidth;
-
-    /* Phase 1 traverses the full horizontal distance over a SHORTER scroll
-       length (same movement, just faster) so the grey frame arrives sooner.
-       Movement uses getDist(); scroll boundaries use phase1(). */
-    const SPEED = 0.7;
-    const phase1 = () => getDist() * SPEED;
-
-    /* ── Merged Stromtransparenz frame: stack rotates, then expands ── */
-    const merged    = frames[frames.length - 1];
-    const barsLeft  = merged.querySelector<HTMLElement>(`.${styles.barsLeft}`)!;
-    const stacked   = merged.querySelector<HTMLElement>(`.${styles.stackedBars}`)!;
-    const bdContent = merged.querySelector<HTMLElement>(`.${styles.bdContent}`)!;
-    const bars      = Array.from(stacked.querySelectorAll<HTMLElement>(`.${styles.bar}`));
-    const footers   = bars.map((b) => b.querySelector<HTMLElement>('[data-barfooter]'));
-    const pcts      = bars.map((b) => b.querySelector<HTMLElement>('[data-pct]'));
-
-    /* centering moves to gsap so x can animate freely during the rotation */
-    gsap.set(bars, { xPercent: -50 });
-    gsap.set(footers.slice(0, 2).filter(Boolean) as HTMLElement[], { opacity: 0 });
-    gsap.set(bdContent, { autoAlpha: 0 });
-
-    const ROT   = 1200; /* scroll px for one full stack rotation */
-    const MORPH = 1200; /* scroll px for the expand-to-breakdown morph */
-
-    /* entrance reveals fire off the track's actual x position */
-    const checkReveals = () => {
-      const x  = -(gsap.getProperty(track, 'x') as number);
-      const vw = document.documentElement.clientWidth;
-      frames.forEach((f, i) => {
-        if (!revealed[i] && f.offsetLeft - x < vw * 0.72) {
-          revealed[i] = true;
-          revealFrame(f);
-        }
-      });
-    };
-
-    /* Pin holds the whole sequence: horizontal travel + rotation + morph.
-       All phase boundaries are function-based so refresh re-measures them. */
-    const pinST = ScrollTrigger.create({
-      trigger: section,
-      start: 'top top',
-      end: () => `+=${phase1() + ROT + MORPH}`,
-      pin: true,
-      anticipatePin: 1,
-      invalidateOnRefresh: true,
-      onUpdate: () => checkReveals(),
-    });
-
-    /* Nav / floater state — page-wide so it keeps working past the pin.
-       Scrolling backwards re-reveals the nav (pushes the floater down);
-       at the very top everything resets to the initial layout. */
-    const stateST = ScrollTrigger.create({
-      start: 0,
-      end: 'max',
-      onUpdate: (self) => {
-        const px = self.scroll() - pinST.start;
-        const scrolled = px > 20;
-        page.classList.toggle(styles.scrolled, scrolled);
-        page.classList.toggle(styles.navShow, scrolled && self.direction < 0);
-        page.classList.toggle(styles.compact, px > phase1() * 0.7);
-      },
-    });
-
-    /* Phase 1 — horizontal travel: full getDist() movement over phase1() scroll */
-    const trackTween = gsap.to(track, {
-      x: () => -getDist(),
-      ease: 'none',
-      /* fires every render tick, incl. scrub catch-up after scrolling stops */
-      onUpdate: checkReveals,
-      scrollTrigger: {
-        start: () => pinST.start,
-        end: () => pinST.start + phase1(),
-        scrub: 1,
-        invalidateOnRefresh: true,
-      },
-    });
-
-    /* ── ONE travelling headline: once it reaches its reading position it
-       counter-translates at exactly track speed (viewport-pinned), riding
-       with the user until it docks at the bars frame's left column ── */
-    const edFrame = frames[1];
-    const edText  = edFrame.querySelector<HTMLElement>(`.${styles.editorialContent}`)!;
-    const photoTR = edFrame.querySelector<HTMLElement>(`.${styles.edPhotoTopRight}`)!;
-    const photoBL = edFrame.querySelector<HTMLElement>(`.${styles.edPhotoBottomLeft}`)!;
-
-    /* offsetLeft is transform-independent — safe to re-measure on refresh.
-       Dock target = barsLeft content edge (frame padding-left = 40px). */
-    const followDelta = () =>
-      merged.offsetLeft + 40 - (edFrame.offsetLeft + edText.offsetLeft);
-    const followStart = () => Math.max(0, getDist() - followDelta()) * SPEED;
-
-    const followTween = gsap.to(edText, {
-      x: () => followDelta(),
-      ease: 'none',
-      scrollTrigger: {
-        start: () => pinST.start + followStart(),
-        end:   () => pinST.start + phase1(),
-        scrub: 1,
-        invalidateOnRefresh: true,
-      },
-    });
-
-    /* ── The lady photo scrolls slower than the text: it converges on the
-       pinned headline, decelerates, and comes to rest BEHIND the beige bars
-       panel (frame 3 paints over it — no fade) without ever touching the text ── */
-    const GAP_TO_TEXT = 64;
-    const barsPanel = merged.querySelector<HTMLElement>(`.${styles.barsPanel}`)!;
-    const ladyEntry = () =>
-      Math.max(0, edFrame.offsetLeft + photoTR.offsetLeft - document.documentElement.clientWidth);
-    const ladyX = () => {
-      /* rigid = where she would end without counter-translation. Resting spot:
-         right of the docked headline AND inside the beige panel's footprint,
-         so the panel fully covers her at the dock (text docks at x = 56). */
-      const rigid      = edFrame.offsetLeft + photoTR.offsetLeft - getDist();
-      const textClamp  = 56 + edText.offsetWidth + GAP_TO_TEXT;
-      const panelCover = merged.offsetLeft + barsPanel.offsetLeft - getDist() + 16;
-      return Math.max(0, Math.max(textClamp, panelCover) - rigid);
-    };
-    const ladyTl = gsap.timeline({
-      scrollTrigger: {
-        start: () => pinST.start + ladyEntry() * SPEED,
-        end:   () => pinST.start + phase1(),
-        scrub: 1,
-        invalidateOnRefresh: true,
-      },
-    });
-    /* power1.in: rides almost rigidly at first, then brakes into place while
-       the grey frame sweeps over her */
-    ladyTl.to(photoTR, { x: ladyX, ease: 'power1.in', duration: 1 }, 0);
-
-    /* the man photo starts well right of the text (CSS) and drives left as
-       you scroll — opposite parallax depth, exits before the dock */
-    const manEntry = () =>
-      Math.max(0, edFrame.offsetLeft + photoBL.offsetLeft - document.documentElement.clientWidth);
-    const manTl = gsap.timeline({
-      scrollTrigger: {
-        start: () => pinST.start + manEntry() * SPEED,
-        end:   () => pinST.start + phase1(),
-        scrub: 1,
-        invalidateOnRefresh: true,
-      },
-    });
-    manTl.to(photoBL, { x: () => -followDelta() * 0.3, ease: 'none', duration: 1 }, 0);
-
-    const parallaxTweens = [ladyTl, manTl];
-
-    /* ── Hub card: appears only once the sticky frame spans the viewport
-       (start of the card-flip phase), with the hero appear settings ── */
-    const hubWrap = merged.querySelector<HTMLElement>(`.${styles.hubWrap}`)!;
-    gsap.set(hubWrap, { y: 70, opacity: 0 });
-    const hubST = ScrollTrigger.create({
-      start: () => pinST.start + phase1() - 2,
-      end:   () => pinST.start + phase1() + ROT + MORPH,
-      onEnter:     () => gsap.to(hubWrap, { y: 0, opacity: 1, duration: 1, ease: 'eonAppear', overwrite: 'auto' }),
-      onLeaveBack: () => gsap.to(hubWrap, { y: 70, opacity: 0, duration: 0.45, ease: 'eonOut', overwrite: 'auto' }),
-    });
-
-    /* Phase 2 — the three stacked cards rotate through the deck once */
-    const POS = [
-      { width: 274, height: 231, top: 0,  filter: 'blur(4px)', opacity: 0.92 }, /* back  */
-      { width: 308, height: 260, top: 28, filter: 'blur(2px)', opacity: 0.96 }, /* mid   */
-      { width: 342, height: 289, top: 68, filter: 'blur(0px)', opacity: 1    }, /* front */
-    ];
-    const rot = gsap.timeline();
-    let order = [0, 1, 2]; /* element index occupying [back, mid, front] */
-    for (let s = 0; s < 3; s++) {
-      const at = s;
-      const [bi, mi, fi] = order;
-      /* front card slides out right, shrinks + blurs, tucks to the back */
-      rot.to(bars[fi], { x: 430, duration: 0.5, ease: 'power2.in' }, at);
-      rot.set(bars[fi], { zIndex: 0 }, at + 0.5);
-      rot.to(bars[fi], { x: 0, ...POS[0], duration: 0.5, ease: 'power2.out' }, at + 0.5);
-      if (footers[fi]) rot.to(footers[fi], { opacity: 0, duration: 0.15 }, at);
-      if (pcts[fi])    rot.to(pcts[fi], { fontSize: 30, duration: 0.5 }, at + 0.5);
-      /* mid card steps up to the front */
-      rot.set(bars[mi], { zIndex: 2 }, at + 0.45);
-      rot.to(bars[mi], { ...POS[2], duration: 0.6, ease: 'power2.inOut' }, at + 0.3);
-      if (footers[mi]) rot.to(footers[mi], { opacity: 1, duration: 0.25 }, at + 0.7);
-      if (pcts[mi])    rot.to(pcts[mi], { fontSize: 40, duration: 0.6 }, at + 0.3);
-      /* back card steps up to the middle */
-      rot.set(bars[bi], { zIndex: 1 }, at + 0.5);
-      rot.to(bars[bi], { ...POS[1], duration: 0.6, ease: 'power2.inOut' }, at + 0.3);
-      order = [fi, bi, mi];
-    }
-    const rotST = ScrollTrigger.create({
-      animation: rot,
-      start: () => pinST.start + phase1(),
-      end:   () => pinST.start + phase1() + ROT,
-      scrub: 1,
-      invalidateOnRefresh: true,
-    });
-
-    /* Phase 3 — text leaves, panel expands full-bleed, then the cards fly to
-       their column slots (FLIP-style) and the extra info appears on top */
-    const colEls   = Array.from(bdContent.querySelectorAll<HTMLElement>(`.${styles.bdCol}`));
-    const barToCol = [colEls[2], colEls[1], colEls[0]]; /* bars [21,32,47] → cols [3rd,2nd,1st] */
-    const colInfo  = bdContent.querySelectorAll(`.${styles.colPrice}, .${styles.colDesc}`);
-    gsap.set(colInfo, { opacity: 0, y: 14 });
-
-    const morph = gsap.timeline();
-    morph.to(barsLeft, { opacity: 0, x: -60, duration: 0.22, ease: 'power1.in' }, 0);
-    /* the travelling headline exits with the column (xPercent leaves the
-       follow tween's x untouched) */
-    morph.to(edText, { opacity: 0, xPercent: -8, duration: 0.22, ease: 'power1.in' }, 0);
-    morph.to(barsLeft, { flexBasis: '0%', paddingLeft: 0, paddingRight: 0, duration: 0.34, ease: 'power2.inOut' }, 0.1);
-    morph.to(merged, { gap: 0, duration: 0.34, ease: 'power2.inOut' }, 0.1);
-
-    bars.forEach((bar, i) => {
-      const col = barToCol[i];
-      /* drop %-based centering so width can tween without the card drifting */
-      morph.set(bar, {
-        xPercent: 0,
-        x: () => (gsap.getProperty(bar, 'x') as number) - bar.offsetWidth / 2,
-      }, 0.5);
-      /* fly + expand to the column's exact rect; measured lazily mid-scrub,
-         after the panel has finished expanding */
-      morph.to(bar, {
-        x: () => (gsap.getProperty(bar, 'x') as number) + col.getBoundingClientRect().left - bar.getBoundingClientRect().left,
-        y: () => (gsap.getProperty(bar, 'y') as number) + col.getBoundingClientRect().top - bar.getBoundingClientRect().top,
-        width:  () => col.offsetWidth,
-        height: () => col.offsetHeight,
-        borderRadius: 6,
-        filter: 'blur(0px)',
-        opacity: 1,
-        duration: 0.35,
-        ease: 'power2.inOut',
-      }, 0.5);
-      if (pcts[i])    morph.to(pcts[i], { fontSize: 24, duration: 0.35, ease: 'power2.inOut' }, 0.5);
-      if (footers[i]) morph.to(footers[i], { opacity: 1, duration: 0.2 }, 0.55);
-    });
-
-    /* seamless swap — cards and real columns overlap pixel-perfect here */
-    morph.to(bars, { autoAlpha: 0, duration: 0.04 }, 0.86);
-    morph.to(bdContent, { autoAlpha: 1, duration: 0.04 }, 0.86);
-
-    /* additional info appears in place */
-    morph.to(colInfo, { opacity: 1, y: 0, duration: 0.22, ease: 'power2.out', stagger: 0.03 }, 0.92);
-    morph.fromTo(
-      bdContent.querySelectorAll(`.${styles.lineItem}`),
-      { y: 24, opacity: 0 },
-      { y: 0, opacity: 1, stagger: 0.02, duration: 0.25, ease: 'power2.out' },
-      0.95
-    );
-    const morphST = ScrollTrigger.create({
-      animation: morph,
-      start: () => pinST.start + phase1() + ROT,
-      end:   () => pinST.start + phase1() + ROT + MORPH,
-      scrub: 1,
-      invalidateOnRefresh: true,
-    });
-
-    /* ── AI chat: parks bottom-right, then ANIMATES to screen centre as a
-       one-shot (NOT scroll-scrubbed) once the breakdown is reached — so it's
-       never stuck halfway, and `orbCentered` is a reliable boolean that the
-       open/close logic can trust (centred stays centred). ── */
-    const orbEl = orbRef.current!;
-    const orbDockX = () => document.documentElement.clientWidth / 2 - orbEl.offsetWidth - 30;
-    const orbCtrX  = () => -orbEl.offsetWidth / 2;
-    gsap.set(orbEl, { x: orbDockX });
-    const centreOrb = (toCentre: boolean) => {
-      orbCentered.current = toCentre;
-      setOrbTariffQ(toCentre);   /* switch placeholder to the tariff prompt */
-      gsap.to(orbEl, { x: toCentre ? orbCtrX : orbDockX, duration: 0.7, ease: 'power3.inOut', overwrite: 'auto' });
-    };
-    const orbCenterST = ScrollTrigger.create({
-      start: () => pinST.start + phase1() + ROT,     /* breakdown morph start */
-      invalidateOnRefresh: true,
-      onEnter:     () => centreOrb(true),
-      onLeaveBack: () => centreOrb(false),
-    });
-
-    /* ── Stories: the text frame scrolls normally above; the cards start near
-       the top of the frame and parallax DOWN — each moves a little slower than
-       the page (different speeds), so they drift apart with layered depth. ── */
-    const stories    = page.querySelector<HTMLElement>(`.${styles.stories}`)!;
-    const storyCards = Array.from(stories.querySelectorAll<HTMLElement>(`.${styles.storyCard}`));
-
-    /* The cards rise UP through the frame (scroll down → cards float up and exit
-       the top). Entry is anchored to the SAME point as the background switch:
-       the stories text crossing the middle of the viewport (so cards start
-       appearing exactly as the background flips and the text reaches the upper
-       half). They keep rising — at pronounced, per-card speeds — across the run,
-       then the stage clips (overflow:hidden) so none reaches the HEMS frame. */
-    const cardEntry = page.querySelector<HTMLElement>(`.${styles.storiesText}`)!;
-    const vh = () => window.innerHeight;
-    /* base rise distance over the run — tuned so the last card reaches the top
-       right as the run ends (and the pin releases into HEMS), no empty tail */
-    const RISE = () => vh() * 0.9;
-    /* per-card rise rate — a WIDE spread for pronounced layered depth */
-    const CARD_SPEED = [0.72, 1.28, 1.0];
-    /* start height below the frame top (×vh); staggers each card's entry so they
-       feed in from the bottom one after another (smaller = appears sooner) */
-    const CARD_START = [0.20, 0.85, 0.50];
-    const cardParallax = storyCards.map((card, i) => {
-      const speed = CARD_SPEED[i % CARD_SPEED.length];
-      const start = CARD_START[i % CARD_START.length];
-      return gsap.fromTo(
-        card,
-        { y: () => start * vh() },                       /* below the frame */
-        {
-          y: () => start * vh() - speed * RISE(),        /* risen up past the top */
-          ease: 'none',
-          scrollTrigger: {
-            trigger: cardEntry,            /* the stories text — same as the bg switch */
-            start: 'center 50%',           /* text centre crosses mid-viewport */
-            end: () => `+=${vh() * 1.1}`,  /* run length (≈ to where the pin releases) */
-            scrub: true,
-            invalidateOnRefresh: true,
-          },
-        }
-      );
-    });
-
-    /* ── HEMS: house unmask on entry, then a sticky stage you scroll through
-       category by category ── */
-    const hems = page.querySelector<HTMLElement>(`.${styles.hems}`)!;
-    /* pre-clip the house to its top-right corner so it never flashes in before
-       the reveal fires (the dark hemsRight backing covers the gap meanwhile) */
-    const hemsPhotoEl = hems.querySelector<HTMLElement>(`.${styles.hemsPhoto}`);
-    const hemsShadeEl = hems.querySelector<HTMLElement>(`.${styles.hemsShade}`);
-    gsap.set([hemsPhotoEl, hemsShadeEl].filter(Boolean) as HTMLElement[],
-      { clipPath: 'inset(0% 0% 100% 100% round 8px)' });
-    if (hemsPhotoEl) gsap.set(hemsPhotoEl, { scale: 1.3 });
-    const hemsST = ScrollTrigger.create({
-      trigger: hems,
-      start: 'top 80%',
-      once: true,
-      onEnter: () => {
-        gsap.fromTo(hems.querySelector(`.${styles.hemsLeft}`),
-          { x: -48, opacity: 0 }, { x: 0, opacity: 1, duration: 0.9, ease: 'expo.out' });
-
-        /* the house unmasks from the top-right corner (eonReveal wipe + image
-           zoom) — same media reveal we use on the horizontal frames */
-        const HR_HIDDEN = 'inset(0% 0% 100% 100% round 8px)';  /* only top-right corner */
-        const HR_SHOWN  = 'inset(0% 0% 0% 0% round 8px)';
-        gsap.fromTo([hemsPhotoEl, hemsShadeEl].filter(Boolean) as HTMLElement[],
-          { clipPath: HR_HIDDEN },
-          { clipPath: HR_SHOWN, duration: 1.6, ease: 'eonReveal', clearProps: 'clipPath' });
-        if (hemsPhotoEl) gsap.fromTo(hemsPhotoEl, { scale: 1.3 }, { scale: 1, duration: 1.6, ease: 'eonReveal' });
-
-        /* pins fade to their state once the house is mostly revealed (CSS owns
-           the per-pin opacity via data-ready / data-dim) */
-        setTimeout(() => setHemsPinsReady(true), 850);
-      },
-    });
-
-    /* auto-open the chat once the user has been INACTIVE (not scrolling) for 3s
-       while the HEMS category (and ONLY HEMS — not Solar/Strom/…) is active. Any
-       scroll within the section re-arms the timer, so it only fires when the user
-       actually pauses; the category is re-checked at fire time. Once per visit. */
-    let hemsIdle: ReturnType<typeof setTimeout> | undefined;
-    let hemsAutoOpened = false;
-    let hemsActiveNow = false;
-    const armHemsIdle = () => {
-      clearTimeout(hemsIdle);
-      if (!hemsActiveNow || hemsAutoOpened) return;
-      hemsIdle = setTimeout(() => {
-        if (hemsIdxRef.current !== 0) return;   /* only the first (HEMS) category */
-        hemsAutoOpened = true;
-        setChatOpen(true);
-      }, 3000);
-    };
-
-    /* sticky scroll-through: progress across the tall section selects the
-       active category (the stage itself stays pinned via CSS position:sticky) */
-    const HEMS_N = HEMS_CATS.length;
-    const hemsScrubST = ScrollTrigger.create({
-      trigger: hems,
-      start: 'top top',
-      end: 'bottom bottom',
-      invalidateOnRefresh: true,
-      onUpdate: (self) => {
-        /* draw the hub→device wires progressively (load-bar fill). Each of the
-           HEMS_N-1 segments fills over one slide transition, so a wire completes
-           just as its category becomes active. */
-        const svg = hemsLinesRef.current;
-        if (svg) {
-          const groups = svg.children;
-          for (let j = 0; j < groups.length; j++) {
-            const d = Math.max(0, Math.min(1, self.progress * (HEMS_N - 1) - j));
-            (groups[j] as SVGGElement).style.setProperty('--draw', d.toFixed(4));
-          }
-        }
-        const idx = Math.min(HEMS_N - 1, Math.round(self.progress * (HEMS_N - 1)));
-        if (idx !== hemsIdxRef.current) { hemsIdxRef.current = idx; setHemsActive(idx); }
-        /* scrolling = active → push the idle auto-open back out */
-        armHemsIdle();
-      },
-    });
-    hemsSTRef.current = hemsScrubST;
-
-    /* track whether the HEMS slide is on screen; entering arms the idle timer,
-       leaving cancels it (see armHemsIdle / hemsScrubST onUpdate above) */
-    const hemsChatST = ScrollTrigger.create({
-      trigger: hems,
-      start: 'top top',
-      end: 'bottom bottom',
-      onToggle: (self) => {
-        hemsActiveNow = self.isActive;
-        if (self.isActive) armHemsIdle();
-        else clearTimeout(hemsIdle);
-      },
-    });
-
-    /* ── FAQ section entrance ── */
-    const faq = page.querySelector<HTMLElement>(`.${styles.faq}`)!;
-    const faqST = ScrollTrigger.create({
-      trigger: faq,
-      start: 'top 70%',
-      once: true,
-      onEnter: () => {
-        gsap.fromTo(faq.querySelector(`.${styles.faqHead}`),
-          { y: 40, opacity: 0 }, { y: 0, opacity: 1, duration: 0.8, ease: 'expo.out' });
-        gsap.fromTo(faq.querySelectorAll(`.${styles.faqItem}`),
-          { y: 32, opacity: 0 }, { y: 0, opacity: 1, duration: 0.7, ease: 'expo.out', stagger: 0.1, delay: 0.15 });
-      },
-    });
-
-    /* leaving HEMS toward the FAQ section → compact the chat back to the pill
-       (no-op if it's already collapsed) */
-    const faqApproachST = ScrollTrigger.create({
-      trigger: faq,
-      start: 'top bottom',
-      onEnter: () => collapseChatToDefault(),
-    });
-
-    /* ── Background switch: white until the stories text passes the middle of
-       the viewport, then the constant red→purple gradient fades in (and the
-       text flips to white). It stays on for the rest of the journey. ── */
-    const zoneBg      = page.querySelector<HTMLElement>(`.${styles.redZoneBg}`)!;
-    const storiesText = page.querySelector<HTMLElement>(`.${styles.storiesText}`)!;
-    const zoneBgST = ScrollTrigger.create({
-      trigger: storiesText,
-      start: 'center 50%',   /* text centre crosses the middle of the viewport */
-      end: 'max',
-      onEnter: () => {
-        gsap.to(zoneBg,      { opacity: 1, duration: 0.5, ease: 'power1.out', overwrite: 'auto' });
-        gsap.to(storiesText, { color: '#ffffff', duration: 0.4, ease: 'power1.inOut', overwrite: 'auto' });
-      },
-      onLeaveBack: () => {
-        gsap.to(zoneBg,      { opacity: 0, duration: 0.4, ease: 'power1.in', overwrite: 'auto' });
-        gsap.to(storiesText, { color: '#262626', duration: 0.3, ease: 'power1.inOut', overwrite: 'auto' });
-      },
-    });
-
-    /* Proof panel overlap: the gradient (.redZoneBg) is position:fixed, so it's
-       inherently still while the white proof panel (higher z-index) scrolls up
-       over it — no pin needed. Pinning .redZone here used to transform it and
-       break the HEMS `position: sticky` stage on a cold first load. */
-
-    /* Re-measure as the layout settles. On a fresh client-side navigation the
-       fonts and images (e.g. the HEMS house) load AFTER the first measure and
-       shift the pin positions — which left the redZone pin / HEMS sticky stage
-       mismeasured until a manual refresh. Refresh on each of those events. */
-    /* Build the hub→device wires as rounded-corner elbows in pixel space, so the
-       corners are truly circular and the ends meet the dot centres regardless of
-       the (non-square) photo aspect. pathLength=1 keeps the scroll-fill math
-       resolution-independent. Re-run whenever the layout settles / resizes. */
-    const buildHemsPaths = () => {
-      const svg = hemsLinesRef.current;
-      if (!svg) return;
-      const W = svg.clientWidth, H = svg.clientHeight;
-      if (!W || !H) return;
-      svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
-      const DOT = 20, R = 18;                       /* dot half-size / corner radius */
-      /* dot-centre px for every hotspot, anchored to the photo content */
-      const C: Record<string, { x: number; y: number }> = {};
-      HEMS_PINS.forEach((p) => { C[p.title] = hemsCover(W, H, p.nx, p.ny); });
-      /* place the pins on their features (left/top = the dot's top-left corner) */
-      const GAP = 16, EDGE = 12;                    /* dot→label gap / container breathing room */
-      const pinEls = svg.parentElement?.querySelectorAll<HTMLElement>(`.${styles.hemsPin}`);
-      if (pinEls) HEMS_PINS.forEach((p, i) => {
-        const c = C[p.title], el = pinEls[i];
-        if (!el) return;
-        /* size the label to its natural single line, but never wider than the room
-           a fully-edge-clamped dot could give it — only then does it wrap */
-        const label = el.querySelector<HTMLElement>(`.${styles.hemsPinLabel}`);
-        let labelW = 0;
-        if (label) {
-          const prevWS = label.style.whiteSpace;
-          label.style.maxWidth = 'none';
-          label.style.whiteSpace = 'nowrap';
-          const natural = label.offsetWidth;        /* widest single-line width */
-          label.style.whiteSpace = prevWS;           /* back to wrapping-allowed */
-          const maxRoom = W - 2 * EDGE - 2 * DOT - GAP;
-          labelW = Math.max(60, Math.min(natural, maxRoom));
-          label.style.maxWidth = `${Math.round(labelW)}px`;
-        }
-        /* Clamp the dot inward so the dot + gap + label always stay inside the
-           photo frame. The wires route to this clamped centre, so a line CONTRACTS
-           rather than running off-screen when its label would leave the frame
-           (e.g. the Wallbox on narrow widths). On wide screens nothing is clamped
-           and every dot sits exactly on its feature. */
-        let cx = c.x;
-        if (p.labelSide === 'left') {
-          cx = Math.min(Math.max(cx, EDGE + labelW + GAP + DOT), W - EDGE - DOT);
-        } else {
-          cx = Math.max(Math.min(cx, W - EDGE - labelW - GAP - DOT), EDGE + DOT);
-        }
-        const cy = Math.min(Math.max(c.y, EDGE + DOT), H - EDGE - DOT);
-        C[p.title] = { x: cx, y: cy };               /* wires read this → they re-route */
-        el.style.left = `${cx - DOT}px`;
-        el.style.top = `${cy - DOT}px`;
-      });
-      /* hub → device wires, routed from one dot centre to the next */
-      const hub = C[HEMS_HUB.title];
-      const groups = svg.children;
-      for (let i = 0; i < groups.length; i++) {
-        const c = C[HEMS_LINKS[i].title];
-        const hx = hub.x, hy = hub.y, dx = c.x, dy = c.y;
-        const sy = dy > hy ? 1 : -1, sx = dx > hx ? 1 : -1;
-        const rr = Math.max(0, Math.min(R, Math.abs(dy - hy) - 1, Math.abs(dx - hx) - 1));
-        /* down the central trunk from the hub, round the corner, branch out to
-           the device — a tidy circuit-trace route */
-        const d = `M ${hx} ${hy} L ${hx} ${dy - sy * rr} Q ${hx} ${dy} ${hx + sx * rr} ${dy} L ${dx} ${dy}`;
-        groups[i].querySelectorAll('path').forEach((pa) => pa.setAttribute('d', d));
-      }
-    };
-
-    const refresh = () => { setFrameWidth(); buildHemsPaths(); ScrollTrigger.refresh(); };
-    requestAnimationFrame(refresh);
-    const settle  = setTimeout(refresh, 500);
-    const settle2 = setTimeout(refresh, 1200);
-    document.fonts?.ready.then(refresh).catch(() => {});
-    const lateImgs = Array.from(page.querySelectorAll('img')).filter((im) => !im.complete);
-    lateImgs.forEach((im) => im.addEventListener('load', refresh, { once: true }));
-    window.addEventListener('load', refresh);
-    /* re-anchor pins + re-route wires + re-cap labels whenever the layout changes
-       size, so the image-fraction hotspots stay glued to the re-cropped photo at
-       every viewport width. Direct resize listener (rAF-coalesced) — don't rely on
-       ScrollTrigger's debounced refresh alone. The 'refresh' hook covers the other
-       settle events (fonts/images/load). */
-    let resizeRaf = 0;
-    const onHemsResize = () => {
-      cancelAnimationFrame(resizeRaf);
-      resizeRaf = requestAnimationFrame(buildHemsPaths);
-    };
-    window.addEventListener('resize', onHemsResize);
-    ScrollTrigger.addEventListener('refresh', buildHemsPaths);
-
-    return () => {
-      clearTimeout(settle);
-      clearTimeout(settle2);
-      window.removeEventListener('load', refresh);
-      ScrollTrigger.removeEventListener('refresh', buildHemsPaths);
-      cancelAnimationFrame(resizeRaf);
-      window.removeEventListener('resize', onHemsResize);
-      lateImgs.forEach((im) => im.removeEventListener('load', refresh));
-      window.removeEventListener('resize', setFrameWidth);
-      cardParallax.forEach((t) => { t.scrollTrigger?.kill(); t.kill(); });
-      clearTimeout(hemsIdle);
-      orbCenterST.kill();
-      hemsChatST.kill();
-      zoneBgST.kill();
-      faqApproachST.kill();
-      hemsST.kill();
-      hemsScrubST.kill();
-      faqST.kill();
-      stateST.kill();
-      rotST.kill();
-      morphST.kill();
-      rot.kill();
-      morph.kill();
-      hubST.kill();
-      followTween.scrollTrigger?.kill();
-      followTween.kill();
-      parallaxTweens.forEach((t) => { t.scrollTrigger?.kill(); t.kill(); });
-      trackTween.scrollTrigger?.kill();
-      trackTween.kill();
-      pinST.kill();
-    };
-  }, []);
+  /* The scroll engine, now in hooks. ORDER MATTERS: usePinnedTrack creates the
+     master pin FIRST; the section hooks below sit under the pin and must be created
+     after it (ScrollTrigger measures in creation order) or their scrub pins at 1. */
+  usePinnedTrack({ pageRef, sectionRef, trackRef, orbRef, orbCentered, setOrbTariffQ });
+  useStoriesParallax(pageRef); // story-card parallax + white→gradient bg switch (slice 1)
+  useHemsStage({               // connected-home reveal + scrub category-select + wires + idle (slice 2)
+    pageRef,
+    linesRef: hemsLinesRef,
+    idxRef: hemsIdxRef,
+    scrubRef: hemsSTRef,
+    setActive: setHemsActive,
+    setPinsReady: setHemsPinsReady,
+    onIdleOpen: () => setChatOpen(true),
+  });
 
   return (
     <div className={styles.page} ref={pageRef}>
@@ -1293,7 +514,7 @@ export default function TariffPage() {
               {/* SAME input row as the closed pill — only adds the send button
                   and a grey fill (data-open). Shared markup ⇒ seamless morph. */}
               <div className={styles.chatInputRow} data-open="true" ref={chatRowRef}>
-                <video className={styles.orb} src="/orb-anim.mp4" autoPlay loop muted playsInline onCanPlay={(e) => { (e.target as HTMLVideoElement).playbackRate = 3; }} />
+                <AiOrb className={styles.orb} />
                 <div className={styles.orbReveal}>
                   <span className={styles.orbHint}>{orbTariffQ ? 'Fragen zu diesem Tarif?' : 'Was beschäftigt dich heute?'}</span>
                 </div>
@@ -1314,7 +535,7 @@ export default function TariffPage() {
             onMouseLeave={onPillLeave}
             aria-label="E.ON Assistant öffnen"
           >
-            <video className={styles.orb} src="/orb-anim.mp4" autoPlay loop muted playsInline onCanPlay={(e) => { (e.target as HTMLVideoElement).playbackRate = 3; }} />
+            <AiOrb className={styles.orb} />
             <div className={styles.orbReveal} ref={pillRevealRef}>
               <span className={styles.orbHint}>{orbTariffQ ? 'Fragen zu diesem Tarif?' : 'Was beschäftigt dich heute?'}</span>
             </div>
@@ -1631,186 +852,28 @@ export default function TariffPage() {
       <div className={styles.redZone}>
         <div className={styles.redZoneBg} />
 
-      {/* ═══ Stories text — scrolls normally, nothing sticky ═══ */}
-      <section className={styles.storiesIntro}>
-        <div className={styles.storiesText}>
-          <span className={styles.storiesLabel}>Passend zu deinem Tarif</span>
-          <h2 className={styles.storiesTitle}>Was hinter deinem Tarif steckt.</h2>
-          <p className={styles.storiesDesc}>
-            Kurze Stories, die zeigen, was deinen Günstig-Tarif ausmacht – Ökostrom, fairer Preis, persönlicher Service.
-          </p>
-        </div>
-      </section>
-
-      {/* ═══ Stories images — frame pins briefly; cards bounce in, then up & out ═══ */}
-      <section className={styles.stories}>
-        <div className={styles.storiesStage}>
-          {[
-            { cls: styles.storyCard1, img: '/tariff-man.png',       title: 'Was heißt hier Ökostrom?', sub: 'Kein Marketing – ein Nachweis.' },
-            { cls: styles.storyCard2, img: '/tariff-hero.png',      title: 'Dein Preis, fair erklärt', sub: 'Wir zeigen dir jeden Cent davon.' },
-            { cls: styles.storyCard3, img: '/tariff-woman-car.png', title: 'Wechseln in Minuten',      sub: 'Du klickst – Wir kümmern uns.' },
-          ].map(card => (
-            <div key={card.title} className={`${styles.storyCard} ${card.cls}`}>
-              <img src={card.img} alt="" className={styles.storyMedia} />
-              <div className={styles.storyShade} />
-              <div className={styles.storyPlay}><PlayCarrierIcon /></div>
-              <div className={styles.storyCaption}>
-                <p className={styles.storyCaptionTitle}>{card.title}</p>
-                <p className={styles.storyCaptionSub}>{card.sub}</p>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
+      <Stories />
 
       {/* ═══ HEMS — sticky stage; scroll advances the category ═══ */}
-      <section className={styles.hems}>
-        <div className={styles.hemsStage}>
-          <div className={styles.hemsLeft}>
-            <div ref={hemsTextRef}>
-              <p className={styles.hemsLogo}>{hemsCat.menu}</p>
-              <h2 className={styles.hemsTitle}>{hemsCat.title}</h2>
-              <p className={styles.hemsDesc}>{hemsCat.desc}</p>
-            </div>
-            <div className={styles.hemsMenu}>
-              {HEMS_CATS.map((c, i) => (
-                <button
-                  key={c.key}
-                  className={`${styles.hemsMenuItem} ${i === hemsActive ? styles.hemsMenuActive : ''}`}
-                  onClick={() => scrollToHemsCat(i)}
-                >
-                  {c.menu}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className={styles.hemsRight}>
-            <img src="/hems-house.jpg" alt="Haus mit Solaranlage, Wallbox und E-Auto" className={styles.hemsPhoto} />
-            <div className={styles.hemsShade} />
-            {/* connecting wires from the HEMS hub to each device; drawn on scroll */}
-            <svg
-              className={styles.hemsLines}
-              viewBox="0 0 100 100"
-              preserveAspectRatio="none"
-              aria-hidden="true"
-              data-ready={hemsPinsReady ? 'true' : 'false'}
-              ref={hemsLinesRef}
-            >
-              {HEMS_LINKS.map(p => (
-                <g key={p.title} className={styles.hemsLink}>
-                  <path className={styles.hemsTrack}  d="" pathLength={1} />
-                  <path className={styles.hemsWire}   d="" pathLength={1} />
-                  <path className={styles.hemsCharge} d="" pathLength={1} />
-                </g>
-              ))}
-            </svg>
-            {HEMS_PINS.map(pin => (
-              <div
-                key={pin.title}
-                className={pin.labelSide === 'left' ? `${styles.hemsPin} ${styles.hemsPinLeft}` : styles.hemsPin}
-                style={{}}
-                data-ready={hemsPinsReady ? 'true' : 'false'}
-                data-active={hemsCat.pin === pin.title ? 'true' : 'false'}
-                data-dim={hemsCat.pin && hemsCat.pin !== pin.title ? 'true' : 'false'}
-              >
-                <div className={styles.hemsPinDot} />
-                <div className={styles.hemsPinLabel}>
-                  <span className={styles.hemsPinTitle}>{pin.title}</span>
-                  <span className={styles.hemsPinSub}>{pin.sub}</span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+      <ConnectedHome
+        cat={hemsCat}
+        activeIndex={hemsActive}
+        pinsReady={hemsPinsReady}
+        onCatClick={scrollToHemsCat}
+        textRef={hemsTextRef}
+        linesRef={hemsLinesRef}
+      />
 
       {/* ═══ FAQ — same gradient continues behind it ═══ */}
-      <section className={styles.faq}>
-        <div className={styles.faqHead}>
-          <span className={styles.faqLabel}>Häufige Fragen</span>
-          <h2 className={styles.faqTitle}>Was du noch wissen willst.</h2>
-        </div>
-        <div className={styles.faqList}>
-          {[
-            'Wie funktioniert der Wechsel?',
-            'Was bedeutet 100% Ökostrom konkret?',
-            'Was passiert nach der Mindestlaufzeit?',
-            'Kann ich den Tarif noch ändern, wenn ich umziehe?',
-          ].map(q => (
-            <div key={q} className={styles.faqItem}>
-              <span className={styles.faqQuestion}>{q}</span>
-              <button className={styles.faqToggle} aria-label="Antwort anzeigen"><ChevronDown /></button>
-            </div>
-          ))}
-        </div>
-      </section>
+      <Faq onApproach={collapseChatToDefault} />
 
       </div>{/* /redZone */}
 
       {/* ═══ Proof — white panel that slides up over the gradient ═══ */}
-      <div className={styles.proofWrap}>
-        <section className={styles.proof}>
-          <div className={styles.proofLeft}>
-            <span className={styles.proofLabel}>In deiner Nähe</span>
-            <h2 className={styles.proofTitle}>Du bist nicht der<br />Erste rund um</h2>
-            <div className={styles.proofZip}>
-              <LocationIcon />
-              <span className={styles.proofZipNum}>{plz}</span>
-            </div>
-            <p className={styles.proofDesc}>
-              Diesen Monat haben 7 Haushalte rund um {plz} zu E.ON gewechselt.
-              Drei davon erzählen, was sie überzeugt hat – echte Stimmen statt Werbeversprechen.
-            </p>
-          </div>
-
-          <div className={styles.proofRight}>
-            <img src="/proof-town.jpg" alt="Luftaufnahme der Nachbarschaft" className={`${styles.proofPhoto} ${styles.proofPhotoTown}`} />
-            <img src="/hems-house.jpg" alt="Haus mit E-Auto" className={`${styles.proofPhoto} ${styles.proofPhotoHouse}`} />
-
-            <div className={styles.proofCardStack}>
-              <div className={styles.proofCardBehind} />
-              <div className={styles.proofCard}>
-                <div>
-                  <p className={styles.proofQuoteTitle}>In 10 Minuten gewechselt.</p>
-                  <p className={styles.proofQuoteText}>Bei E.ON hab ich das gute Gefühl, wirklich grün unterwegs zu sein. Da ich mit meinem Ökostrom nachhaltige Projekte in dieser Region unterstütze.</p>
-                </div>
-                <div className={styles.proofAuthor}>
-                  <div className={styles.proofAvatar}>AK</div>
-                  <div className={styles.proofAuthorMeta}>
-                    <div className={styles.proofAuthorName}>Andrea K.</div>
-                    <div className={styles.proofAuthorRow}>
-                      <span className={styles.proofAuthorTariff}>Ökostrom 12</span>
-                      <span className={styles.proofAuthorWhen}>Gewechselt vor 3 Wochen</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className={styles.proofDots}>
-              <div className={`${styles.proofDot} ${styles.proofDotActive}`} />
-              <div className={styles.proofDot} />
-              <div className={styles.proofDot} />
-            </div>
-
-            <div className={styles.proofStats}>
-              <div className={styles.proofStat}>
-                <span className={styles.proofStatNum}>~12 Min</span>
-                <span className={styles.proofStatLabel}>bis zum Abschluss</span>
-              </div>
-              <div className={styles.proofStat}>
-                <span className={styles.proofStatNum}>94%</span>
-                <span className={styles.proofStatLabel}>würden wieder wechseln</span>
-              </div>
-              <Button variant="primary" className="ml-auto shrink-0 rounded-button">Mehr Erfahrungen</Button>
-            </div>
-          </div>
-        </section>
-      </div>
+      <Proof plz={plz} />
 
       {/* Conversational checkout journey — opened by the red "Tarif auswählen" CTAs */}
-      <JourneyModal />
+      <CheckoutJourney />
     </div>
   );
 }
