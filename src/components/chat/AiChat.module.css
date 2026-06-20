@@ -186,7 +186,7 @@ button.row {
   align-items: flex-start;
   gap: 8px 7px;
   width: 100%;
-  padding: 12px 16px;
+  padding: 16px 16px;
 }
 
 /* ── Answer ("Chat heading" + "Answer wrapper") — assistant reply ───────────── */

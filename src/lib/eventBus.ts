@@ -5,10 +5,14 @@
  *
  *  • `eon:journey-start` — Hero chat chip → opens the OnboardingJourney.
  *  • `eon:checkout-start` — tariff "Tarif auswählen" / cart → opens the CheckoutJourney.
+ *  • `eon:intro-done` — the branded IntroLoader is lifting away → the Hero plays
+ *    its from-the-top entrance. Fires immediately when the loader won't show
+ *    (revisits / reduced motion) so the hero never waits on a cue that won't come.
  */
 export interface EonEventDetail {
   'eon:journey-start': { type: string };
   'eon:checkout-start': undefined;
+  'eon:intro-done': undefined;
 }
 
 export type EonEventName = keyof EonEventDetail;
