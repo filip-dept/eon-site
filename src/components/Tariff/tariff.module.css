@@ -425,7 +425,8 @@
   display: none;
 }
 
-.frameImage img {
+.frameImage img,
+.frameImage video {
   display: block;
   width: 100%;
   height: 100%;
