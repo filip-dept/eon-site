@@ -17,6 +17,7 @@ import { Toggle } from '@/ui/Toggle';
 import type { Tariff } from '@/types/Tariff';
 import { TARIFFS, stopsFor, snapTo, tariffFor } from '@/data/tariffs';
 import { HEMS_CATS, HEMS_PINS, hemsCover, HEMS_HUB, HEMS_LINKS } from '@/data/hems';
+import { useStoriesParallax } from '@/hooks/useStoriesParallax';
 import { Proof } from './sections/Proof';
 import { Faq } from './sections/Faq';
 import { ConnectedHome } from './sections/ConnectedHome';
@@ -467,6 +468,9 @@ export default function TariffPage() {
     }
   }, [tariff.id]);
 
+  /* stories parallax + bg switch — extracted from the scroll engine (capstone slice 1) */
+  useStoriesParallax(pageRef);
+
   useEffect(() => {
     const page    = pageRef.current;
     const section = sectionRef.current;
@@ -756,47 +760,6 @@ export default function TariffPage() {
       onLeaveBack: () => centreOrb(false),
     });
 
-    /* ── Stories: the text frame scrolls normally above; the cards start near
-       the top of the frame and parallax DOWN — each moves a little slower than
-       the page (different speeds), so they drift apart with layered depth. ── */
-    const stories    = page.querySelector<HTMLElement>(`.${styles.stories}`)!;
-    const storyCards = Array.from(stories.querySelectorAll<HTMLElement>(`.${styles.storyCard}`));
-
-    /* The cards rise UP through the frame (scroll down → cards float up and exit
-       the top). Entry is anchored to the SAME point as the background switch:
-       the stories text crossing the middle of the viewport (so cards start
-       appearing exactly as the background flips and the text reaches the upper
-       half). They keep rising — at pronounced, per-card speeds — across the run,
-       then the stage clips (overflow:hidden) so none reaches the HEMS frame. */
-    const cardEntry = page.querySelector<HTMLElement>(`.${styles.storiesText}`)!;
-    const vh = () => window.innerHeight;
-    /* base rise distance over the run — tuned so the last card reaches the top
-       right as the run ends (and the pin releases into HEMS), no empty tail */
-    const RISE = () => vh() * 0.9;
-    /* per-card rise rate — a WIDE spread for pronounced layered depth */
-    const CARD_SPEED = [0.72, 1.28, 1.0];
-    /* start height below the frame top (×vh); staggers each card's entry so they
-       feed in from the bottom one after another (smaller = appears sooner) */
-    const CARD_START = [0.20, 0.85, 0.50];
-    const cardParallax = storyCards.map((card, i) => {
-      const speed = CARD_SPEED[i % CARD_SPEED.length];
-      const start = CARD_START[i % CARD_START.length];
-      return gsap.fromTo(
-        card,
-        { y: () => start * vh() },                       /* below the frame */
-        {
-          y: () => start * vh() - speed * RISE(),        /* risen up past the top */
-          ease: 'none',
-          scrollTrigger: {
-            trigger: cardEntry,            /* the stories text — same as the bg switch */
-            start: 'center 50%',           /* text centre crosses mid-viewport */
-            end: () => `+=${vh() * 1.1}`,  /* run length (≈ to where the pin releases) */
-            scrub: true,
-            invalidateOnRefresh: true,
-          },
-        }
-      );
-    });
 
     /* ── HEMS: house unmask on entry, then a sticky stage you scroll through
        category by category ── */
@@ -892,24 +855,7 @@ export default function TariffPage() {
     /* FAQ entrance + the "approaching FAQ → collapse orb" trigger now live inside
        <Faq> (it receives collapseChatToDefault as onApproach). */
 
-    /* ── Background switch: white until the stories text passes the middle of
-       the viewport, then the constant red→purple gradient fades in (and the
-       text flips to white). It stays on for the rest of the journey. ── */
-    const zoneBg      = page.querySelector<HTMLElement>(`.${styles.redZoneBg}`)!;
-    const storiesText = page.querySelector<HTMLElement>(`.${styles.storiesText}`)!;
-    const zoneBgST = ScrollTrigger.create({
-      trigger: storiesText,
-      start: 'center 50%',   /* text centre crosses the middle of the viewport */
-      end: 'max',
-      onEnter: () => {
-        gsap.to(zoneBg,      { opacity: 1, duration: 0.5, ease: 'power1.out', overwrite: 'auto' });
-        gsap.to(storiesText, { color: '#ffffff', duration: 0.4, ease: 'power1.inOut', overwrite: 'auto' });
-      },
-      onLeaveBack: () => {
-        gsap.to(zoneBg,      { opacity: 0, duration: 0.4, ease: 'power1.in', overwrite: 'auto' });
-        gsap.to(storiesText, { color: '#262626', duration: 0.3, ease: 'power1.inOut', overwrite: 'auto' });
-      },
-    });
+    /* Stories parallax + bg switch → useStoriesParallax(pageRef) */
 
     /* Proof panel overlap: the gradient (.redZoneBg) is position:fixed, so it's
        inherently still while the white proof panel (higher z-index) scrolls up
@@ -1015,11 +961,9 @@ export default function TariffPage() {
       window.removeEventListener('resize', onHemsResize);
       lateImgs.forEach((im) => im.removeEventListener('load', refresh));
       window.removeEventListener('resize', setFrameWidth);
-      cardParallax.forEach((t) => { t.scrollTrigger?.kill(); t.kill(); });
       clearTimeout(hemsIdle);
       orbCenterST.kill();
       hemsChatST.kill();
-      zoneBgST.kill();
       hemsST.kill();
       hemsScrubST.kill();
       stateST.kill();
