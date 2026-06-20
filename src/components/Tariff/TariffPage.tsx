@@ -7,13 +7,21 @@ import { useSearchParams } from 'next/navigation';
 const useIsoLayoutEffect = typeof window !== 'undefined' ? useLayoutEffect : useEffect;
 import { gsap, ScrollTrigger } from '@/lib/gsap';
 import Navbar from '@/components/Navbar/Navbar';
-import JourneyModal from '@/components/Journey/JourneyModal';
+import CheckoutJourney from '@/components/Journey/CheckoutJourney';
 import { Button } from '@/ui/Button';
 import { Badge } from '@/ui/Badge';
 import { Link } from '@/ui/Link';
 import { Icon } from '@/ui/Icon';
 import { IconButton } from '@/ui/IconButton';
 import { Toggle } from '@/ui/Toggle';
+import type { Tariff } from '@/types/Tariff';
+import { TARIFFS, stopsFor, snapTo, tariffFor } from '@/data/tariffs';
+import { HEMS_CATS, HEMS_PINS, hemsCover, HEMS_HUB, HEMS_LINKS } from '@/data/hems';
+import { Proof } from './sections/Proof';
+import { Faq } from './sections/Faq';
+import { ConnectedHome } from './sections/ConnectedHome';
+import { Stories } from './sections/Stories';
+import { AiOrb } from '@/components/chat/AiOrb';
 import styles from './tariff.module.css';
 
 /* the red "Tarif auswählen" CTAs open the conversational checkout journey */
@@ -82,101 +90,9 @@ const MicIcon = () => (
   </svg>
 );
 /* TickIcon → <Icon name="check"/> (inside <Toggle>) */
-const ChevronDown = () => (
-  <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-    <path d="M3 6l5 5 5-5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
-  </svg>
-);
-const PlayCarrierIcon = () => (
-  <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
-    <circle cx="20" cy="20" r="15" stroke="currentColor" strokeWidth="2"/>
-    <path d="M17 14.5l9 5.5-9 5.5z" fill="currentColor"/>
-  </svg>
-);
+/* ChevronDown → <Icon name="chevron-down"/> (inside <Faq>) */
+/* PlayCarrierIcon → moved into sections/Stories.tsx */
 
-/* ─── Tariff catalogue (slider picks within a family, checkbox switches the
-       family: Standard ↔ Zukunft "besonders nachhaltig") ───────────────────── */
-interface Tariff {
-  id: string;
-  name: string;
-  sub: string;
-  price: string;     // € pro Monat
-  bonus: string;
-  bonusUntil: string;
-  ct: string;        // ct/kWh — feeds the Stromtransparenz Gesamtpreis
-  features: [string, string][];
-}
-
-const TARIFFS: { standard: Tariff[]; zukunft: Tariff[] } = {
-  /* slider: Flexibilität → Sicherheit */
-  standard: [
-    {
-      id: 'oeko-flex', name: 'E.ON ÖkoStrom Flex', sub: 'Flex | Standard',
-      price: '57,50', bonus: '30 € Neukunden-Bonus', bonusUntil: 'bis 20.04.2026', ct: '30,50',
-      features: [
-        ['Keine Mindestlaufzeit', 'sofort kündbar'],
-        ['100% Ökostrom', 'aus erneuerbaren Quellen'],
-        ['Volle Flexibilität', 'bei Tarif-Wechsel'],
-      ],
-    },
-    {
-      id: 'oeko-extra-12', name: 'E.ON ÖkoStrom Extra 12', sub: '12 Mo | Standard',
-      price: '53,11', bonus: '60 € Neukunden-Bonus', bonusUntil: 'bis 20.04.2026', ct: '28,13',
-      features: [
-        ['12 Monate Preisgarantie', 'gute Balance'],
-        ['100% Ökostrom', 'aus erneuerbaren Quellen'],
-        ['Monatlich kündbar', 'nach der Mindestlaufzeit'],
-      ],
-    },
-    {
-      id: 'festpreis-24', name: 'E.ON Festpreis 24', sub: '24 Mo | Standard',
-      price: '47,90', bonus: '90 € Neukunden-Bonus', bonusUntil: 'bis 20.04.2026', ct: '25,40',
-      features: [
-        ['24 Monate Preisgarantie', 'kein Schwanken'],
-        ['100% Ökostrom', 'aus erneuerbaren Quellen'],
-        ['Pünktliche Verlängerung', 'faire Konditionen'],
-      ],
-    },
-  ],
-  zukunft: [
-    {
-      id: 'zukunft-flex', name: 'E.ON ZukunftsStrom Flex', sub: 'Flex | Zukunft',
-      price: '62,80', bonus: '50 € Neukunden-Bonus', bonusUntil: 'bis 20.04.2026', ct: '33,20',
-      features: [
-        ['Keine Mindestlaufzeit', 'sofort kündbar'],
-        ['100% Strom', 'aus neuen Wind- und Solar-Anlagen'],
-        ['Dein Beitrag', 'finanziert den Anlagen-Ausbau'],
-      ],
-    },
-    {
-      id: 'zukunft-extra-12', name: 'E.ON ZukunftsStrom Extra 12', sub: '12 Mo | Zukunft',
-      price: '58,40', bonus: '85 € Neukunden-Bonus', bonusUntil: 'bis 20.04.2026', ct: '30,90',
-      features: [
-        ['12 Monate Preisgarantie', 'gute Balance'],
-        ['100% Strom', 'aus neuen Wind- und Solar-Anlagen'],
-        ['Dein Beitrag', 'finanziert den Anlagen-Ausbau'],
-      ],
-    },
-    {
-      id: 'zukunft-festpreis-24', name: 'E.ON ZukunftsStrom Festpreis 24', sub: '24 Mo | Zukunft',
-      price: '54,30', bonus: '120 € Neukunden-Bonus', bonusUntil: 'bis 20.04.2026', ct: '28,80',
-      features: [
-        ['24 Monate Preisgarantie', 'kein Schwanken'],
-        ['100% Strom', 'aus neuen Wind- und Solar-Anlagen'],
-        ['Dein Beitrag', 'finanziert den Anlagen-Ausbau'],
-      ],
-    },
-  ],
-};
-
-/* slider snap stops — Flexibilität | Mitte | Sicherheit (both families have 3) */
-const stopsFor = (_eco: boolean) => [6, 50, 94];
-const snapTo = (p: number, stops: number[]) =>
-  stops.reduce((a, b) => (Math.abs(b - p) < Math.abs(a - p) ? b : a));
-const tariffFor = (eco: boolean, p: number) => {
-  const list = eco ? TARIFFS.zukunft : TARIFFS.standard;
-  return list[p < 33 ? 0 : p < 67 ? 1 : 2];
-};
 
 /* ─── Preference slider (interactive: click or drag along the rail) ───────── */
 function PrefSlider({ groupLabel, left, right, value, onChange, onCommit }: {
@@ -287,72 +203,6 @@ function revealFrame(frame: HTMLElement) {
   if (ah.length) tl.to(ah, { y: 0, opacity: 1, duration: 1, ease: 'eonAppear' }, 0.2);
 }
 
-/* ─── HEMS: scroll-through categories (first one is the HEMS overview) ─────── */
-interface HemsCat {
-  key: string;
-  menu: string;
-  title: React.ReactNode;
-  desc: string;
-  pin: string | null;   /* which hotspot lights up (null = overview, none) */
-}
-const HEMS_CATS: HemsCat[] = [
-  {
-    key: 'hems', menu: 'HEMS',
-    title: <>Deine Energie.<br />Deine Freiheit</>,
-    desc: 'Intelligente Lösungen für ein nachhaltiges Zuhause – alles vernetzt, alles unter Kontrolle.',
-    pin: 'HEMS',
-  },
-  {
-    key: 'solar', menu: 'Solar',
-    title: <>Sonne, die sich<br />auszahlt.</>,
-    desc: 'Erzeuge deinen eigenen Strom direkt vom Dach – und mach dich unabhängiger vom Netz.',
-    pin: 'Solar',
-  },
-  {
-    key: 'strom', menu: 'Strom',
-    title: <>Strom, der<br />zu dir passt.</>,
-    desc: '100 % Ökostrom, fair erklärt und intelligent gesteuert – passend zu deinem Verbrauch.',
-    pin: 'Strom',
-  },
-  {
-    key: 'waerme', menu: 'Wärmepumpe',
-    title: <>Wärme aus<br />der Umwelt.</>,
-    desc: 'Heize effizient und klimafreundlich – mit Strom statt Öl und Gas.',
-    pin: 'Wärmepumpe',
-  },
-  {
-    key: 'wallbox', menu: 'Wallbox',
-    title: <>Lädt, während<br />du schläfst.</>,
-    desc: 'Lade dein E-Auto bequem zuhause – schnell, sicher und am besten mit eigenem Solarstrom.',
-    pin: 'Wallbox',
-  },
-];
-
-/* Hotspots are anchored as fractions of the source image (1600×893), not as
-   container percentages — so each dot sticks to its physical feature regardless
-   of how object-fit:cover crops the portrait frame at different viewport widths. */
-const HEMS_IMG_W = 1600, HEMS_IMG_H = 893;
-const HEMS_PINS = [
-  { title: 'HEMS',       sub: 'Alles vernetzt · smart gesteuert', nx: 0.477, ny: 0.248, labelSide: 'right' },
-  { title: 'Solar',      sub: '4,2 kWp · ~3.900 kWh/Jahr',        nx: 0.554, ny: 0.388, labelSide: 'right' },
-  { title: 'Strom',      sub: '100 % Ökostrom · 3.200 kWh',       nx: 0.435, ny: 0.528, labelSide: 'left' },
-  { title: 'Wallbox',    sub: '11 kW · lädt mit Solar',           nx: 0.674, ny: 0.738, labelSide: 'right'  },
-  { title: 'Wärmepumpe', sub: 'COP 4,1 · ~60 % weniger Gas',      nx: 0.435, ny: 0.700, labelSide: 'left' },
-];
-/* map a native-image fraction → container px under object-fit:cover (centered) */
-const hemsCover = (cw: number, ch: number, nx: number, ny: number) => {
-  const s = Math.max(cw / HEMS_IMG_W, ch / HEMS_IMG_H);
-  const rw = HEMS_IMG_W * s, rh = HEMS_IMG_H * s;
-  return { x: (cw - rw) / 2 + nx * rw, y: (ch - rh) / 2 + ny * rh };
-};
-
-/* HEMS is the hub that connects every device. As the user scrolls through the
-   stage the wires draw outward from the hub (load-bar fill) with a travelling
-   electric charge. Links are ordered to match the slide order so each wire
-   completes just as its category becomes active. */
-const HEMS_HUB = HEMS_PINS[0];
-const HEMS_LINKS = ['Solar', 'Strom', 'Wärmepumpe', 'Wallbox']
-  .map((t) => HEMS_PINS.find((p) => p.title === t)!);
 
 /* ─── Main page ──────────────────────────────────────────────────────────── */
 export default function TariffPage() {
@@ -1039,27 +889,8 @@ export default function TariffPage() {
       },
     });
 
-    /* ── FAQ section entrance ── */
-    const faq = page.querySelector<HTMLElement>(`.${styles.faq}`)!;
-    const faqST = ScrollTrigger.create({
-      trigger: faq,
-      start: 'top 70%',
-      once: true,
-      onEnter: () => {
-        gsap.fromTo(faq.querySelector(`.${styles.faqHead}`),
-          { y: 40, opacity: 0 }, { y: 0, opacity: 1, duration: 0.8, ease: 'expo.out' });
-        gsap.fromTo(faq.querySelectorAll(`.${styles.faqItem}`),
-          { y: 32, opacity: 0 }, { y: 0, opacity: 1, duration: 0.7, ease: 'expo.out', stagger: 0.1, delay: 0.15 });
-      },
-    });
-
-    /* leaving HEMS toward the FAQ section → compact the chat back to the pill
-       (no-op if it's already collapsed) */
-    const faqApproachST = ScrollTrigger.create({
-      trigger: faq,
-      start: 'top bottom',
-      onEnter: () => collapseChatToDefault(),
-    });
+    /* FAQ entrance + the "approaching FAQ → collapse orb" trigger now live inside
+       <Faq> (it receives collapseChatToDefault as onApproach). */
 
     /* ── Background switch: white until the stories text passes the middle of
        the viewport, then the constant red→purple gradient fades in (and the
@@ -1189,10 +1020,8 @@ export default function TariffPage() {
       orbCenterST.kill();
       hemsChatST.kill();
       zoneBgST.kill();
-      faqApproachST.kill();
       hemsST.kill();
       hemsScrubST.kill();
-      faqST.kill();
       stateST.kill();
       rotST.kill();
       morphST.kill();
@@ -1293,7 +1122,7 @@ export default function TariffPage() {
               {/* SAME input row as the closed pill — only adds the send button
                   and a grey fill (data-open). Shared markup ⇒ seamless morph. */}
               <div className={styles.chatInputRow} data-open="true" ref={chatRowRef}>
-                <video className={styles.orb} src="/orb-anim.mp4" autoPlay loop muted playsInline onCanPlay={(e) => { (e.target as HTMLVideoElement).playbackRate = 3; }} />
+                <AiOrb className={styles.orb} />
                 <div className={styles.orbReveal}>
                   <span className={styles.orbHint}>{orbTariffQ ? 'Fragen zu diesem Tarif?' : 'Was beschäftigt dich heute?'}</span>
                 </div>
@@ -1314,7 +1143,7 @@ export default function TariffPage() {
             onMouseLeave={onPillLeave}
             aria-label="E.ON Assistant öffnen"
           >
-            <video className={styles.orb} src="/orb-anim.mp4" autoPlay loop muted playsInline onCanPlay={(e) => { (e.target as HTMLVideoElement).playbackRate = 3; }} />
+            <AiOrb className={styles.orb} />
             <div className={styles.orbReveal} ref={pillRevealRef}>
               <span className={styles.orbHint}>{orbTariffQ ? 'Fragen zu diesem Tarif?' : 'Was beschäftigt dich heute?'}</span>
             </div>
@@ -1631,186 +1460,28 @@ export default function TariffPage() {
       <div className={styles.redZone}>
         <div className={styles.redZoneBg} />
 
-      {/* ═══ Stories text — scrolls normally, nothing sticky ═══ */}
-      <section className={styles.storiesIntro}>
-        <div className={styles.storiesText}>
-          <span className={styles.storiesLabel}>Passend zu deinem Tarif</span>
-          <h2 className={styles.storiesTitle}>Was hinter deinem Tarif steckt.</h2>
-          <p className={styles.storiesDesc}>
-            Kurze Stories, die zeigen, was deinen Günstig-Tarif ausmacht – Ökostrom, fairer Preis, persönlicher Service.
-          </p>
-        </div>
-      </section>
-
-      {/* ═══ Stories images — frame pins briefly; cards bounce in, then up & out ═══ */}
-      <section className={styles.stories}>
-        <div className={styles.storiesStage}>
-          {[
-            { cls: styles.storyCard1, img: '/tariff-man.png',       title: 'Was heißt hier Ökostrom?', sub: 'Kein Marketing – ein Nachweis.' },
-            { cls: styles.storyCard2, img: '/tariff-hero.png',      title: 'Dein Preis, fair erklärt', sub: 'Wir zeigen dir jeden Cent davon.' },
-            { cls: styles.storyCard3, img: '/tariff-woman-car.png', title: 'Wechseln in Minuten',      sub: 'Du klickst – Wir kümmern uns.' },
-          ].map(card => (
-            <div key={card.title} className={`${styles.storyCard} ${card.cls}`}>
-              <img src={card.img} alt="" className={styles.storyMedia} />
-              <div className={styles.storyShade} />
-              <div className={styles.storyPlay}><PlayCarrierIcon /></div>
-              <div className={styles.storyCaption}>
-                <p className={styles.storyCaptionTitle}>{card.title}</p>
-                <p className={styles.storyCaptionSub}>{card.sub}</p>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
+      <Stories />
 
       {/* ═══ HEMS — sticky stage; scroll advances the category ═══ */}
-      <section className={styles.hems}>
-        <div className={styles.hemsStage}>
-          <div className={styles.hemsLeft}>
-            <div ref={hemsTextRef}>
-              <p className={styles.hemsLogo}>{hemsCat.menu}</p>
-              <h2 className={styles.hemsTitle}>{hemsCat.title}</h2>
-              <p className={styles.hemsDesc}>{hemsCat.desc}</p>
-            </div>
-            <div className={styles.hemsMenu}>
-              {HEMS_CATS.map((c, i) => (
-                <button
-                  key={c.key}
-                  className={`${styles.hemsMenuItem} ${i === hemsActive ? styles.hemsMenuActive : ''}`}
-                  onClick={() => scrollToHemsCat(i)}
-                >
-                  {c.menu}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className={styles.hemsRight}>
-            <img src="/hems-house.jpg" alt="Haus mit Solaranlage, Wallbox und E-Auto" className={styles.hemsPhoto} />
-            <div className={styles.hemsShade} />
-            {/* connecting wires from the HEMS hub to each device; drawn on scroll */}
-            <svg
-              className={styles.hemsLines}
-              viewBox="0 0 100 100"
-              preserveAspectRatio="none"
-              aria-hidden="true"
-              data-ready={hemsPinsReady ? 'true' : 'false'}
-              ref={hemsLinesRef}
-            >
-              {HEMS_LINKS.map(p => (
-                <g key={p.title} className={styles.hemsLink}>
-                  <path className={styles.hemsTrack}  d="" pathLength={1} />
-                  <path className={styles.hemsWire}   d="" pathLength={1} />
-                  <path className={styles.hemsCharge} d="" pathLength={1} />
-                </g>
-              ))}
-            </svg>
-            {HEMS_PINS.map(pin => (
-              <div
-                key={pin.title}
-                className={pin.labelSide === 'left' ? `${styles.hemsPin} ${styles.hemsPinLeft}` : styles.hemsPin}
-                style={{}}
-                data-ready={hemsPinsReady ? 'true' : 'false'}
-                data-active={hemsCat.pin === pin.title ? 'true' : 'false'}
-                data-dim={hemsCat.pin && hemsCat.pin !== pin.title ? 'true' : 'false'}
-              >
-                <div className={styles.hemsPinDot} />
-                <div className={styles.hemsPinLabel}>
-                  <span className={styles.hemsPinTitle}>{pin.title}</span>
-                  <span className={styles.hemsPinSub}>{pin.sub}</span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+      <ConnectedHome
+        cat={hemsCat}
+        activeIndex={hemsActive}
+        pinsReady={hemsPinsReady}
+        onCatClick={scrollToHemsCat}
+        textRef={hemsTextRef}
+        linesRef={hemsLinesRef}
+      />
 
       {/* ═══ FAQ — same gradient continues behind it ═══ */}
-      <section className={styles.faq}>
-        <div className={styles.faqHead}>
-          <span className={styles.faqLabel}>Häufige Fragen</span>
-          <h2 className={styles.faqTitle}>Was du noch wissen willst.</h2>
-        </div>
-        <div className={styles.faqList}>
-          {[
-            'Wie funktioniert der Wechsel?',
-            'Was bedeutet 100% Ökostrom konkret?',
-            'Was passiert nach der Mindestlaufzeit?',
-            'Kann ich den Tarif noch ändern, wenn ich umziehe?',
-          ].map(q => (
-            <div key={q} className={styles.faqItem}>
-              <span className={styles.faqQuestion}>{q}</span>
-              <button className={styles.faqToggle} aria-label="Antwort anzeigen"><ChevronDown /></button>
-            </div>
-          ))}
-        </div>
-      </section>
+      <Faq onApproach={collapseChatToDefault} />
 
       </div>{/* /redZone */}
 
       {/* ═══ Proof — white panel that slides up over the gradient ═══ */}
-      <div className={styles.proofWrap}>
-        <section className={styles.proof}>
-          <div className={styles.proofLeft}>
-            <span className={styles.proofLabel}>In deiner Nähe</span>
-            <h2 className={styles.proofTitle}>Du bist nicht der<br />Erste rund um</h2>
-            <div className={styles.proofZip}>
-              <LocationIcon />
-              <span className={styles.proofZipNum}>{plz}</span>
-            </div>
-            <p className={styles.proofDesc}>
-              Diesen Monat haben 7 Haushalte rund um {plz} zu E.ON gewechselt.
-              Drei davon erzählen, was sie überzeugt hat – echte Stimmen statt Werbeversprechen.
-            </p>
-          </div>
-
-          <div className={styles.proofRight}>
-            <img src="/proof-town.jpg" alt="Luftaufnahme der Nachbarschaft" className={`${styles.proofPhoto} ${styles.proofPhotoTown}`} />
-            <img src="/hems-house.jpg" alt="Haus mit E-Auto" className={`${styles.proofPhoto} ${styles.proofPhotoHouse}`} />
-
-            <div className={styles.proofCardStack}>
-              <div className={styles.proofCardBehind} />
-              <div className={styles.proofCard}>
-                <div>
-                  <p className={styles.proofQuoteTitle}>In 10 Minuten gewechselt.</p>
-                  <p className={styles.proofQuoteText}>Bei E.ON hab ich das gute Gefühl, wirklich grün unterwegs zu sein. Da ich mit meinem Ökostrom nachhaltige Projekte in dieser Region unterstütze.</p>
-                </div>
-                <div className={styles.proofAuthor}>
-                  <div className={styles.proofAvatar}>AK</div>
-                  <div className={styles.proofAuthorMeta}>
-                    <div className={styles.proofAuthorName}>Andrea K.</div>
-                    <div className={styles.proofAuthorRow}>
-                      <span className={styles.proofAuthorTariff}>Ökostrom 12</span>
-                      <span className={styles.proofAuthorWhen}>Gewechselt vor 3 Wochen</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className={styles.proofDots}>
-              <div className={`${styles.proofDot} ${styles.proofDotActive}`} />
-              <div className={styles.proofDot} />
-              <div className={styles.proofDot} />
-            </div>
-
-            <div className={styles.proofStats}>
-              <div className={styles.proofStat}>
-                <span className={styles.proofStatNum}>~12 Min</span>
-                <span className={styles.proofStatLabel}>bis zum Abschluss</span>
-              </div>
-              <div className={styles.proofStat}>
-                <span className={styles.proofStatNum}>94%</span>
-                <span className={styles.proofStatLabel}>würden wieder wechseln</span>
-              </div>
-              <Button variant="primary" className="ml-auto shrink-0 rounded-button">Mehr Erfahrungen</Button>
-            </div>
-          </div>
-        </section>
-      </div>
+      <Proof plz={plz} />
 
       {/* Conversational checkout journey — opened by the red "Tarif auswählen" CTAs */}
-      <JourneyModal />
+      <CheckoutJourney />
     </div>
   );
 }

@@ -1,0 +1,64 @@
+/* FAQ section — moved verbatim out of tariff.module.css. */
+.faq {
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 150px 24px 120px;
+  color: #fff;
+}.faqHead {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  text-align: center;
+  margin-bottom: 56px;
+}.faqLabel {
+  font-family: var(--font-body);
+  font-weight: 500;
+  font-size: 20px;
+  line-height: 1.64;
+  opacity: 0.9;
+}.faqTitle {
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: clamp(32px, 3.4vw, 40px);
+  line-height: 1.1;
+  margin: 0;
+}.faqList {
+  width: 100%;
+  max-width: 1172px;
+  display: flex;
+  flex-direction: column;
+}.faqItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 32px 24px;
+  border-radius: 12px;
+  border-bottom: 1px solid rgba(230, 230, 230, 0.1);
+  background: rgba(241, 235, 228, 0);
+  cursor: pointer;
+  transition: background 0.3s ease;
+}.faqItem:hover { background: rgba(241, 235, 228, 0.1); }.faqQuestion {
+  font-family: var(--font-body);
+  font-weight: 500;
+  font-size: clamp(18px, 1.7vw, 22px);
+  line-height: 1.1;
+  color: #fff;
+}.faqToggle {
+  width: 48px;
+  height: 48px;
+  flex-shrink: 0;
+  border: none;
+  border-radius: 14px;
+  background: #fff;
+  color: var(--c-text-primary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.3s var(--ease-out);
+}.faqToggle svg { display: block; }

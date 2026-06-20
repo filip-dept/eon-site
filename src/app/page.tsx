@@ -1,5 +1,5 @@
 import Hero from '@/components/Hero/Hero';
-import OnboardingModal from '@/components/Journey/OnboardingModal';
+import OnboardingJourney from '@/components/Journey/OnboardingJourney';
 import IntroLoader from '@/components/IntroLoader/IntroLoader';
 
 export default function Home() {
@@ -7,7 +7,7 @@ export default function Home() {
     <main>
       <Hero />
       {/* Hero chat chips open the 3-question onboarding → routes to /tariff */}
-      <OnboardingModal />
+      <OnboardingJourney />
       {/* branded intro splash on first load */}
       <IntroLoader variant="home" />
     </main>

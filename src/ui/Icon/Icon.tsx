@@ -82,6 +82,33 @@ const icons = {
       <path d="M2 6.2l2.6 2.6L10 3" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" />
     ),
   },
+  'arrow-right': {
+    viewBox: '0 0 16 16',
+    width: 16,
+    height: 16,
+    content: (
+      <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" />
+    ),
+  },
+  location: {
+    viewBox: '0 0 24 24',
+    width: 16,
+    height: 16,
+    content: (
+      <g stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+        <path d="M12 21c-4-4-7-7.3-7-10a7 7 0 1 1 14 0c0 2.7-3 6-7 10z" />
+        <circle cx="12" cy="11" r="2" />
+      </g>
+    ),
+  },
+  'chevron-down': {
+    viewBox: '0 0 16 16',
+    width: 14,
+    height: 14,
+    content: (
+      <path d="M3 6l5 5 5-5" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" />
+    ),
+  },
 } satisfies Record<string, IconDef>;
 
 export type IconName = keyof typeof icons;
