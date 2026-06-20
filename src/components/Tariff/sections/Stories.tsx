@@ -1,11 +1,5 @@
+import { Icon } from '@/ui/Icon';
 import styles from '../tariff.module.css';
-
-const PlayCarrierIcon = () => (
-  <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
-    <circle cx="20" cy="20" r="15" stroke="currentColor" strokeWidth="2" />
-    <path d="M17 14.5l9 5.5-9 5.5z" fill="currentColor" />
-  </svg>
-);
 
 const STORY_CARDS = [
   { cls: styles.storyCard1, img: '/tariff-man.png', title: 'Was heißt hier Ökostrom?', sub: 'Kein Marketing – ein Nachweis.' },
@@ -40,7 +34,7 @@ export function Stories() {
             <div key={card.title} className={`${styles.storyCard} ${card.cls}`}>
               <img src={card.img} alt="" className={styles.storyMedia} />
               <div className={styles.storyShade} />
-              <div className={styles.storyPlay}><PlayCarrierIcon /></div>
+              <div className={styles.storyPlay}><Icon name="play-carrier" /></div>
               <div className={styles.storyCaption}>
                 <p className={styles.storyCaptionTitle}>{card.title}</p>
                 <p className={styles.storyCaptionSub}>{card.sub}</p>
