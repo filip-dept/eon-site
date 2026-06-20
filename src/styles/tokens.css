@@ -1,75 +1,78 @@
-:root {
-  /* ─── Brand colours (from Figma variables) ─── */
-  --c-red: #ea1b0a;             /* SCH background/interactive/primary, gradient stop 1 */
-  --c-magenta: #c11054;         /* gradient stop 3 */
-  --c-purple: #941481;          /* gradient stop 4 */
-  --c-white: #ffffff;
-  --c-text-primary: #262626;    /* SCH Text/decorative/primary */
-  --c-text-secondary: #535252;  /* UI text/decorative/secondary (placeholder) */
-  --c-chip-bg: #ebebeb;
-  --c-chip-border: #e5e4e4;
-  --c-black: #0a0a0a;
+/* ──────────────────────────────────────────────────────────────────────────
+   tokens.css — dimension tokens: spacing, radii, shadows, borders, z-index,
+   sizes, motion, opacity. (Colour → colors.css/palette.css; type → typography.css.)
 
-  /* tariff cards (Figma "Idea" refined panel/comparison) */
-  --c-bg-secondary: #f8f5f2;    /* SCH background/decorative — secondary surface */
-  --c-divider: #d7d0cc;         /* grey/300 — in-card divider */
-  --c-success: #18a087;         /* UI system feedback/success — recommendation badge */
-  /* recommended card: red-tinted upward glow + soft drop shadow */
+   No magic numbers: every spacing/radius/shadow/etc. a component uses resolves to
+   a token here, surfaced as a Tailwind utility in globals.css. Numeric spacing
+   (gap-4, p-6 …) comes from Tailwind's built-in 4px grid; only SEMANTIC spacing
+   is tokenised here. Figma-sourced where a variable exists; otherwise seeded to
+   today's values and refined as components migrate.
+   ────────────────────────────────────────────────────────────────────────── */
+:root {
+  /* ── Semantic spacing (named roles; numeric scale = Tailwind grid) ──
+     Figma: grid-margin 32 · grid-gutter 48 · formSpace 16/24 · padding-section 88 */
+  --gutter: 32px;        /* page side gutter */
+  --section-y: 88px;     /* vertical rhythm between major sections */
+  --card-pad: 24px;      /* inner padding of cards/panels */
+  --field-gap: 16px;     /* gap between form fields */
+  --stack-sm: 8px;       /* tight vertical stack */
+  --stack-md: 16px;
+  --stack-lg: 24px;
+
+  /* ── Radii ── (Figma exposes button-100 = 14; rest seeded to component corners) */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-button: 14px; /* Figma `border radius/button primary/button-100` */
+  --radius-pill: 999px;
+  --radius-full: 50%;
+
+  /* ── Shadows ── */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.06);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.10);
+  --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.16);
+  --shadow-modal: 0 4px 24px rgba(0, 0, 0, 0.10); /* Figma `Modal/Default` */
+  --shadow-chat: 0 4px 24px rgba(0, 0, 0, 0.10);  /* chat surface (= legacy --chat-shadow) */
+  /* recommended tariff card: red-tinted upward glow + soft drop shadow */
   --shadow-rec: 0 -16px 34px 0 rgba(150, 17, 8, 0.4), 4px 20px 24px -8px rgba(0, 0, 0, 0.25);
 
-  /* Hero brand gradient (red → magenta → purple), top-left origin */
-  --hero-gradient: linear-gradient(135deg, #ea1b0a 0%, #ea1b0a 35%, #c11054 72%, #941481 100%);
+  /* ── Borders (widths; colours live in colors.css) ── */
+  --border-1: 1px;
+  --border-2: 2px;
 
-  /* ─── Typography (E.ON design system — Figma "Design eon.de") ───
-     Family: EON Brix Sans. Loaded weights: Regular 400 / Medium 500 / Bold 700.
-     Scale (size / line-height), letter-spacing 0:
-       Headings (Bold 700): H3 56/64 · H2 40/48 · H4 36/44 · H5 22/30 · H6 16/24
-       Copy: xl 20/30 · lg 18/27 · md 16/24 · sm 14/21  (Regular/Medium/Bold) */
-  --font-head: 'EON Head', 'Arial Black', system-ui, sans-serif;
-  --font-body: 'EON Brix Sans', Arial, system-ui, sans-serif;
+  /* ── Z-index (named, not magic numbers) ── */
+  --z-base: 1;
+  --z-nav: 100;
+  --z-overlay: 200;
+  --z-modal: 300;
+  --z-orb: 400;
+  --z-intro: 9999;
 
-  --fw-regular: 400;
-  --fw-medium: 500;
-  --fw-bold: 700;
-
-  /* headings */
-  --fs-h3: 56px;  --lh-h3: 100%;
-  --fs-h2: 40px;  --lh-h2: 100%;
-  --fs-h4: 36px;  --lh-h4: 100%;
-  --fs-h5: 22px;  --lh-h5: 100%;
-  --fs-h6: 16px;  --lh-h6: 100%;
-
-  /* copy */
-  --fs-xl: 20px;  --lh-xl: 30px;
-  --fs-lg: 18px;  --lh-lg: 27px;
-  --fs-md: 16px;  --lh-md: 24px;
-  --fs-sm: 14px;  --lh-sm: 21px;
-
-  /* aliases still referenced in components */
-  --fs-nav: 18px;
-  --fs-input: 18px;   --lh-input: 27px;   /* Copy/lg */
-  --fs-chip: 16px;    --lh-chip: 24px;    /* Copy/md */
-
-  /* ─── Layout ─── */
+  /* ── Sizes / layout ── */
   --nav-height: 68px;
   --nav-pad-x: clamp(16px, 4vw, 48px);
   --hero-pad: 20px;
   --container-max: 1440px;
+  --media-radius: 20px;
+  --scroll-size: 66px;
 
   /* Chat module */
   --chat-width: 660px;
   --chat-radius: 24px;
   --chat-pad: 16px;
   --chat-gap: 24px;
-  --chat-shadow: 0px 4px 24px 0px rgba(0, 0, 0, 0.1);
+  --chat-shadow: var(--shadow-chat);
 
-  /* Image area */
-  --media-radius: 20px;
-
-  /* Scroll indicator */
-  --scroll-size: 66px;
-
-  /* ─── Easings ─── */
-  --ease-eon: cubic-bezier(0.33, 0.02, 0, 0.99);
+  /* ── Motion ── (durations seeded; brand eases preserved. TS mirror → lib/motion/tokens.ts, Phase 4) */
+  --duration-fast: 150ms;
+  --duration-base: 300ms;
+  --duration-slow: 600ms;
+  --ease-eon: cubic-bezier(0.33, 0.02, 0, 0.99);   /* brand ease */
   --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-emphasized: cubic-bezier(0.2, 0, 0, 1);
+
+  /* ── Opacity ── */
+  --opacity-muted: 0.6;
+  --opacity-disabled: 0.4;
 }

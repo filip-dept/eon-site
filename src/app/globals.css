@@ -4,45 +4,209 @@
    visual result identical; Preflight is reconsidered once components fully migrate. */
 @layer theme, base, components, utilities;
 
+/* Design tokens — split by concern (source of truth, framework-agnostic):
+   palette (raw ramp) → colors (semantic) · typography (scale) · tokens (dims). */
 @import '../styles/fonts.css';
+@import '../styles/palette.css';
+@import '../styles/colors.css';
+@import '../styles/typography.css';
 @import '../styles/tokens.css';
 
 @import 'tailwindcss/theme.css' layer(theme);
 @import 'tailwindcss/utilities.css' layer(utilities);
 
-/* Feed the existing design tokens into the Tailwind theme. `inline` makes the
-   generated utilities reference the token vars directly (e.g. `bg-brand-red` →
-   `var(--c-red)`), so `styles/tokens.css` stays the single source of truth.
-   The full semantic colour/type/dimension taxonomy lands in Phase 1; this is the
-   minimal mapping proving the wiring. */
+/* ── Tailwind theme binding ──
+   Maps the design tokens above onto Tailwind utilities. `inline` makes the
+   generated utilities reference the token vars directly (e.g. `bg-page` →
+   `var(--bg-page)`), so the `styles/` files stay the single source of truth and
+   editing a token (or re-syncing it from Figma) updates every utility. */
 @theme inline {
+  /* Fonts → font-head / font-body */
   --font-head: var(--font-head);
   --font-body: var(--font-body);
 
-  --color-brand-red: var(--c-red);
-  --color-brand-magenta: var(--c-magenta);
-  --color-brand-purple: var(--c-purple);
-  --color-primary: var(--c-text-primary);
-  --color-secondary: var(--c-text-secondary);
-  --color-surface: var(--c-bg-secondary);
-  --color-success: var(--c-success);
-  --color-divider: var(--c-divider);
+  /* Colour — semantic groups (→ bg-*, text-*, border-*) */
+  --color-page: var(--bg-page);
+  --color-surface: var(--bg-surface);
+  --color-muted: var(--bg-muted);
+  --color-inverse: var(--bg-inverse);
 
-  --text-h3: var(--fs-h3);
-  --text-h2: var(--fs-h2);
-  --text-h4: var(--fs-h4);
-  --text-h5: var(--fs-h5);
-  --text-h6: var(--fs-h6);
-  --text-copy-xl: var(--fs-xl);
-  --text-copy-lg: var(--fs-lg);
-  --text-copy-md: var(--fs-md);
-  --text-copy-sm: var(--fs-sm);
+  --color-primary: var(--fg-primary);
+  --color-secondary: var(--fg-secondary);
+  --color-tertiary: var(--fg-muted);     /* text-tertiary (muted fg) */
+  --color-on-inverse: var(--fg-inverse); /* text-on-inverse */
+
+  /* Borders → border-line / border-line-strong / border-line-subtle
+     (Tailwind couples border colours to the colour namespace; `line` reads as a
+     stroke and avoids the doubled `border-border-*`). */
+  --color-line: var(--border-default);
+  --color-line-strong: var(--border-strong);
+  --color-line-subtle: var(--border-subtle);
+
+  --color-success: var(--success);
+  --color-info: var(--info);
+  --color-warning: var(--warning);
+  --color-error: var(--error);
+
+  --color-brand: var(--brand-red);
+  --color-brand-red: var(--brand-red);
+  --color-brand-magenta: var(--brand-magenta);
+  --color-brand-purple: var(--brand-purple);
+
+  --color-btn-primary: var(--btn-primary);
+  --color-btn-primary-hover: var(--btn-primary-hover);
+  --color-btn-disabled: var(--btn-disabled-bg);
+  --color-btn-disabled-fg: var(--btn-disabled-fg);
+  --color-focus-ring: var(--focus-ring);
+
+  /* Type scale — mirrors Figma. Headings (bold, responsive) → text-heading-1…6;
+     copy → text-copy-xl|lg|md|sm; lead copy → text-abstract-*; quotes → text-quote-*. */
+  --text-heading-1: var(--type-heading-1-size);
+  --text-heading-1--line-height: var(--type-heading-1-line);
+  --text-heading-1--font-weight: var(--fw-bold);
+  --text-heading-2: var(--type-heading-2-size);
+  --text-heading-2--line-height: var(--type-heading-2-line);
+  --text-heading-2--font-weight: var(--fw-bold);
+  --text-heading-3: var(--type-heading-3-size);
+  --text-heading-3--line-height: var(--type-heading-3-line);
+  --text-heading-3--font-weight: var(--fw-bold);
+  --text-heading-4: var(--type-heading-4-size);
+  --text-heading-4--line-height: var(--type-heading-4-line);
+  --text-heading-4--font-weight: var(--fw-bold);
+  --text-heading-5: var(--type-heading-5-size);
+  --text-heading-5--line-height: var(--type-heading-5-line);
+  --text-heading-5--font-weight: var(--fw-bold);
+  --text-heading-6: var(--type-heading-6-size);
+  --text-heading-6--line-height: var(--type-heading-6-line);
+  --text-heading-6--font-weight: var(--fw-bold);
+
+  /* Fixed per-mode heading sizes (Figma Headings/N/{sm,md,lg,xl,xxl}) →
+     text-heading-N-{sm|md|lg|xl|xxl}. Pin a size instead of the responsive var. */
+  --text-heading-1-sm: var(--type-heading-1-sm);  --text-heading-1-sm--line-height: var(--type-heading-1-sm-lh);  --text-heading-1-sm--font-weight: var(--fw-bold);
+  --text-heading-1-md: var(--type-heading-1-md);  --text-heading-1-md--line-height: var(--type-heading-1-md-lh);  --text-heading-1-md--font-weight: var(--fw-bold);
+  --text-heading-1-lg: var(--type-heading-1-lg);  --text-heading-1-lg--line-height: var(--type-heading-1-lg-lh);  --text-heading-1-lg--font-weight: var(--fw-bold);
+  --text-heading-1-xl: var(--type-heading-1-xl);  --text-heading-1-xl--line-height: var(--type-heading-1-xl-lh);  --text-heading-1-xl--font-weight: var(--fw-bold);
+  --text-heading-1-xxl: var(--type-heading-1-xxl); --text-heading-1-xxl--line-height: var(--type-heading-1-xxl-lh); --text-heading-1-xxl--font-weight: var(--fw-bold);
+  --text-heading-2-sm: var(--type-heading-2-sm);  --text-heading-2-sm--line-height: var(--type-heading-2-sm-lh);  --text-heading-2-sm--font-weight: var(--fw-bold);
+  --text-heading-2-md: var(--type-heading-2-md);  --text-heading-2-md--line-height: var(--type-heading-2-md-lh);  --text-heading-2-md--font-weight: var(--fw-bold);
+  --text-heading-2-lg: var(--type-heading-2-lg);  --text-heading-2-lg--line-height: var(--type-heading-2-lg-lh);  --text-heading-2-lg--font-weight: var(--fw-bold);
+  --text-heading-2-xl: var(--type-heading-2-xl);  --text-heading-2-xl--line-height: var(--type-heading-2-xl-lh);  --text-heading-2-xl--font-weight: var(--fw-bold);
+  --text-heading-2-xxl: var(--type-heading-2-xxl); --text-heading-2-xxl--line-height: var(--type-heading-2-xxl-lh); --text-heading-2-xxl--font-weight: var(--fw-bold);
+  --text-heading-3-sm: var(--type-heading-3-sm);  --text-heading-3-sm--line-height: var(--type-heading-3-sm-lh);  --text-heading-3-sm--font-weight: var(--fw-bold);
+  --text-heading-3-md: var(--type-heading-3-md);  --text-heading-3-md--line-height: var(--type-heading-3-md-lh);  --text-heading-3-md--font-weight: var(--fw-bold);
+  --text-heading-3-lg: var(--type-heading-3-lg);  --text-heading-3-lg--line-height: var(--type-heading-3-lg-lh);  --text-heading-3-lg--font-weight: var(--fw-bold);
+  --text-heading-3-xl: var(--type-heading-3-xl);  --text-heading-3-xl--line-height: var(--type-heading-3-xl-lh);  --text-heading-3-xl--font-weight: var(--fw-bold);
+  --text-heading-3-xxl: var(--type-heading-3-xxl); --text-heading-3-xxl--line-height: var(--type-heading-3-xxl-lh); --text-heading-3-xxl--font-weight: var(--fw-bold);
+  --text-heading-4-sm: var(--type-heading-4-sm);  --text-heading-4-sm--line-height: var(--type-heading-4-sm-lh);  --text-heading-4-sm--font-weight: var(--fw-bold);
+  --text-heading-4-md: var(--type-heading-4-md);  --text-heading-4-md--line-height: var(--type-heading-4-md-lh);  --text-heading-4-md--font-weight: var(--fw-bold);
+  --text-heading-4-lg: var(--type-heading-4-lg);  --text-heading-4-lg--line-height: var(--type-heading-4-lg-lh);  --text-heading-4-lg--font-weight: var(--fw-bold);
+  --text-heading-4-xl: var(--type-heading-4-xl);  --text-heading-4-xl--line-height: var(--type-heading-4-xl-lh);  --text-heading-4-xl--font-weight: var(--fw-bold);
+  --text-heading-4-xxl: var(--type-heading-4-xxl); --text-heading-4-xxl--line-height: var(--type-heading-4-xxl-lh); --text-heading-4-xxl--font-weight: var(--fw-bold);
+  --text-heading-5-sm: var(--type-heading-5-sm);  --text-heading-5-sm--line-height: var(--type-heading-5-sm-lh);  --text-heading-5-sm--font-weight: var(--fw-bold);
+  --text-heading-5-md: var(--type-heading-5-md);  --text-heading-5-md--line-height: var(--type-heading-5-md-lh);  --text-heading-5-md--font-weight: var(--fw-bold);
+  --text-heading-5-lg: var(--type-heading-5-lg);  --text-heading-5-lg--line-height: var(--type-heading-5-lg-lh);  --text-heading-5-lg--font-weight: var(--fw-bold);
+  --text-heading-5-xl: var(--type-heading-5-xl);  --text-heading-5-xl--line-height: var(--type-heading-5-xl-lh);  --text-heading-5-xl--font-weight: var(--fw-bold);
+  --text-heading-5-xxl: var(--type-heading-5-xxl); --text-heading-5-xxl--line-height: var(--type-heading-5-xxl-lh); --text-heading-5-xxl--font-weight: var(--fw-bold);
+  --text-heading-6-sm: var(--type-heading-6-sm);  --text-heading-6-sm--line-height: var(--type-heading-6-sm-lh);  --text-heading-6-sm--font-weight: var(--fw-bold);
+  --text-heading-6-md: var(--type-heading-6-md);  --text-heading-6-md--line-height: var(--type-heading-6-md-lh);  --text-heading-6-md--font-weight: var(--fw-bold);
+  --text-heading-6-lg: var(--type-heading-6-lg);  --text-heading-6-lg--line-height: var(--type-heading-6-lg-lh);  --text-heading-6-lg--font-weight: var(--fw-bold);
+  --text-heading-6-xl: var(--type-heading-6-xl);  --text-heading-6-xl--line-height: var(--type-heading-6-xl-lh);  --text-heading-6-xl--font-weight: var(--fw-bold);
+  --text-heading-6-xxl: var(--type-heading-6-xxl); --text-heading-6-xxl--line-height: var(--type-heading-6-xxl-lh); --text-heading-6-xxl--font-weight: var(--fw-bold);
+
+  --text-copy-xl: var(--type-copy-xl-size);
+  --text-copy-xl--line-height: var(--type-copy-xl-line);
+  --text-copy-lg: var(--type-copy-lg-size);
+  --text-copy-lg--line-height: var(--type-copy-lg-line);
+  --text-copy-md: var(--type-copy-md-size);
+  --text-copy-md--line-height: var(--type-copy-md-line);
+  --text-copy-sm: var(--type-copy-sm-size);
+  --text-copy-sm--line-height: var(--type-copy-sm-line);
+
+  --text-abstract-sm: var(--type-abstract-sm-size);
+  --text-abstract-sm--line-height: var(--type-abstract-sm-line);
+  --text-abstract-sm--font-weight: var(--fw-medium);
+  --text-abstract-md: var(--type-abstract-md-size);
+  --text-abstract-md--line-height: var(--type-abstract-md-line);
+  --text-abstract-md--font-weight: var(--fw-medium);
+  --text-abstract-lg: var(--type-abstract-lg-size);
+  --text-abstract-lg--line-height: var(--type-abstract-lg-line);
+  --text-abstract-lg--font-weight: var(--fw-medium);
+  --text-abstract-xl: var(--type-abstract-xl-size);
+  --text-abstract-xl--line-height: var(--type-abstract-xl-line);
+  --text-abstract-xl--font-weight: var(--fw-medium);
+
+  --text-quote-sm: var(--type-quote-sm-size);
+  --text-quote-sm--line-height: var(--type-quote-sm-line);
+  --text-quote-md: var(--type-quote-md-size);
+  --text-quote-md--line-height: var(--type-quote-md-line);
+  --text-quote-lg: var(--type-quote-lg-size);
+  --text-quote-lg--line-height: var(--type-quote-lg-line);
+  --text-quote-xl: var(--type-quote-xl-size);
+  --text-quote-xl--line-height: var(--type-quote-xl-line);
+
+  /* Font weights → font-regular / font-medium / font-bold */
+  --font-weight-regular: var(--fw-regular);
+  --font-weight-medium: var(--fw-medium);
+  --font-weight-bold: var(--fw-bold);
+
+  /* Semantic spacing → p-gutter / gap-field / p-card / my-section … (numeric scale = Tailwind grid) */
+  --spacing-gutter: var(--gutter);
+  --spacing-section: var(--section-y);
+  --spacing-card: var(--card-pad);
+  --spacing-field: var(--field-gap);
+  --spacing-stack-sm: var(--stack-sm);
+  --spacing-stack-md: var(--stack-md);
+  --spacing-stack-lg: var(--stack-lg);
+
+  /* Radii → rounded-sm / rounded-md / rounded-lg / rounded-button / rounded-pill / rounded-full */
+  --radius-sm: var(--radius-sm);
+  --radius-md: var(--radius-md);
+  --radius-lg: var(--radius-lg);
+  --radius-button: var(--radius-button);
+  --radius-pill: var(--radius-pill);
+  --radius-full: var(--radius-full);
+
+  /* Shadows → shadow-sm / shadow-md / shadow-lg / shadow-modal / shadow-chat / shadow-rec */
+  --shadow-sm: var(--shadow-sm);
+  --shadow-md: var(--shadow-md);
+  --shadow-lg: var(--shadow-lg);
+  --shadow-modal: var(--shadow-modal);
+  --shadow-chat: var(--shadow-chat);
+  --shadow-rec: var(--shadow-rec);
+
+  /* Easings → ease-eon / ease-out / ease-standard / ease-emphasized */
+  --ease-eon: var(--ease-eon);
+  --ease-out: var(--ease-out);
+  --ease-standard: var(--ease-standard);
+  --ease-emphasized: var(--ease-emphasized);
+
+  /* Container max → max-w-page */
+  --container-page: var(--container-max);
+
+  /* Breakpoints aligned to E.ON's viewport modes so md:/lg:/xl:/2xl: stay
+     consistent with the responsive type steps in typography.css. md (768) and
+     lg (1024) already match Tailwind defaults; override xl/2xl. (Confirm with design.) */
+  --breakpoint-xl: 1440px;
+  --breakpoint-2xl: 1920px;
 }
 
-*, *::before, *::after {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
+/* Named z-index utilities (Tailwind v4 has no z-index theme namespace). */
+@utility z-nav { z-index: var(--z-nav); }
+@utility z-overlay { z-index: var(--z-overlay); }
+@utility z-modal { z-index: var(--z-modal); }
+@utility z-orb { z-index: var(--z-orb); }
+@utility z-intro { z-index: var(--z-intro); }
+
+/* Base reset in @layer base so Tailwind's `@layer utilities` (p-*, m-*, …) win over
+   it. Existing unlayered CSS-Module rules still override this base, exactly as before
+   — so this is neutral for un-migrated components and fixes padding/margin utilities
+   for migrated ones. (We don't import Tailwind Preflight; this is our minimal reset.) */
+@layer base {
+  *, *::before, *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
 }
 
 html {
@@ -77,11 +241,16 @@ html.lenis body {
   overflow: hidden;
 }
 
-a {
-  color: inherit;
-  text-decoration: none;
-}
+/* Base element defaults in @layer base so Tailwind utilities (text-*, underline,
+   font-*) win — otherwise unlayered `a {}` would override `<Link>`'s colour/underline
+   (as Tailwind's Preflight base would, which we don't import). */
+@layer base {
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
 
-button {
-  font-family: inherit;
+  button {
+    font-family: inherit;
+  }
 }

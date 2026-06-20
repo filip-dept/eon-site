@@ -1,0 +1,158 @@
+/* ──────────────────────────────────────────────────────────────────────────
+   typography.css — font families, weights, and the type scale.
+
+   Names + values MIRROR the E.ON Figma type system (file K94xaZYEFeZ0QQiqioY2RJ,
+   "Text Styles"): `Headings/1…6` and `Copy/xl|lg|md|sm`, plus `Abstract/*` and
+   `Quote/*`. Family is EON Brix Sans (Figma uses it for headings too, style Bold);
+   `EON Head` is kept ONLY for the hero display headline.
+
+   Headings come in two forms, matching Figma:
+     • a RESPONSIVE "var" — `--type-heading-N-size/line` resolve to the breakpoint's
+       value automatically (the recommended default), and
+     • FIXED per-mode sizes — `--type-heading-N-{sm,md,lg,xl,xxl}` pinned to one mode.
+   The var simply points at the current breakpoint's fixed token (so values live once).
+   Copy/Abstract/Quote are fixed scales (no breakpoint variants in Figma).
+
+   ⚠️ Breakpoint thresholds (768/1024/1440/1920) are a best-effort map of the Figma
+   viewport modes; confirm with design. They match the Tailwind screen overrides in
+   globals.css so `md:`/`lg:`/`xl:`/`2xl:` stay consistent.
+
+   The `--fs-*`/`--lh-*` block is the FROZEN legacy scale (today's values), removed
+   per component as they migrate.
+   ────────────────────────────────────────────────────────────────────────── */
+:root {
+  /* ── Families ── */
+  --font-head: 'EON Head', 'Arial Black', system-ui, sans-serif;
+  --font-body: 'EON Brix Sans', Arial, system-ui, sans-serif;
+
+  /* ── Weights ── (Figma: Regular/Medium/Bold; Black 900 not loaded — needs .otf) */
+  --fw-regular: 400;
+  --fw-medium: 500;
+  --fw-bold: 700;
+
+  /* ── Heading FIXED sizes per Figma viewport mode (size / line-height) ── */
+  --type-heading-1-sm: 48px;  --type-heading-1-sm-lh: 56px;
+  --type-heading-1-md: 60px;  --type-heading-1-md-lh: 68px;
+  --type-heading-1-lg: 72px;  --type-heading-1-lg-lh: 80px;
+  --type-heading-1-xl: 88px;  --type-heading-1-xl-lh: 96px;
+  --type-heading-1-xxl: 88px; --type-heading-1-xxl-lh: 96px;
+
+  --type-heading-2-sm: 40px;  --type-heading-2-sm-lh: 48px;
+  --type-heading-2-md: 48px;  --type-heading-2-md-lh: 56px;
+  --type-heading-2-lg: 56px;  --type-heading-2-lg-lh: 64px;
+  --type-heading-2-xl: 72px;  --type-heading-2-xl-lh: 80px;
+  --type-heading-2-xxl: 72px; --type-heading-2-xxl-lh: 80px;
+
+  --type-heading-3-sm: 32px;  --type-heading-3-sm-lh: 40px;
+  --type-heading-3-md: 40px;  --type-heading-3-md-lh: 48px;
+  --type-heading-3-lg: 48px;  --type-heading-3-lg-lh: 56px;
+  --type-heading-3-xl: 56px;  --type-heading-3-xl-lh: 64px;
+  --type-heading-3-xxl: 56px; --type-heading-3-xxl-lh: 64px;
+
+  --type-heading-4-sm: 28px;  --type-heading-4-sm-lh: 36px;
+  --type-heading-4-md: 30px;  --type-heading-4-md-lh: 38px;
+  --type-heading-4-lg: 32px;  --type-heading-4-lg-lh: 40px;
+  --type-heading-4-xl: 36px;  --type-heading-4-xl-lh: 44px;
+  --type-heading-4-xxl: 36px; --type-heading-4-xxl-lh: 44px;
+
+  --type-heading-5-sm: 22px;  --type-heading-5-sm-lh: 30px;
+  --type-heading-5-md: 24px;  --type-heading-5-md-lh: 32px;
+  --type-heading-5-lg: 24px;  --type-heading-5-lg-lh: 32px;
+  --type-heading-5-xl: 26px;  --type-heading-5-xl-lh: 36px;
+  --type-heading-5-xxl: 26px; --type-heading-5-xxl-lh: 36px;
+
+  --type-heading-6-sm: 16px;  --type-heading-6-sm-lh: 24px;
+  --type-heading-6-md: 18px;  --type-heading-6-md-lh: 24px;
+  --type-heading-6-lg: 20px;  --type-heading-6-lg-lh: 32px;
+  --type-heading-6-xl: 20px;  --type-heading-6-xl-lh: 28px;
+  --type-heading-6-xxl: 20px; --type-heading-6-xxl-lh: 28px;
+
+  /* ── Responsive "var" = the current breakpoint's fixed value (base = sm) ── */
+  --type-heading-1-size: var(--type-heading-1-sm); --type-heading-1-line: var(--type-heading-1-sm-lh);
+  --type-heading-2-size: var(--type-heading-2-sm); --type-heading-2-line: var(--type-heading-2-sm-lh);
+  --type-heading-3-size: var(--type-heading-3-sm); --type-heading-3-line: var(--type-heading-3-sm-lh);
+  --type-heading-4-size: var(--type-heading-4-sm); --type-heading-4-line: var(--type-heading-4-sm-lh);
+  --type-heading-5-size: var(--type-heading-5-sm); --type-heading-5-line: var(--type-heading-5-sm-lh);
+  --type-heading-6-size: var(--type-heading-6-sm); --type-heading-6-line: var(--type-heading-6-sm-lh);
+
+  /* ── Copy (fixed; Regular/Medium/Bold via font-* utilities) ── */
+  --type-copy-xl-size: 20px;  --type-copy-xl-line: 30px;
+  --type-copy-lg-size: 18px;  --type-copy-lg-line: 27px;
+  --type-copy-md-size: 16px;  --type-copy-md-line: 24px;
+  --type-copy-sm-size: 14px;  --type-copy-sm-line: 21px;
+
+  /* ── Abstract (lead/intro copy, Medium) ── */
+  --type-abstract-sm-size: 18px;  --type-abstract-sm-line: 27px;
+  --type-abstract-md-size: 20px;  --type-abstract-md-line: 27px;
+  --type-abstract-lg-size: 20px;  --type-abstract-lg-line: 27px;
+  --type-abstract-xl-size: 22px;  --type-abstract-xl-line: 27px;
+
+  /* ── Quote (pull-quotes) ── */
+  --type-quote-sm-size: 22px;  --type-quote-sm-line: 33px;
+  --type-quote-md-size: 24px;  --type-quote-md-line: 36px;
+  --type-quote-lg-size: 26px;  --type-quote-lg-line: 39px;
+  --type-quote-xl-size: 26px;  --type-quote-xl-line: 39px;
+}
+
+/* ── Responsive heading "var" steps (Figma modes md → xxl) ── */
+@media (min-width: 768px) { /* md */
+  :root {
+    --type-heading-1-size: var(--type-heading-1-md); --type-heading-1-line: var(--type-heading-1-md-lh);
+    --type-heading-2-size: var(--type-heading-2-md); --type-heading-2-line: var(--type-heading-2-md-lh);
+    --type-heading-3-size: var(--type-heading-3-md); --type-heading-3-line: var(--type-heading-3-md-lh);
+    --type-heading-4-size: var(--type-heading-4-md); --type-heading-4-line: var(--type-heading-4-md-lh);
+    --type-heading-5-size: var(--type-heading-5-md); --type-heading-5-line: var(--type-heading-5-md-lh);
+    --type-heading-6-size: var(--type-heading-6-md); --type-heading-6-line: var(--type-heading-6-md-lh);
+  }
+}
+@media (min-width: 1024px) { /* lg */
+  :root {
+    --type-heading-1-size: var(--type-heading-1-lg); --type-heading-1-line: var(--type-heading-1-lg-lh);
+    --type-heading-2-size: var(--type-heading-2-lg); --type-heading-2-line: var(--type-heading-2-lg-lh);
+    --type-heading-3-size: var(--type-heading-3-lg); --type-heading-3-line: var(--type-heading-3-lg-lh);
+    --type-heading-4-size: var(--type-heading-4-lg); --type-heading-4-line: var(--type-heading-4-lg-lh);
+    --type-heading-5-size: var(--type-heading-5-lg); --type-heading-5-line: var(--type-heading-5-lg-lh);
+    --type-heading-6-size: var(--type-heading-6-lg); --type-heading-6-line: var(--type-heading-6-lg-lh);
+  }
+}
+@media (min-width: 1440px) { /* xl */
+  :root {
+    --type-heading-1-size: var(--type-heading-1-xl); --type-heading-1-line: var(--type-heading-1-xl-lh);
+    --type-heading-2-size: var(--type-heading-2-xl); --type-heading-2-line: var(--type-heading-2-xl-lh);
+    --type-heading-3-size: var(--type-heading-3-xl); --type-heading-3-line: var(--type-heading-3-xl-lh);
+    --type-heading-4-size: var(--type-heading-4-xl); --type-heading-4-line: var(--type-heading-4-xl-lh);
+    --type-heading-5-size: var(--type-heading-5-xl); --type-heading-5-line: var(--type-heading-5-xl-lh);
+    --type-heading-6-size: var(--type-heading-6-xl); --type-heading-6-line: var(--type-heading-6-xl-lh);
+  }
+}
+@media (min-width: 1920px) { /* xxl (same as xl per Figma) */
+  :root {
+    --type-heading-1-size: var(--type-heading-1-xxl); --type-heading-1-line: var(--type-heading-1-xxl-lh);
+    --type-heading-2-size: var(--type-heading-2-xxl); --type-heading-2-line: var(--type-heading-2-xxl-lh);
+    --type-heading-3-size: var(--type-heading-3-xxl); --type-heading-3-line: var(--type-heading-3-xxl-lh);
+    --type-heading-4-size: var(--type-heading-4-xxl); --type-heading-4-line: var(--type-heading-4-xxl-lh);
+    --type-heading-5-size: var(--type-heading-5-xxl); --type-heading-5-line: var(--type-heading-5-xxl-lh);
+    --type-heading-6-size: var(--type-heading-6-xxl); --type-heading-6-line: var(--type-heading-6-xxl-lh);
+  }
+}
+
+/* ════════════════════════════════════════════════════════════════════════
+   LEGACY (frozen) — today's type scale + alias drift still referenced by
+   components. Do not change; remove per component as they migrate.
+   ════════════════════════════════════════════════════════════════════════ */
+:root {
+  --fs-h3: 56px;  --lh-h3: 100%;
+  --fs-h2: 40px;  --lh-h2: 100%;
+  --fs-h4: 36px;  --lh-h4: 100%;
+  --fs-h5: 22px;  --lh-h5: 100%;
+  --fs-h6: 16px;  --lh-h6: 100%;
+
+  --fs-xl: 20px;  --lh-xl: 30px;
+  --fs-lg: 18px;  --lh-lg: 27px;
+  --fs-md: 16px;  --lh-md: 24px;
+  --fs-sm: 14px;  --lh-sm: 21px;
+
+  --fs-nav: 18px;
+  --fs-input: 18px;  --lh-input: 27px;
+  --fs-chip: 16px;   --lh-chip: 24px;
+}

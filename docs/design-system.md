@@ -30,16 +30,45 @@ Two layers: a small **palette** (raw colours, deduped) → **semantic tokens** g
 
 → Tailwind: `bg-page`, `bg-surface`, `text-primary`, `text-secondary`, `border-default`, `text-brand`, `bg-success`. **Audit target: every one of the 168 literals maps to a group token; 0 raw hex in components.** (Also unlocks dark mode later = swap the semantic layer.)
 
-## Typography — one clean scale
-Replace today's sprawl (`fs-h2/h3/h4/h5/h6`, `copy xl/lg/md/sm`, **plus** alias drift `fs-nav`/`fs-input`/`fs-chip` that just duplicate copy sizes) with **one minimal scale**, each entry = size + line-height + weight:
+## Typography — mirror the Figma scale
+The scale **mirrors the E.ON Figma type system 1:1** (names + values): `Headings/1…6`,
+`Copy/xl|lg|md|sm`, plus `Abstract/*` (lead copy) and `Quote/*`. This replaces today's
+sprawl (`fs-h2…h6`, `copy xl/lg/md/sm`, and the alias drift `fs-nav`/`fs-input`/`fs-chip`).
+Each entry = size + line-height + weight; headings are bold, copy is regular (Medium/Bold
+via `font-*` utilities).
+
+**Headings expose both forms Figma documents — `var` (responsive) and the fixed modes.**
+`<Heading level={N}>` (or `text-heading-N`) is the **`var`** style: one utility that resizes
+itself per breakpoint (the recommended default). To pin a specific Figma mode, use
+`<Heading level={N} size="sm|md|lg|xl|xxl">` (or `text-heading-N-<mode>`) → the exact fixed
+size, regardless of viewport. Weight is `<Heading … weight="bold|medium|regular">` (bold default).
+The per-breakpoint steps (the `var` ramp = the fixed columns below):
 
 ```
-display  (56/100, bold)   — hero
-h1 40 · h2 32 · h3 22 · h4 18           (headings, bold)
-body-lg 18/27 · body 16/24 · body-sm 14/21   (regular/medium)
-label 14 (medium) · caption 12
+                sm     md     lg     xl/xxl
+heading-1   48/56  60/68  72/80  88/96
+heading-2   40/48  48/56  56/64  72/80
+heading-3   32/40  40/48  48/56  56/64
+heading-4   28/36  30/38  32/40  36/44
+heading-5   22/30  24/32  24/32  26/36
+heading-6   16/24  18/24  20/32  20/28
 ```
-→ Tailwind `fontSize` keys (`text-h2`, `text-body-lg`) + a `<Text variant>`/`<Heading level>` component (see [components.md](./components.md)). Kills the hand-assembled font rules (and the `clamp()` headline bug). Aliases (`fs-nav`=`body-lg`, `fs-chip`=`body`) collapse into the scale.
+
+Copy (fixed): `copy-xl 20/30 · copy-lg 18/27 · copy-md 16/24 · copy-sm 14/21`.
+Abstract (Medium): `sm 18/27 · md/lg 20/27 · xl 22/27`. Quote: `sm 22/33 · md 24/36 · lg/xl 26/39`.
+
+→ Tailwind `fontSize` keys (`text-heading-2`, `text-copy-lg`) + a `<Text variant>`/`<Heading level>`
+component (see [components.md](./components.md)). Kills the hand-assembled font rules (and the
+`clamp()` headline bug).
+
+> **Rule — type is defined once, only referenced elsewhere.** It lives in the scale (`typography.css`) + the `<Text>`/`<Heading>` primitives. Every other component **references** it — `<Text variant>`/`<Heading level>` for content, or a `text-*` scale utility where a component can't be inserted. **No component declares raw `font-size`/`font-weight`/`line-height`/`font-family`** (lint-enforced: no off-scale or `text-[14px]` escapes). The only family applied at a usage site is `font-head` on the hero display headline.
+
+> **Family:** Figma uses **EON Brix Sans** for everything incl. headings (style *Bold*) —
+> the scale is family-agnostic (size/line/weight only). **`EON Head`** is kept solely for the
+> hero display headline (a site choice, not in the Figma text-style variables), applied via
+> `font-head` at the usage site. **Black (900)** copy weight exists in Figma but the `.otf`
+> isn't loaded yet. **Breakpoints** (768/1024/1440/1920) are a best-effort map of the Figma
+> viewport modes — confirm with design.
 
 ## Full token taxonomy — *every value is a variable*
 No magic numbers anywhere. Every spacing, radius, shadow, etc. resolves to a token (→ a Tailwind utility). Groups (in `styles/tokens.css`, mapped into the theme):
@@ -62,9 +91,9 @@ No magic numbers anywhere. Every spacing, radius, shadow, etc. resolves to a tok
 ## Tokens sourced from Figma (editable at the source)
 **Single source of truth = Figma Variables.** A sync script regenerates the token files so a designer edits a variable in Figma → we re-pull → the site updates (same model as the icon sync).
 
-- `scripts/sync-tokens.ts` reads the Figma **variable collections** (colour, number/spacing, radius, …) via the **Figma MCP `get_variable_defs`** (per-frame, available now) and/or the **Figma Variables REST API** (`/v1/files/:key/variables/local`), then writes `styles/colors.css` + `styles/tokens.css` and the Tailwind theme mapping. `npm run sync:tokens`.
+- **Built:** `scripts/sync-tokens.mjs` (`npm run sync:tokens`) regenerates `styles/palette.css` (the raw colour ramps) from the Figma colour variables. Source priority: the **Variables REST API** (`/v1/files/:key/variables/local`) when `FIGMA_TOKEN` is set, else the checked-in snapshot `scripts/figma-variables.json` (refreshed via the Figma MCP — select the Colours frame, re-pull, update the JSON). Only the **palette** (raw primitives) is generated; the semantic layer (`colors.css`), type scale, and dimensions stay hand-curated (they encode design decisions a dump can't infer).
 - Mapping is by **Figma variable name → token name** (e.g. `grid/spacer-100` → `--space-…`, `border-radius/button-100` → `--radius-button`) — names we already saw in the frames (`var(--grid/spacer-100,24px)`, `--border-radius/button-primary/button-100`).
-- ⚠️ Caveat: the **full Variables REST API is Enterprise-gated**; if unavailable we seed/maintain via MCP per-frame reads + a checked-in mapping file. Either way the tokens stay the editable layer and Figma the origin.
+- ⚠️ The **full Variables REST API is Enterprise-gated** — the REST path is implemented but unverified here; the snapshot path is the tested default. **Not yet generated:** spacing/radius/type primitives (extend the same script) and the **icon** sync (same MCP→SVGR pattern, still pending).
 
 ## Enforcement
 `eslint-plugin-tailwindcss` (class order, no contradictions) + a rule banning arbitrary hex (`text-[#fff]`) and off-scale sizes — values always come from the theme. This is what prevents regression to today's 168-literal drift.
