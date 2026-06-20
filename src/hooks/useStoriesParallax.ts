@@ -58,10 +58,12 @@ export function useStoriesParallax(pageRef: RefObject<HTMLElement | null>) {
         onEnter: () => {
           gsap.to(zoneBg, { opacity: 1, duration: 0.5, ease: 'power1.out', overwrite: 'auto' });
           gsap.to(cardEntry, { color: '#ffffff', duration: 0.4, ease: 'power1.inOut', overwrite: 'auto' });
+          page.dataset.navSolid = 'true'; // dark gradient behind the nav → show the white pill
         },
         onLeaveBack: () => {
           gsap.to(zoneBg, { opacity: 0, duration: 0.4, ease: 'power1.in', overwrite: 'auto' });
           gsap.to(cardEntry, { color: '#262626', duration: 0.3, ease: 'power1.inOut', overwrite: 'auto' });
+          page.dataset.navSolid = 'false'; // back on the light page → nav goes bare again
         },
       });
     }, page);

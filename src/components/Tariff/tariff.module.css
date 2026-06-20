@@ -36,6 +36,18 @@
   align-items: center;
   justify-content: space-between;
 }
+/* The nav sits BARE over the light tariff page (dark text, no white pill). The
+   solid pill only appears once the page background shifts to the gradient at the
+   stories section (data-nav-solid, set with the bg switch) — so dark nav text
+   stays readable over the dark gradient. Overrides Navbar's .solid background. */
+.topBar .nav {
+  background: transparent;
+  box-shadow: none;
+}
+.page[data-nav-solid='true'] .topBar .nav {
+  background: #fff;
+  box-shadow: 0 10px 34px rgba(0, 0, 0, 0.08);
+}
 
 .navLeft {
   display: flex;
@@ -425,7 +437,8 @@
   display: none;
 }
 
-.frameImage img {
+.frameImage img,
+.frameImage video {
   display: block;
   width: 100%;
   height: 100%;
@@ -1178,202 +1191,10 @@
   pointer-events: auto;
 }
 
-/* prompt reveal — collapsed by default; GSAP animates width 0 → scrollWidth on
-   hover (closed pill). The open state shows it via the data-open rule below. */
-.orbReveal {
-  display: flex;
-  align-items: center;
-  width: 0;
-  opacity: 0;
-  overflow: hidden;
-}
-.orbReveal .orbHint {
-  margin-left: 16px;            /* 16px gap from the orb when revealed */
-  white-space: nowrap;
-  flex-shrink: 0;
-  font-family: var(--font-body);
-  font-size: 16px;
-  color: rgba(38,38,38,0.6);
-}
-
-/* living orb — base gradient + two radial-bloom layers rotating in opposite
-   directions (clipped to the circle) so the colour flows */
-.orb {
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
-  flex-shrink: 0;
-  position: relative;
-  overflow: hidden;
-  background: radial-gradient(circle at 32% 28%, #f9c8b8 0%, #ee7e9d 45%, #c46be0 100%);
-  object-fit: cover;
-}
-.orb::before,
-.orb::after {
-  content: '';
-  position: absolute;
-  inset: -40%;
-  will-change: transform;
-  pointer-events: none;
-}
-.orb::before {
-  background:
-    radial-gradient(circle at 32% 30%, #ffd6ad 0%, rgba(255,214,173,0) 55%),
-    radial-gradient(circle at 72% 58%, #ff6fae 0%, rgba(255,111,174,0) 55%);
-  animation: orbFlowA 7s linear infinite;
-}
-.orb::after {
-  background:
-    radial-gradient(circle at 40% 72%, #b66ce6 0%, rgba(182,108,230,0) 55%),
-    radial-gradient(circle at 28% 32%, #ff9a6b 0%, rgba(255,154,107,0) 50%);
-  mix-blend-mode: screen;
-  animation: orbFlowB 9s linear infinite;
-}
-@keyframes orbFlowA {
-  0%   { transform: rotate(0deg)   translate(6%, -4%); }
-  100% { transform: rotate(360deg) translate(6%, -4%); }
-}
-@keyframes orbFlowB {
-  0%   { transform: rotate(360deg) translate(-5%, 5%); }
-  100% { transform: rotate(0deg)   translate(-5%, 5%); }
-}
-@media (prefers-reduced-motion: reduce) {
-  .orb::before, .orb::after { animation: none; }
-}
-
-/* ── Opened card (Figma 1093:7923) ── */
-.chatCard {
-  width: 438px;
-  max-width: calc(100vw - 32px);
-  background: #fff;
-  border-radius: 4px;
-  overflow: hidden;
-  box-shadow: 0 0 2px rgba(0,0,0,0.08), 0 18px 48px rgba(0,0,0,0.18);
-  display: flex;
-  flex-direction: column;
-}
-.chatHeader {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 9px 24px;
-  background: #fffdfc;
-}
-.chatHeaderLeft { display: flex; align-items: center; gap: 13px; }
-.chatAssistant {
-  font-family: var(--font-body);
-  font-weight: 500;
-  font-size: 16px;
-  line-height: 21px;
-  color: var(--c-text-primary);
-  opacity: 0.8;
-}
-.chatClose {
-  width: 36px;
-  height: 36px;
-  border: none;
-  background: none;
-  border-radius: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--c-text-primary);
-  opacity: 0.75;
-  cursor: pointer;
-  transition: background 0.15s ease, opacity 0.15s ease;
-}
-.chatClose:hover { background: #f3efec; opacity: 1; }
-
-/* brand-red accent bar under the header */
-.chatAccent { height: 2px; width: 30%; background: var(--c-red); }
-
-.chatBody {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  padding: 24px;
-  overflow: hidden;
-}
-/* soft orb glow, top-right of the message */
-.chatGlow {
-  position: absolute;
-  top: -10px;
-  right: -20px;
-  width: 150px;
-  height: 110px;
-  border-radius: 50%;
-  background: radial-gradient(circle at 50% 50%, rgba(255,120,90,0.45), rgba(196,107,224,0.18) 55%, transparent 72%);
-  filter: blur(12px);
-  pointer-events: none;
-}
-.chatHeading {
-  position: relative;
-  font-family: var(--font-body);
-  font-weight: 500;
-  font-size: 18px;
-  line-height: 24px;
-  color: var(--c-text-primary);
-}
-.chatText {
-  position: relative;
-  font-family: var(--font-body);
-  font-size: 16px;
-  line-height: 24px;
-  color: var(--c-text-primary);
-  opacity: 0.75;
-}
-/* ── Shared input row — the closed PILL and the OPEN card's foot are the SAME
-   element/markup (same orb, prompt, divider, mic). Only differences: the send
-   button (open only) and a slightly grey fill (open). data-open switches the
-   pill ↔ row look, which is why the open/close morph stays seamless. ── */
-.chatInputRow {
-  display: flex;
-  align-items: center;
-  padding: 9px 16px;
-}
-/* closed = white pill (clickable; condensed → hover reveals the prompt) */
-.chatInputRow[data-open='false'] {
-  background: #fff;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  box-shadow: 0 0 2px rgba(0,0,0,0.06), 0 10px 32px rgba(0,0,0,0.12);
-}
-/* open = same white fill (no grey) */
-.chatInputRow[data-open='true'] { background: #fff; }
-/* open shows the prompt and lets it fill, pushing the controls to the right */
-.chatInputRow[data-open='true'] .orbReveal { flex: 1; width: auto; opacity: 1; overflow: visible; }
-/* divider — full orb height, 16px each side (same in both states) */
-.chatInputRow .voiceDivider { flex-shrink: 0; width: 1px; height: 44px; margin: 0 16px; }
-.chatInputRow .chatSend { margin-left: 6px; }
-.chatIconBtn {
-  width: 36px;
-  height: 36px;
-  border: none;
-  background: none;
-  border-radius: 24px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--c-text-primary);
-  cursor: pointer;
-  flex-shrink: 0;
-}
-.chatSend {
-  width: 40px;
-  height: 40px;
-  border: none;
-  border-radius: 10px;
-  background: var(--c-red);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  flex-shrink: 0;
-  transition: background 0.15s ease;
-}
-.chatSend:hover { background: #cc1709; }
+/* The orb + chat bubble markup/styles now live in the AiChat component
+   (src/components/chat/AiChat.{tsx,module.css}). Only .orbFloat above — the
+   fixed positioning + scroll-reveal of the floating bubble — stays here, since
+   it's specific to the tariff scroll choreography. */
 
 /* ─── Expanded breakdown (revealed inside barsPanel by the morph) ────────── */
 .bdContent {

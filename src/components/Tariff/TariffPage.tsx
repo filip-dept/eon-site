@@ -24,7 +24,7 @@ import { Proof } from './sections/Proof';
 import { Faq } from './sections/Faq';
 import { ConnectedHome } from './sections/ConnectedHome';
 import { Stories } from './sections/Stories';
-import { AiOrb } from '@/components/chat/AiOrb';
+import { AiChat } from '@/components/chat/AiChat';
 import { emitEon } from '@/lib/eventBus';
 import styles from './tariff.module.css';
 
@@ -34,12 +34,13 @@ const startCheckout = () => emitEon('eon:checkout-start');
 /* AI-chat orb: one easing for every transition (default↔hover↔open) so they
    all feel the same. `back.out(n)`: higher n = more bounce. */
 const CHAT_EASE = 'back.out(1.1)';
-const DEFAULT_PILL_W = 145;   /* 16 + orb 44 + 16 + divider 1 + 16 + mic 36 + 16 */
-const PILL_H = 62;
+const DEFAULT_PILL_W = 129;   /* Figma "small": 16 + orb 44 + 10 + divider 1 + 6 + mic 36 + 16 */
+const PILL_H = 68;            /* py 12 + orb 44 + py 12 */
+const CHAT_CARD_W = 440;      /* fixed inner width of the open "answer" card (it grows out of the pill) */
 
 /* ─── Icons ──────────────────────────────────────────────────────────────── */
 /* Location/Persons/Plug, Doc, Info, HomeGreen, CheckCircle, Bonus, ChevronRight, Cart,
-   Menu → real <Icon name=…/>. Only MicIcon stays inline (no microphone in the library). */
+   Menu → real <Icon name=…/>. Chat icons (mic/send/close) live in <AiChat>. */
 /* one feature row — shared by the solo card (grid) and the comparison cards (list) */
 function Feature({ icon, name, desc }: { icon: React.ReactNode; name: string; desc: string }) {
   return (
@@ -52,11 +53,7 @@ function Feature({ icon, name, desc }: { icon: React.ReactNode; name: string; de
     </div>
   );
 }
-const MicIcon = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-    <rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10v1a7 7 0 0 0 14 0v-1M12 18v4"/>
-  </svg>
-);
+/* MicIcon/SendIcon/CloseIcon now live inside <AiChat> (the chat bubble component) */
 /* TickIcon → <Icon name="check"/> (inside <Toggle>) */
 /* ChevronDown → <Icon name="chevron-down"/> (inside <Faq>) */
 /* PlayCarrierIcon → moved into sections/Stories.tsx */
@@ -185,11 +182,10 @@ export default function TariffPage() {
 
   /* footprint of the pill at the moment we open from it (default or hovered) */
   const pillSize = useRef({ w: DEFAULT_PILL_W, h: PILL_H });
-  /* refs (not class queries) so the open/close logic is independent of the
-     CSS-module class names */
-  const chatCardRef = useRef<HTMLDivElement>(null);
-  const chatInnerRef = useRef<HTMLDivElement>(null);
-  const chatRowRef = useRef<HTMLDivElement>(null);
+  /* The chat markup is now <AiChat>; the morph reaches its nodes through the
+     stable `data-ai-*` hooks it renders, queried within orbRef (the float). */
+  const q = useCallback(<T extends HTMLElement>(sel: string): T | null =>
+    orbRef.current?.querySelector<T>(sel) ?? null, []);
 
   /* Open is the SAME mechanic as the pill's hover-expand: the box grows
      (width + height) with CHAT_EASE while the wrapper's x re-anchors — right
@@ -201,9 +197,9 @@ export default function TariffPage() {
     if (!orb) return;
     const vw = document.documentElement.clientWidth;
     if (chatOpen) {
-      const card  = chatCardRef.current;
-      const inner = chatInnerRef.current;
-      const row   = chatRowRef.current;
+      const card  = q('[data-ai-card]');
+      const inner = q<HTMLElement>('[data-ai-inner]');
+      const row   = q('[data-ai-row]');
       if (!card || !inner) return;
       const fullW = inner.offsetWidth, fullH = inner.offsetHeight;
       const targetX = orbCentered.current ? -fullW / 2 : vw / 2 - fullW - 30;
@@ -211,13 +207,13 @@ export default function TariffPage() {
       gsap.to(card, { width: fullW, height: fullH, duration: 0.5, ease: CHAT_EASE, clearProps: 'width,height' });
       gsap.to(orb, { x: targetX, duration: 0.5, ease: CHAT_EASE });
       /* hover → open: the send slides in from the right (reverse of the close) */
-      const send = row?.querySelector<HTMLElement>(`.${styles.chatSend}`) ?? null;
+      const send = row?.querySelector<HTMLElement>('[data-ai-send]') ?? null;
       if (send) gsap.fromTo(send, { x: 70, opacity: 0 }, { x: 0, opacity: 1, duration: 0.5, ease: CHAT_EASE, clearProps: 'opacity,transform' });
     } else {
       const w = orb.offsetWidth;
       gsap.set(orb, { x: orbCentered.current ? -w / 2 : vw / 2 - w - 30 });
     }
-  }, [chatOpen]);
+  }, [chatOpen, q]);
 
   /* Close in two beats, both with CHAT_EASE: (1) open → hovered — fold the card
      down to the input row (still full width, prompt visible); (2) hovered →
@@ -229,11 +225,11 @@ export default function TariffPage() {
 
   const collapseChatToDefault = useCallback(() => {
     closingRef.current = false;
-    const orb = orbRef.current, card = chatCardRef.current, row = chatRowRef.current;
+    const orb = orbRef.current, card = q('[data-ai-card]'), row = q('[data-ai-row]');
     if (!orb || !card) { setChatOpen(false); return; }
     const vw = document.documentElement.clientWidth;
     const targetX = orbCentered.current ? -DEFAULT_PILL_W / 2 : vw / 2 - DEFAULT_PILL_W - 30;
-    const reveal = row?.querySelector<HTMLElement>(`.${styles.orbReveal}`) ?? null;
+    const reveal = row?.querySelector<HTMLElement>('[data-ai-reveal]') ?? null;
     const tl = gsap.timeline({ onComplete: () => setChatOpen(false) });
     if (reveal) {   // collapse the prompt so the row becomes the condensed pill
       gsap.set(reveal, { flexGrow: 0, width: reveal.getBoundingClientRect().width });
@@ -241,7 +237,7 @@ export default function TariffPage() {
     }
     tl.to(card, { width: DEFAULT_PILL_W, height: PILL_H, duration: 0.4, ease: CHAT_EASE }, 0);
     tl.to(orb,  { x: targetX, duration: 0.4, ease: CHAT_EASE }, 0);
-  }, []);
+  }, [q]);
 
   /* (re)arm the 1s dwell before the hover-state pill collapses to default */
   const armChatDwell = useCallback(() => {
@@ -255,15 +251,15 @@ export default function TariffPage() {
      default. Hovering the card during the hold cancels the collapse (re-armed
      on leave). The card never moves horizontally, so a centred chat stays put. */
   const closeChat = useCallback(() => {
-    const card = chatCardRef.current, inner = chatInnerRef.current, row = chatRowRef.current;
+    const card = q('[data-ai-card]'), inner = q<HTMLElement>('[data-ai-inner]'), row = q('[data-ai-row]');
     if (!card || !inner || !row) { setChatOpen(false); return; }
-    const send = row.querySelector<HTMLElement>(`.${styles.chatSend}`);
+    const send = row.querySelector<HTMLElement>('[data-ai-send]');
     gsap.set(card, { width: inner.offsetWidth, height: inner.offsetHeight });
     gsap.to(card, { height: row.offsetHeight, duration: 0.5, ease: CHAT_EASE });   // fold → hover
     if (send) gsap.to(send, { x: 70, opacity: 0, duration: 0.5, ease: CHAT_EASE });// send slides out
     closingRef.current = true;
     armChatDwell();
-  }, [armChatDwell]);
+  }, [armChatDwell, q]);
 
   /* clear the dwell timer on unmount */
   useEffect(() => () => clearTimeout(dwellTimer.current), []);
@@ -272,34 +268,33 @@ export default function TariffPage() {
      Width-reveal and the compensating x-shift run on the SAME tween (duration +
      ease), so the right edge stays put when docked (grows left) and the centre
      stays put when centred (grows both ways) — through the little bounce too. ── */
-  const pillRevealRef = useRef<HTMLDivElement>(null);
   const pillBaseX = useRef(0);
 
   const onPillEnter = useCallback(() => {
-    const orb = orbRef.current, reveal = pillRevealRef.current;
+    const orb = orbRef.current, reveal = q('[data-ai-reveal]');
     if (!orb || !reveal) return;
     const w = reveal.scrollWidth;                                  // natural revealed width
     pillBaseX.current = (gsap.getProperty(orb, 'x') as number) || 0;
     const shift = orbCentered.current ? w / 2 : w;                 // centre → half, dock → full
     gsap.to(reveal, { width: w, opacity: 1, duration: 0.55, ease: CHAT_EASE, overwrite: 'auto' });
     gsap.to(orb, { x: pillBaseX.current - shift, duration: 0.55, ease: CHAT_EASE, overwrite: 'auto' });
-  }, []);
+  }, [q]);
 
   const onPillLeave = useCallback(() => {
-    const orb = orbRef.current, reveal = pillRevealRef.current;
+    const orb = orbRef.current, reveal = q('[data-ai-reveal]');
     if (!orb || !reveal) return;
     gsap.to(reveal, { width: 0, opacity: 0, duration: 0.5, ease: CHAT_EASE, overwrite: 'auto' });
     gsap.to(orb, { x: pillBaseX.current, duration: 0.5, ease: CHAT_EASE, overwrite: 'auto' });
-  }, []);
+  }, [q]);
 
   /* capture the pill's footprint (default or hovered) so the card can grow from it */
   const openChat = useCallback(() => {
     clearTimeout(dwellTimer.current);
     closingRef.current = false;
-    const pill = orbRef.current?.querySelector<HTMLElement>(`.${styles.orbPill}`);
+    const pill = q('[data-ai-row]');   // current pill footprint (default or hovered)
     if (pill) { const r = pill.getBoundingClientRect(); pillSize.current = { w: r.width, h: r.height }; }
     setChatOpen(true);
-  }, []);
+  }, [q]);
 
   /* ── Sequenced OPEN: fade the solo card out → expand the background + mount the
      comparison cards (hidden) → (reveal effect) stagger them in once bg opened. ── */
@@ -444,69 +439,31 @@ export default function TariffPage() {
         </div>
       </div>
 
-      {/* ── AI chat — 3 variants: condensed pill (default) → wider on hover →
-            full card when opened. Drifts to centre during the breakdown morph;
-            auto-opens after 3s on the HEMS section. ── */}
+      {/* ── AI chat (one <AiChat>, two states): condensed "pill" (default → wider
+            on hover) ↔ full "answer" card when opened. The float wrapper carries
+            the GSAP x; the morph drives AiChat's data-ai-* nodes. Drifts to centre
+            during the breakdown morph; auto-opens after 3s on the HEMS section. ── */}
       <div className={styles.orbFloat} ref={orbRef} data-open={chatOpen ? 'true' : 'false'}>
         {chatOpen ? (
-          <div
-            className={styles.chatCard}
-            ref={chatCardRef}
-            style={{ justifyContent: 'flex-end', alignItems: 'flex-start' }}
+          <AiChat
+            variant="answer"
+            prompt={orbTariffQ ? 'Fragen zu diesem Tarif?' : 'Was beschäftigt dich heute?'}
+            answerHeading="Du willst das Meiste aus deinem Ökostrom herausholen?"
+            answerBody="Hier kommt ein HEMS (Home Energy Management System) ins Spiel. Über Apps (wie E.ON Home oder Smart Control) siehst du in Echtzeit, welche deiner Geräte wie viel verbrauchen. Stromfresser werden sofort entlarvt. So kannst du deinen Gesamtverbrauch – und damit auch den Bedarf an Erzeugung – nachhaltig senken."
+            cardWidth={CHAT_CARD_W}
+            onCloseChat={closeChat}
             onMouseEnter={() => { if (closingRef.current) clearTimeout(dwellTimer.current); }}
             onMouseLeave={() => { if (closingRef.current) armChatDwell(); }}
-          >
-            {/* fixed-width inner so the outer box can grow (width+height) without
-                reflowing text — overflow on the outer reveals it like the pill.
-                Inline-styled so a CSS-module strip can't break the layout. */}
-            <div
-              ref={chatInnerRef}
-              style={{ width: 438, flexShrink: 0, display: 'flex', flexDirection: 'column', background: '#fff' }}
-            >
-              <div className={styles.chatHeader}>
-                <span className={styles.chatAssistant}>E.ON Assistant</span>
-                <button className={styles.chatClose} onClick={closeChat} aria-label="Schließen">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>
-                </button>
-              </div>
-              <div className={styles.chatBody}>
-                <div className={styles.chatGlow} />
-                <p className={styles.chatHeading}>Du willst das Meiste aus deinem Ökostrom herausholen?</p>
-                <p className={styles.chatText}>
-                  Hier kommt ein HEMS (Home Energy Management System) ins Spiel. Über Apps (wie E.ON Home oder Smart Control) siehst du in Echtzeit, welche deiner Geräte wie viel verbrauchen. Stromfresser werden sofort entlarvt. So kannst du deinen Gesamtverbrauch – und damit auch den Bedarf an Erzeugung – nachhaltig senken.
-                </p>
-              </div>
-              {/* SAME input row as the closed pill — only adds the send button
-                  and a grey fill (data-open). Shared markup ⇒ seamless morph. */}
-              <div className={styles.chatInputRow} data-open="true" ref={chatRowRef}>
-                <AiOrb className={styles.orb} />
-                <div className={styles.orbReveal}>
-                  <span className={styles.orbHint}>{orbTariffQ ? 'Fragen zu diesem Tarif?' : 'Was beschäftigt dich heute?'}</span>
-                </div>
-                <div className={styles.voiceDivider} />
-                <button className={styles.chatIconBtn} aria-label="Spracheingabe"><MicIcon /></button>
-                <button className={styles.chatSend} aria-label="Senden">
-                  <svg width="18" height="18" viewBox="0 0 20 20" fill="#fff" aria-hidden="true"><path d="M13.66 18.6 19.32 4.85a2.06 2.06 0 0 0-2.69-2.69L2.88 7.82a1.93 1.93 0 0 0 .08 3.6l5.93 2.35 2.34 5.92a1.92 1.92 0 0 0 3.6.08l-.27-.17ZM10.2 11.6l-1.8-1.8 6.9-6.9-5.1 8.7Z"/></svg>
-                </button>
-              </div>
-            </div>
-          </div>
+          />
         ) : (
-          <button
-            className={styles.chatInputRow}
-            data-open="false"
+          <AiChat
+            variant="pill"
+            prompt={orbTariffQ ? 'Fragen zu diesem Tarif?' : 'Was beschäftigt dich heute?'}
             onClick={openChat}
             onMouseEnter={onPillEnter}
             onMouseLeave={onPillLeave}
             aria-label="E.ON Assistant öffnen"
-          >
-            <AiOrb className={styles.orb} />
-            <div className={styles.orbReveal} ref={pillRevealRef}>
-              <span className={styles.orbHint}>{orbTariffQ ? 'Fragen zu diesem Tarif?' : 'Was beschäftigt dich heute?'}</span>
-            </div>
-            <div className={styles.voiceDivider} />
-            <span className={styles.chatIconBtn} aria-hidden="true"><MicIcon /></span>
-          </button>
+          />
         )}
       </div>
 
