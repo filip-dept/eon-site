@@ -43,6 +43,9 @@ const icons = {
 
 export type IconName = keyof typeof icons;
 
+/** All registered icon names (for galleries/docs). */
+export const iconNames = Object.keys(icons) as IconName[];
+
 type IconProps = {
   name: IconName;
   size?: number;
