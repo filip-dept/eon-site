@@ -254,3 +254,16 @@ html.lenis body {
     font-family: inherit;
   }
 }
+
+/* Reduced-motion baseline: neutralise CSS transitions/animations + smooth scroll
+   for users who ask for less motion. (Covers hovers, ambient keyframes, the intro,
+   etc. The scroll-scrubbed GSAP choreography is JS-driven and still needs a
+   `gsap.matchMedia` pass — tracked as a follow-up.) */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
