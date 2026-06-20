@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { gsap } from '@/lib/gsap';
+import { onEon, type EonEventName } from '@/lib/eventBus';
 
 /** Client-mounted flag without setState-in-effect (false on server, true after hydration). */
 const emptySubscribe = () => () => {};
@@ -12,8 +13,8 @@ const emptySubscribe = () => () => {};
 export type RevealStep = (panel: HTMLElement, stepIndex: number, isEnter: boolean) => void;
 
 export interface StepWizardConfig<A> {
-  /** DOM CustomEvent that opens the wizard (e.g. 'eon:journey-start'). */
-  event: string;
+  /** Typed app event that opens the wizard (e.g. 'eon:journey-start'). */
+  event: EonEventName;
   totalSteps: number;
   /** Answers reset to this each time the wizard opens. */
   initialAnswers: A;
@@ -79,11 +80,7 @@ export function useStepWizard<A>(config: StepWizardConfig<A>) {
     document.body.style.overflow = 'hidden';
   }, []);
 
-  useEffect(() => {
-    const handler = () => openWizard();
-    document.addEventListener(event, handler);
-    return () => document.removeEventListener(event, handler);
-  }, [event, openWizard]);
+  useEffect(() => onEon(event, () => openWizard()), [event, openWizard]);
 
   /* Safety net: always release the body scroll-lock on unmount. Onboarding's
      completion navigates away via router.push WITHOUT running close(), so this is

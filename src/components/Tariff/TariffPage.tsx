@@ -25,11 +25,11 @@ import { Faq } from './sections/Faq';
 import { ConnectedHome } from './sections/ConnectedHome';
 import { Stories } from './sections/Stories';
 import { AiOrb } from '@/components/chat/AiOrb';
+import { emitEon } from '@/lib/eventBus';
 import styles from './tariff.module.css';
 
 /* the red "Tarif auswählen" CTAs open the conversational checkout journey */
-const startCheckout = () =>
-  document.dispatchEvent(new CustomEvent('eon:checkout-start'));
+const startCheckout = () => emitEon('eon:checkout-start');
 
 /* AI-chat orb: one easing for every transition (default↔hover↔open) so they
    all feel the same. `back.out(n)`: higher n = more bounce. */
