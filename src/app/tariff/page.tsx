@@ -1,13 +1,13 @@
 import { Suspense } from 'react';
 import TariffPage from '@/components/Tariff/TariffPage';
-import IntroLoader from '@/components/IntroLoader/IntroLoader';
 
 export default function Tariff() {
   return (
     <Suspense>
       <TariffPage />
-      {/* same branded splash, shown when arriving from a completed journey */}
-      <IntroLoader variant="tariff" />
+      {/* The journey → /tariff reveal is handled by the persistent RouteCurtain
+          (mounted in the root layout), which lifts away once TariffPage signals
+          `eon:tariff-ready`. */}
     </Suspense>
   );
 }
