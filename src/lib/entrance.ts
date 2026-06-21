@@ -91,7 +91,7 @@ export function buildEntranceTl(refs: EntranceRefs) {
   const MORPH = 1.45;
   tl.to(chatCardEl, { width: fullW, height: fullH, duration: 0.5, ease: 'back.out(1.4)' }, MORPH);
   if (reveal) tl.to(reveal, { opacity: 1, duration: 0.28, ease: 'power3.out' }, MORPH + 0.12);
-  if (send)   tl.to(send, { opacity: 1, duration: 0.28, ease: 'power3.out' }, MORPH + 1.18);
+  if (send)   tl.to(send, { opacity: 1, duration: 0.28, ease: 'power3.out' }, MORPH + 0.18);
   if (sugg)   tl.to(sugg, { opacity: 1, duration: 0.3, ease: 'power3.out' }, MORPH + 0.22);
 
   /* hand sizing back to CSS so the card stays responsive after the morph */
