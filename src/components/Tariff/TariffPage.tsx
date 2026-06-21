@@ -25,8 +25,12 @@ import { Faq } from './sections/Faq';
 import { ConnectedHome } from './sections/ConnectedHome';
 import { Stories } from './sections/Stories';
 import { AiChat } from '@/components/chat/AiChat';
-import { emitEon } from '@/lib/eventBus';
+import { emitEon, onEon } from '@/lib/eventBus';
 import styles from './tariff.module.css';
+
+/* the first screen rises in from below by this much when arriving from the
+   journey — mirrors the homepage hero video (RISE_BG in lib/entrance.ts) */
+const INTRO_RISE = 300;
 
 /* the red "Tarif auswählen" CTAs open the conversational checkout journey */
 const startCheckout = () => emitEon('eon:checkout-start');
@@ -374,6 +378,21 @@ export default function TariffPage() {
   }, [tariff.id]);
 
 
+  /* Journey hand-off: the IntroLoader red curtain lifts away (eon:intro-done) and
+     the first screen rises in from below, matching the homepage hero video. Only
+     fires when arriving from a completed journey — on a direct load the loader
+     never shows, so the cue never comes and the hero stays put. */
+  useEffect(() => {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    return onEon('eon:intro-done', () => {
+      const hero = sectionRef.current?.querySelector<HTMLElement>(`.${styles.frameHero}`);
+      if (hero) {
+        gsap.fromTo(hero, { y: INTRO_RISE },
+          { y: 0, duration: 0.85, ease: 'power3.out', clearProps: 'transform' });
+      }
+    });
+  }, []);
+
   /* The scroll engine, now in hooks. ORDER MATTERS: usePinnedTrack creates the
      master pin FIRST; the section hooks below sit under the pin and must be created
      after it (ScrollTrigger measures in creation order) or their scrub pins at 1. */
@@ -472,8 +491,8 @@ export default function TariffPage() {
         <div className={styles.track} ref={trackRef}>
 
           {/* ═══ Frame 1: Hero + Tariff card ═══ */}
-          <div className={`${styles.frame} ${styles.frameHero}`} data-comparing={comparing}>
-            <div className={styles.frameImage} data-aimg>
+          <div className={`${styles.frame} ${styles.frameHero}`} data-comparing={comparing} data-noclip>
+            <div className={styles.frameImage}>
               <video src="/newhousevideo.mp4" aria-label="E.ON Kundin" autoPlay loop muted playsInline />
             </div>
 
@@ -495,7 +514,7 @@ export default function TariffPage() {
               )}
 
               <div className={styles.panelNormal}>
-                <div className={styles.panelHeader} data-al>
+                <div className={styles.panelHeader}>
                   {comparing ? (
                     <>
                       <span className={styles.panelLabel}>Tarif im Vergleich</span>
@@ -518,7 +537,6 @@ export default function TariffPage() {
                     <div
                       className={styles.card}
                       data-rec="true"
-                      data-au=""
                       ref={cardRef}
                     >
                       <div className={styles.cardHeader}>

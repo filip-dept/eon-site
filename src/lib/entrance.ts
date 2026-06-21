@@ -84,14 +84,14 @@ export function buildEntranceTl(refs: EntranceRefs) {
   tl.to(navItems, { opacity: 1, duration: 0.6, ease: 'eonOut' }, 0.25);
 
   /* the chat rises the same way but a beat later than the copy (quick ease-out) */
-  tl.to(chatWrapEl, { y: 0, opacity: 1, duration: 0.7, ease: 'eonOut' }, 0.45);
+  tl.to(chatWrapEl, { y: 0, opacity: 1, duration: 1.0, ease: 'eonOut' }, 0.45);
 
   /* 3 ─ Once the chat has settled, it grows from the pill into the full
      suggestions card — a longer, gently springy ease-out; reveals fade in. */
   const MORPH = 1.45;
   tl.to(chatCardEl, { width: fullW, height: fullH, duration: 0.5, ease: 'back.out(1.4)' }, MORPH);
   if (reveal) tl.to(reveal, { opacity: 1, duration: 0.28, ease: 'power3.out' }, MORPH + 0.12);
-  if (send)   tl.to(send, { opacity: 1, duration: 0.28, ease: 'power3.out' }, MORPH + 0.18);
+  if (send)   tl.to(send, { opacity: 1, duration: 0.28, ease: 'power3.out' }, MORPH + 1.18);
   if (sugg)   tl.to(sugg, { opacity: 1, duration: 0.3, ease: 'power3.out' }, MORPH + 0.22);
 
   /* hand sizing back to CSS so the card stays responsive after the morph */
