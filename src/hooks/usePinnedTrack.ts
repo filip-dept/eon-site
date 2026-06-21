@@ -87,7 +87,10 @@ export function usePinnedTrack({ pageRef, sectionRef, trackRef, orbRef, orbCente
 
     const frames = Array.from(track.children) as HTMLElement[];
     const revealed = frames.map((_, i) => i === 0);
-    frames.forEach((f, i) => (i === 0 ? revealFrame(f) : setHidden(f)));
+    /* The hero frame (0) shows WITHOUT the top→down clip-path wipe — it's simply
+       present, and rises into place via the journey → tariff hand-off (see
+       TariffPage's intro effect). Later frames stay hidden until scrolled to. */
+    frames.forEach((f, i) => { if (i !== 0) setHidden(f); });
 
     /* Size frames off clientWidth (excludes scrollbar) so the track lands flush */
     const setFrameWidth = () =>
