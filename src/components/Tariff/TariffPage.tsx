@@ -403,33 +403,33 @@ export default function TariffPage() {
     const frame = heroFrameRef.current;
     if (!frame) return;
 
-    /* Rise into place when the RouteCurtain lifts. Registered on EVERY effect run
-       (and torn down on cleanup) so it survives React Strict Mode's double-invoke. */
-    const off = onEon('eon:intro-done', () => {
+    /* The hero enters by rising from below as the cover lifts away — the journey
+       RouteCurtain OR the fresh-load IntroLoader splash, whichever brought us here
+       (both emit `eon:intro-done`). Mirrors the home hero video rise. The listener
+       is (re)registered every run so it survives React Strict Mode's double-invoke. */
+    let fallback = 0;
+    const rise = () => {
+      clearTimeout(fallback);
       gsap.to(frame, { y: 0, duration: 0.85, ease: 'power3.out', clearProps: 'y' });
-    });
+    };
+    const off = onEon('eon:intro-done', rise);
 
-    /* One-shot prime: arriving from a completed journey → start the hero below,
-       hidden under the red cover, then tell the curtain we're painted so it lifts.
-       Guarded by a ref (not the consumed flag) so Strict Mode's second invoke
-       doesn't undo it; the rAF is intentionally NOT cancelled on cleanup so the
-       single `tariff-ready` cue still fires through the double-invoke. */
+    /* Prime once (ref-guarded, not flag-gated, so Strict Mode's second invoke
+       can't drop it): park the hero below, hidden under the cover, and signal the
+       curtain we're painted (the IntroLoader self-drives, so it ignores this). A
+       fallback guarantees the hero never stays parked if no cue ever arrives. */
     if (!introPrimed.current) {
-      let flagged = false;
-      try {
-        flagged = sessionStorage.getItem('eon:intro-tariff') === '1';
-        if (flagged) sessionStorage.removeItem('eon:intro-tariff');
-      } catch {}
+      introPrimed.current = true;
       const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-      if (flagged && !reduced) {
-        introPrimed.current = true;
+      if (!reduced) {
         gsap.set(frame, { y: INTRO_RISE });
         requestAnimationFrame(() =>
           requestAnimationFrame(() => emitEon('eon:tariff-ready')));
+        fallback = window.setTimeout(rise, 4000);
       }
     }
 
-    return () => off();
+    return () => { off(); clearTimeout(fallback); };
   }, []);
 
   return (
