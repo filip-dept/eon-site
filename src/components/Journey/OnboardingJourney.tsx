@@ -1,8 +1,8 @@
 'use client';
 
 import { useEffect, useRef, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
 import { gsap } from '@/lib/gsap';
+import { emitEon } from '@/lib/eventBus';
 import { useStepWizard } from '@/hooks/useStepWizard';
 import { Button } from '@/ui/Button';
 import { Icon } from '@/ui/Icon';
@@ -346,8 +346,6 @@ function Step3({ answers, setAnswers, onSubmit, goBack }: {
 
 /* ─── Main modal ─────────────────────────────────────────────────────────── */
 export default function OnboardingJourney() {
-  const router = useRouter();
-
   /* Conversational reveal: blurred-typewriter question, then the answers rise in
      staggered just after it. (Per-wizard reveal strategy for useStepWizard.) */
   const revealStep = useCallback((panel: HTMLElement) => {
@@ -385,7 +383,9 @@ export default function OnboardingJourney() {
     return true;
   }, []);
 
-  /* Completing the last step routes to the tariff page (+ the intro-splash flag). */
+  /* Completing the last step hands off to /tariff through the red RouteCurtain:
+     the flag tells TariffPage to enter from under the cover (hero rises 300px),
+     and `eon:route-cover` wipes the curtain down before it navigates. */
   const onComplete = useCallback((a: Answers) => {
     const q = new URLSearchParams({
       plz:     a.plz     ?? '',
@@ -393,8 +393,8 @@ export default function OnboardingJourney() {
       kwh:     String(a.kwh     ?? 3200),
     });
     try { sessionStorage.setItem('eon:intro-tariff', '1'); } catch {}
-    router.push(`/tariff?${q.toString()}`);
-  }, [router]);
+    emitEon('eon:route-cover', { href: `/tariff?${q.toString()}` });
+  }, []);
 
   const {
     mounted, open, step, answers, setAnswers,

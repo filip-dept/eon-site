@@ -1,0 +1,10 @@
+/* Persistent full-screen red wipe panel — see RouteCurtain.tsx.
+   Parked above the viewport (yPercent -100) by GSAP until a transition runs. */
+.curtain {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: var(--c-red);
+  pointer-events: none;
+  will-change: transform;
+}

@@ -25,7 +25,7 @@ import { Faq } from './sections/Faq';
 import { ConnectedHome } from './sections/ConnectedHome';
 import { Stories } from './sections/Stories';
 import { AiChat } from '@/components/chat/AiChat';
-import { emitEon } from '@/lib/eventBus';
+import { emitEon, onEon } from '@/lib/eventBus';
 import styles from './tariff.module.css';
 
 /* the red "Tarif auswählen" CTAs open the conversational checkout journey */
@@ -37,6 +37,7 @@ const CHAT_EASE = 'back.out(1.1)';
 const DEFAULT_PILL_W = 129;   /* Figma "small": 16 + orb 44 + 10 + divider 1 + 6 + mic 36 + 16 */
 const PILL_H = 68;            /* py 12 + orb 44 + py 12 */
 const CHAT_CARD_W = 440;      /* fixed inner width of the open "answer" card (it grows out of the pill) */
+const INTRO_RISE = 300;       /* px the hero content rises on the journey → tariff reveal (mirrors the home hero video) */
 
 /* ─── Icons ──────────────────────────────────────────────────────────────── */
 /* Location/Persons/Plug, Doc, Info, HomeGreen, CheckCircle, Bonus, ChevronRight, Cart,
@@ -124,6 +125,8 @@ export default function TariffPage() {
   const sectionRef = useRef<HTMLElement>(null);
   const trackRef   = useRef<HTMLDivElement>(null);
   const cardRef    = useRef<HTMLDivElement>(null);
+  const heroFrameRef = useRef<HTMLDivElement>(null);  // Frame 1 (hero) — rises in on the journey reveal
+  const introPrimed = useRef(false);                  // one-shot guard (survives React Strict double-invoke)
 
   /* ── Tariff picker: slider position + nachhaltig checkbox drive the card ── */
   const [eco,  setEco]  = useState(true);   // "Besonders nachhaltig" → Zukunft family
@@ -389,6 +392,46 @@ export default function TariffPage() {
     onIdleOpen: () => setChatOpen(true),
   });
 
+  /* Journey → tariff reveal: enter from under the RouteCurtain. Pre-offset the
+     hero frame by INTRO_RISE (parked below, hidden beneath the red cover), signal
+     the curtain we've painted so it lifts, then rise the hero up as the curtain
+     lifts — mirroring the home hero video. Only when arriving from a completed
+     journey (the onboarding sets `eon:intro-tariff`). Animating the frame's own
+     translateY is safe: the scroll track scrubs `x` and reveals via clipPath, so
+     this transform is otherwise unused. */
+  useIsoLayoutEffect(() => {
+    const frame = heroFrameRef.current;
+    if (!frame) return;
+
+    /* Rise into place when the RouteCurtain lifts. Registered on EVERY effect run
+       (and torn down on cleanup) so it survives React Strict Mode's double-invoke. */
+    const off = onEon('eon:intro-done', () => {
+      gsap.to(frame, { y: 0, duration: 0.85, ease: 'power3.out', clearProps: 'y' });
+    });
+
+    /* One-shot prime: arriving from a completed journey → start the hero below,
+       hidden under the red cover, then tell the curtain we're painted so it lifts.
+       Guarded by a ref (not the consumed flag) so Strict Mode's second invoke
+       doesn't undo it; the rAF is intentionally NOT cancelled on cleanup so the
+       single `tariff-ready` cue still fires through the double-invoke. */
+    if (!introPrimed.current) {
+      let flagged = false;
+      try {
+        flagged = sessionStorage.getItem('eon:intro-tariff') === '1';
+        if (flagged) sessionStorage.removeItem('eon:intro-tariff');
+      } catch {}
+      const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      if (flagged && !reduced) {
+        introPrimed.current = true;
+        gsap.set(frame, { y: INTRO_RISE });
+        requestAnimationFrame(() =>
+          requestAnimationFrame(() => emitEon('eon:tariff-ready')));
+      }
+    }
+
+    return () => off();
+  }, []);
+
   return (
     <div className={styles.page} ref={pageRef}>
 
@@ -472,7 +515,7 @@ export default function TariffPage() {
         <div className={styles.track} ref={trackRef}>
 
           {/* ═══ Frame 1: Hero + Tariff card ═══ */}
-          <div className={`${styles.frame} ${styles.frameHero}`} data-comparing={comparing}>
+          <div className={`${styles.frame} ${styles.frameHero}`} data-comparing={comparing} ref={heroFrameRef}>
             <div className={styles.frameImage} data-aimg>
               <video src="/newhousevideo.mp4" aria-label="E.ON Kundin" autoPlay loop muted playsInline />
             </div>
