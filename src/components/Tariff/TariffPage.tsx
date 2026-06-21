@@ -337,14 +337,15 @@ export default function TariffPage() {
       const cont = cardsRef.current;
       const cards = cont ? Array.from(cont.querySelectorAll<HTMLElement>(`.${styles.card}`)) : [];
       if (!cards.length) { animatingCards.current = false; return; }
-      /* Smooth slide-in from the right (x:80, fade from 0); tight stagger so the
-         three read as one fluid motion — 3rd card first → 2nd → 1st. */
-      gsap.set(cards, { opacity: 0, x: 80 });
+      /* Dramatic deck fly-in from fully off the right edge; bigger stagger so the
+         three read as a clear cascade — 3rd card first → 2nd → 1st. */
+      const off = Math.round(window.innerWidth - cont!.getBoundingClientRect().left + 80);
+      gsap.set(cards, { opacity: 0, x: off });
       gsap.to(cards, {
         opacity: 1, x: 0,
-        duration: 0.5, ease: 'power3.out',
-        stagger: { each: 0.06, from: 'end' },
-        delay: 0.14,
+        duration: 0.42, ease: 'power3.out',
+        stagger: { each: 0.08, from: 'end' },
+        delay: 0.08,
         clearProps: 'opacity,transform',
         onComplete: () => { animatingCards.current = false; },
       });
@@ -602,13 +603,15 @@ export default function TariffPage() {
                     [
                       { t: tariff, isRec: true, k: 'rec' },
                       ...family.filter((t) => t.id !== tariff.id).map((t) => ({ t, isRec: false, k: t.id })),
-                    ].map(({ t, isRec, k }) => (
+                    ].map(({ t, isRec, k }, i) => (
                       <div
                         key={k}
                         className={styles.card}
                         data-comparing="true"
                         data-rec={isRec ? 'true' : 'false'}
                         data-extra={isRec ? undefined : 'true'}
+                        /* stack so the cascade layers right: 1st card lowest → 3rd card on top */
+                        style={{ zIndex: i + 1 }}
                       >
                         <div className={styles.cardHeader}>
                           <div className={styles.cardHeadRow}>
