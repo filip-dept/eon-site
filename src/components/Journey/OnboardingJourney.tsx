@@ -344,6 +344,34 @@ function Step3({ answers, setAnswers, onSubmit, goBack }: {
   );
 }
 
+/* sidebar steps — mirrors the checkout journey's progress rail (3 steps here) */
+const STEPS = [
+  {
+    label: 'Prioritäten',
+    icon: (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M12 3l2.6 5.3 5.9.85-4.25 4.15 1 5.85L12 16.6l-5.25 2.55 1-5.85L3.5 9.15l5.9-.85z" />
+      </svg>
+    ),
+  },
+  {
+    label: 'Wohnort',
+    icon: (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M12 21s7-5.5 7-11a7 7 0 1 0-14 0c0 5.5 7 11 7 11z" /><circle cx="12" cy="10" r="2.5" />
+      </svg>
+    ),
+  },
+  {
+    label: 'Verbrauch',
+    icon: (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M13 2L5 13h6l-1 9 8-11h-6l1-9z" />
+      </svg>
+    ),
+  },
+];
+
 /* ─── Main modal ─────────────────────────────────────────────────────────── */
 export default function OnboardingJourney() {
   /* Conversational reveal: blurred-typewriter question, then the answers rise in
@@ -399,7 +427,7 @@ export default function OnboardingJourney() {
   const {
     mounted, open, step, answers, setAnswers,
     overlayRef, modalRef, stepRefs,
-    goNext, goBack, advance, close,
+    goNext, goBack, goToStep, advance, close,
   } = useStepWizard<Answers>({
     event: 'eon:journey-start',
     totalSteps: 3,
@@ -426,8 +454,30 @@ export default function OnboardingJourney() {
       {/* Assistant orb — docked top-centre between the back/close buttons */}
       <ConvSphere />
 
-      {/* ── Body: centred conversational column (no side navigation) ── */}
+      {/* ── Body: 3-step progress rail + centred conversational column ── */}
       <div className={styles.modalBody}>
+        <nav className={styles.sidebar} aria-label="Fortschritt">
+          {STEPS.map((c, i) => {
+            const s = i + 1;
+            const state = s === step ? 'active' : s < step ? 'done' : 'todo';
+            return (
+              <button
+                key={c.label}
+                type="button"
+                className={styles.sideItem}
+                data-state={state}
+                onClick={() => goToStep(s)}
+                disabled={s > step}
+                aria-current={s === step ? 'step' : undefined}
+              >
+                <span className={styles.sideIndicator} aria-hidden="true" />
+                <span className={styles.sideIcon}>{c.icon}</span>
+                <span className={styles.sideLabel}>{c.label}</span>
+              </button>
+            );
+          })}
+        </nav>
+
         <div className={styles.contentCol}>
           {/* Step panels (all mounted, GSAP controls visibility) */}
           <div className={styles.content}>

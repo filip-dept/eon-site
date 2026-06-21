@@ -140,6 +140,11 @@ export function AiChat({
           <span className={styles.iconBtn} aria-hidden="true">
             <MicIcon />
           </span>
+          {/* revealed on hover (CSS) — a preview of the send action; the whole
+              pill is the click target, so this stays a non-interactive span */}
+          <span className={styles.send} aria-hidden="true">
+            <SendIcon />
+          </span>
         </div>
       </button>
     );

@@ -49,10 +49,10 @@ export function JourneyWizard({
         aria-label={ariaLabel}
       >
         <button className={styles.cornerBtn} data-pos="back" onClick={onBack} aria-label="Zurück">
-          <Icon name="chevron-left" size={18} />
+          <Icon name="chevron-left" size={16} />
         </button>
         <button className={styles.cornerBtn} data-pos="close" onClick={onClose} aria-label="Schließen">
-          <Icon name="close" size={18} />
+          <Icon name="close" size={16} />
         </button>
 
         {children}

@@ -178,6 +178,11 @@ button.row {
 .send:hover { background: var(--red-600, #c41708); }
 .send svg { width: 19px; height: 19px; display: block; }
 
+/* In the resting pill the send is hidden (keeps the footprint = orb + mic);
+   hovering the pill reveals the red send button alongside the prompt. */
+.row[data-open='false'] .send { display: none; }
+.row[data-open='false']:hover .send { display: flex; }
+
 /* ── Suggestions ("Suggestion wrapper") — quick-prompt chips ────────────────── */
 .suggestions {
   display: flex;
