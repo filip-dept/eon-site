@@ -27,8 +27,9 @@ const ChatWidget = forwardRef<HTMLDivElement>((_, ref) => {
           type="text"
           placeholder="Was beschäftigt dich heute?"
           aria-label="Frage an den E.ON Assistenten"
+          data-chat-input
         />
-        <div className={styles.chatActions}>
+        <div className={styles.chatActions} data-chat-actions>
           <button className={styles.chatIconBtn} aria-label="Spracheingabe">
             {/* tabler microphone */}
             <svg viewBox="0 0 22 22" fill="none" stroke="#5c5c5c" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -45,7 +46,7 @@ const ChatWidget = forwardRef<HTMLDivElement>((_, ref) => {
       </div>
 
       {/* Suggestion chips — only the first triggers the journey */}
-      <div className={styles.chatChips}>
+      <div className={styles.chatChips} data-chat-chips>
         {CHIPS.map((chip, i) => (
           <button
             key={chip.id}
