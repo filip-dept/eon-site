@@ -123,8 +123,8 @@ export function useStepWizard<A>(config: StepWizardConfig<A>) {
     gsap.to(outEl, {
       y: dy,
       opacity: 0,
-      duration: 0.32,
-      ease: 'eonReveal',
+      duration: 0.5,
+      ease: 'eonGlide',
       onComplete: () => {
         gsap.set(outEl, { display: 'none', y: 0 });
         setStep(nextStep);
@@ -133,8 +133,8 @@ export function useStepWizard<A>(config: StepWizardConfig<A>) {
           gsap.to(inEl, {
             y: 0,
             opacity: 1,
-            duration: 0.42,
-            ease: 'eonOut',
+            duration: 0.62,
+            ease: 'eonGlide',
             onComplete: () => { animating.current = false; },
           });
           cfg.current.revealStep(inEl, nextStep - 1, false);
