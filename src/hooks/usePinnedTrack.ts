@@ -25,6 +25,7 @@ function setHidden(frame: HTMLElement) {
   const au = qa(frame, '[data-au]');
   const ah = qa(frame, '[data-ahero]');
   const ai = qa(frame, '[data-aimg]');
+  const aln = qa(frame, '[data-alines]');
   /* the frame itself unmasks like the hero — except the bars frame, which just
      slides in horizontally with the track (data-noclip) */
   if (!frame.hasAttribute('data-noclip')) gsap.set(frame, { clipPath: CLIP_HIDDEN });
@@ -38,6 +39,8 @@ function setHidden(frame: HTMLElement) {
     const img = w.querySelector('img');
     if (img) gsap.set(img, { scale: 1.3 });
   });
+  /* each child line clipped + dropped, revealed in sequence */
+  aln.forEach((el) => gsap.set(Array.from(el.children) as HTMLElement[], { clipPath: CLIP_HIDDEN, y: 24, opacity: 0 }));
 }
 
 function revealFrame(frame: HTMLElement) {
@@ -48,6 +51,7 @@ function revealFrame(frame: HTMLElement) {
   const au = qa(frame, '[data-au]');
   const ah = qa(frame, '[data-ahero]');
   const ai = qa(frame, '[data-aimg]');
+  const aln = qa(frame, '[data-alines]');
   /* hero media settings: unmask wipe top→bottom, eonReveal, 1.6s — the clip is
      cleared on complete so it never interferes with later transforms. The bars
      frame opts out (data-noclip): it just slides in with the track. */
@@ -67,6 +71,12 @@ function revealFrame(frame: HTMLElement) {
   if (au.length) tl.to(au, { y: 0, opacity: 1, stagger: 0.06, duration: 0.55 }, 0.4);
   /* hero content settings: y 70 → 0, opacity 0 → 1, eonAppear, 1s, 0.2s delay */
   if (ah.length) tl.to(ah, { y: 0, opacity: 1, duration: 1, ease: 'eonAppear' }, 0.2);
+  /* line-by-line: each child clip-wipes up in sequence — snappier than the block unmask */
+  aln.forEach((el) => {
+    tl.to(Array.from(el.children) as HTMLElement[],
+      { clipPath: CLIP_VISIBLE, y: 0, opacity: 1, duration: 0.5, ease: 'expo.out', stagger: 0.09, clearProps: 'clipPath,transform,opacity' },
+      0.05);
+  });
 }
 
 interface UsePinnedTrackParams {
