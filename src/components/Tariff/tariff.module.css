@@ -637,12 +637,26 @@
   gap: 16px;
   min-width: 0;
 }
-/* comparing → cap the three-card row and centre it so it never sprawls wide */
-.cards[data-comparing='true'] {
-  max-width: 1120px;
-  margin-left: auto;
-  margin-right: auto;
-  width: 100%;
+/* comparing → pin the three-card row at its FINAL geometry so it NEVER reflows as
+   the panel expands/collapses behind it. The panel's right edge is fixed (it only
+   grows leftward), so we right-anchor the row there and give it a fixed width equal
+   to the panel's final content width. Absolutely placed inside the panel, which
+   (overflow:hidden) becomes the separate background layer and clips the row until
+   it has fully opened — so the cards can slide in immediately, at full width. */
+.frameHero[data-comparing='true'] .cards {
+  /* offset parent is .panelNormal (position:relative); its right edge is fixed as
+     the panel grows leftward, so right:0 pins the row there while it stays put.
+     Width = the panel's final CONTENT width. The panel (.heroRight) is capped at
+     flex-basis 1208px, so on wide viewports its content tops out at 1208−88=1120px
+     and the photo absorbs the slack — hence the min() cap. Without it the row
+     computes wider than the panel and the left card gets clipped.
+     100 = gap(12) + panel padding-left(72) + padding-right(16); 88 = the paddings. */
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: min(calc(var(--fw, calc(100vw - 32px)) - 100px), 1120px);
+  max-width: none;
+  margin: 0;
 }
 
 /* ─── Tariff card ─────────────────────────────────────────────────────────── */

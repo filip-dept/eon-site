@@ -184,6 +184,7 @@ export default function TariffPage() {
   const [cardPhase, setCardPhase] = useState<'solo' | 'compare'>('solo'); // which card SET is mounted
   const panelRef = useRef<HTMLDivElement>(null);
   const cardsRef = useRef<HTMLDivElement>(null);        // .cards container (to query the compare cards)
+  const soloCardsWidth = useRef(0);                     // .cards width in solo state — pins it during collapse so the solo card enters at its final width (no reflow)
   const animatingCards = useRef(false);
   const firstCardPhase = useRef(true);
 
@@ -318,6 +319,9 @@ export default function TariffPage() {
     if (animatingCards.current) return;
     animatingCards.current = true;
     const solo = cardRef.current;   // the solo card IS the rec card
+    /* capture the solo row's width NOW (steady state) so we can pin it during the
+       collapse — lets the solo card re-enter at its final width without reflow */
+    if (cardsRef.current) soloCardsWidth.current = cardsRef.current.getBoundingClientRect().width;
     const go = () => { setComparing(true); setCardPhase('compare'); };
     /* solo OUT mirrors the 3-card OUT: same x:80 slide / 0.26s / power2.in */
     if (solo) gsap.to(solo, { opacity: 0, x: 80, duration: 0.26, ease: 'power2.in', onComplete: go });
@@ -351,30 +355,38 @@ export default function TariffPage() {
       const cont = cardsRef.current;
       const cards = cont ? Array.from(cont.querySelectorAll<HTMLElement>(`.${styles.card}`)) : [];
       if (!cards.length) { animatingCards.current = false; return; }
-      /* Held until the panel has finished expanding (0.4s) so each card enters at
-         its FINAL width — no mid-slide reflow (mandatory). THEN slide in left →
-         right, clearly one-by-one (0.12s stagger), mirroring the collapse. */
+      /* The row is pinned at its FINAL width by CSS (.frameHero[data-comparing] .cards),
+         so the cards never reflow as the panel expands behind them — which means we
+         no longer need to wait. Slide them in IMMEDIATELY, one-by-one (0.12s stagger),
+         left → right (from:'start') with ease-out — opposite to how the single card
+         is the lone left→right slide; the 3 cards read as a left-to-right cascade. */
       gsap.set(cards, { opacity: 0, x: 80 });
       gsap.to(cards, {
         opacity: 1, x: 0,
         duration: 0.26, ease: 'power2.out',
         stagger: { each: 0.12, from: 'start' },
-        delay: 0.35,
         clearProps: 'opacity,transform',
         onComplete: () => { animatingCards.current = false; },
       });
     } else {
       const solo = cardRef.current;
+      const cont = cardsRef.current;
       if (!solo) { animatingCards.current = false; return; }
-      /* solo IN: same x-slide manner as the 3 cards (0.26s / power2.out), entering
-         from the LEFT (left → right). Held until the panel finishes collapsing
-         (0.4s) so it appears at its final width — no reflow (mandatory). */
+      /* Pin the row at its captured solo width (right-anchored) so the solo card
+         enters at its FINAL width while the panel is still collapsing behind it —
+         no reflow, no waiting. Then slide it in IMMEDIATELY from the LEFT
+         (left → right), mirroring how the 3 cards enter. */
+      if (cont && soloCardsWidth.current) {
+        gsap.set(cont, { width: soloCardsWidth.current, marginLeft: 'auto', flex: 'none' });
+      }
       gsap.set(solo, { opacity: 0, x: -80 });
       gsap.to(solo, {
         opacity: 1, x: 0, duration: 0.26, ease: 'power2.out',
-        delay: 0.35,
         clearProps: 'opacity,transform',
-        onComplete: () => { animatingCards.current = false; },
+        onComplete: () => {
+          if (cont) gsap.set(cont, { clearProps: 'width,marginLeft,flex' });
+          animatingCards.current = false;
+        },
       });
     }
   }, [cardPhase]);
