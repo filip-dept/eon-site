@@ -358,13 +358,13 @@ export default function TariffPage() {
       /* The row is pinned at its FINAL width by CSS (.frameHero[data-comparing] .cards),
          so the cards never reflow as the panel expands behind them — which means we
          no longer need to wait. Slide them in IMMEDIATELY, one-by-one (0.12s stagger),
-         left → right (from:'start') with ease-out — opposite to how the single card
-         is the lone left→right slide; the 3 cards read as a left-to-right cascade. */
+         3rd card first → 1st card last (from:'end', right → left) with ease-out — this
+         also matches the panel's right→left reveal, so no card slides in while clipped. */
       gsap.set(cards, { opacity: 0, x: 80 });
       gsap.to(cards, {
         opacity: 1, x: 0,
         duration: 0.26, ease: 'power2.out',
-        stagger: { each: 0.12, from: 'start' },
+        stagger: { each: 0.12, from: 'end' },
         clearProps: 'opacity,transform',
         onComplete: () => { animatingCards.current = false; },
       });
