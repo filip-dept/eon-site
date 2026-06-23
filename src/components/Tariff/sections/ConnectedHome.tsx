@@ -1,6 +1,7 @@
 import type { Ref } from 'react';
 import type { HemsCat } from '@/data/hems';
-import { HEMS_CATS, HEMS_LINKS, HEMS_PINS } from '@/data/hems';
+import { HEMS_CATS, HEMS_PINS, HEMS_LINKS } from '@/data/hems';
+import { Hotspot } from './Hotspot';
 import styles from '../tariff.module.css';
 
 /**
@@ -64,21 +65,22 @@ export function ConnectedHome({ cat, activeIndex, pinsReady, onCatClick, textRef
               </g>
             ))}
           </svg>
-          {HEMS_PINS.map((pin) => (
-            <div
-              key={pin.title}
-              className={pin.labelSide === 'left' ? `${styles.hemsPin} ${styles.hemsPinLeft}` : styles.hemsPin}
-              data-ready={pinsReady ? 'true' : 'false'}
-              data-active={cat.pin === pin.title ? 'true' : 'false'}
-              data-dim={cat.pin && cat.pin !== pin.title ? 'true' : 'false'}
-            >
-              <div className={styles.hemsPinDot} />
-              <div className={styles.hemsPinLabel}>
-                <span className={styles.hemsPinTitle}>{pin.title}</span>
-                <span className={styles.hemsPinSub}>{pin.sub}</span>
-              </div>
-            </div>
-          ))}
+          {/* Figma "Hotspot" set — a dot + glass pill per device, wired to the HEMS hub.
+              Only the live device (its category is the active one) is highlighted with
+              a solid white disc + red dot; the rest keep a plain white dot. */}
+          {HEMS_PINS.map((pin) => {
+            const catIdx = HEMS_CATS.findIndex((c) => c.pin === pin.title);
+            return (
+              <Hotspot
+                key={pin.title}
+                title={pin.title}
+                sub={pin.sub}
+                layout={pin.variant}
+                ready={pinsReady}
+                active={pinsReady && activeIndex === catIdx}
+              />
+            );
+          })}
         </div>
       </div>
     </section>

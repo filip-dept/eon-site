@@ -193,7 +193,6 @@ function Step1({ answers, setAnswers, goNext }: {
             data-appear
             layout="row"
             className="min-w-0 flex-1"
-            icon={p.icon}
             title={p.title}
             sub={p.sub}
             selected={answers.priority === p.id}

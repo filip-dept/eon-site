@@ -46,6 +46,9 @@
   color: rgba(38, 38, 38, 0.55);
 }
 .miniTrack { position: relative; height: 2px; background: #e6e4e3; border-radius: 1px; }
+/* interactive variant: pointer cursor + a taller invisible hit area (the rail is only 2px) */
+.miniTrackInteractive { cursor: pointer; touch-action: none; }
+.miniTrackInteractive::before { content: ''; position: absolute; inset: -9px 0; }
 .miniFill { position: absolute; left: 0; top: 0; height: 2px; width: 55%; background: #0075c2; border-radius: 1px; }
 .miniDot {
   position: absolute;

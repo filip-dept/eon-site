@@ -1,6 +1,6 @@
 import { useEffect, useRef, type MutableRefObject, type RefObject } from 'react';
 import { gsap, ScrollTrigger } from '@/lib/gsap';
-import { HEMS_CATS, HEMS_PINS, HEMS_HUB, HEMS_LINKS, hemsCover } from '@/data/hems';
+import { HEMS_CATS, HEMS_PINS, HEMS_HUB, HEMS_LINKS, HEMS_ZOOM, hemsCover } from '@/data/hems';
 import styles from '@/components/Tariff/tariff.module.css';
 
 /**
@@ -42,7 +42,7 @@ export function useHemsStage({ pageRef, linesRef, idxRef, scrubRef, setActive, s
     const hemsPhotoEl = hems.querySelector<HTMLElement>(`.${styles.hemsPhoto}`);
     const hemsShadeEl = hems.querySelector<HTMLElement>(`.${styles.hemsShade}`);
     gsap.set([hemsPhotoEl, hemsShadeEl].filter(Boolean) as HTMLElement[], { clipPath: 'inset(0% 0% 100% 100% round 8px)' });
-    if (hemsPhotoEl) gsap.set(hemsPhotoEl, { scale: 1.3 });
+    if (hemsPhotoEl) gsap.set(hemsPhotoEl, { scale: 1.3 * HEMS_ZOOM });
 
     /* idle auto-open: fires when the user pauses 3s while HEMS (and only HEMS) is
        the active category; any scroll re-arms it; once per visit. */
@@ -74,7 +74,7 @@ export function useHemsStage({ pageRef, linesRef, idxRef, scrubRef, setActive, s
           gsap.fromTo([hemsPhotoEl, hemsShadeEl].filter(Boolean) as HTMLElement[],
             { clipPath: HR_HIDDEN },
             { clipPath: HR_SHOWN, duration: 1.6, ease: 'eonReveal', clearProps: 'clipPath' });
-          if (hemsPhotoEl) gsap.fromTo(hemsPhotoEl, { scale: 1.3 }, { scale: 1, duration: 1.6, ease: 'eonReveal' });
+          if (hemsPhotoEl) gsap.fromTo(hemsPhotoEl, { scale: 1.3 * HEMS_ZOOM }, { scale: HEMS_ZOOM, duration: 1.6, ease: 'eonReveal' });
           setTimeout(() => setPinsReady(true), 850);
         },
       });
@@ -86,6 +86,7 @@ export function useHemsStage({ pageRef, linesRef, idxRef, scrubRef, setActive, s
         end: 'bottom bottom',
         invalidateOnRefresh: true,
         onUpdate: (self) => {
+          /* progressively fill each hub→device wire as the scroll advances */
           const svg = linesRef.current;
           if (svg) {
             const groups = svg.children;
@@ -114,44 +115,25 @@ export function useHemsStage({ pageRef, linesRef, idxRef, scrubRef, setActive, s
       });
     }, page);
 
-    /* hub→device wires as rounded-corner elbows in pixel space, ends meeting the
-       dot centres regardless of the (non-square) photo aspect. */
+    /* place each hotspot's dot at its feature (cover-cropped photo, clamped on),
+       then draw the hub→device wires as rounded-corner elbows meeting the dot
+       centres. The label floats off the dot via its CSS layout. */
     const buildHemsPaths = () => {
       const svg = linesRef.current;
       if (!svg) return;
       const W = svg.clientWidth, H = svg.clientHeight;
       if (!W || !H) return;
       svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
-      const DOT = 20, R = 18;
+      const DOT = 20, EDGE = 12, R = 18;
       const C: Record<string, { x: number; y: number }> = {};
-      HEMS_PINS.forEach((p) => { C[p.title] = hemsCover(W, H, p.nx, p.ny); });
-      const GAP = 16, EDGE = 12;
-      const pinEls = svg.parentElement?.querySelectorAll<HTMLElement>(`.${styles.hemsPin}`);
-      if (pinEls) HEMS_PINS.forEach((p, i) => {
-        const c = C[p.title], el = pinEls[i];
-        if (!el) return;
-        const label = el.querySelector<HTMLElement>(`.${styles.hemsPinLabel}`);
-        let labelW = 0;
-        if (label) {
-          const prevWS = label.style.whiteSpace;
-          label.style.maxWidth = 'none';
-          label.style.whiteSpace = 'nowrap';
-          const natural = label.offsetWidth;
-          label.style.whiteSpace = prevWS;
-          const maxRoom = W - 2 * EDGE - 2 * DOT - GAP;
-          labelW = Math.max(60, Math.min(natural, maxRoom));
-          label.style.maxWidth = `${Math.round(labelW)}px`;
-        }
-        let cx = c.x;
-        if (p.labelSide === 'left') {
-          cx = Math.min(Math.max(cx, EDGE + labelW + GAP + DOT), W - EDGE - DOT);
-        } else {
-          cx = Math.max(Math.min(cx, W - EDGE - labelW - GAP - DOT), EDGE + DOT);
-        }
+      const pinEls = svg.parentElement?.querySelectorAll<HTMLElement>('[data-hotspot]');
+      HEMS_PINS.forEach((p, i) => {
+        const c = hemsCover(W, H, p.nx, p.ny);
+        const cx = Math.min(Math.max(c.x, EDGE + DOT), W - EDGE - DOT);
         const cy = Math.min(Math.max(c.y, EDGE + DOT), H - EDGE - DOT);
         C[p.title] = { x: cx, y: cy };
-        el.style.left = `${cx - DOT}px`;
-        el.style.top = `${cy - DOT}px`;
+        const el = pinEls?.[i];
+        if (el) { el.style.left = `${cx - DOT}px`; el.style.top = `${cy - DOT}px`; }
       });
       const hub = C[HEMS_HUB.title];
       const groups = svg.children;

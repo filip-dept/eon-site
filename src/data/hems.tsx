@@ -48,17 +48,29 @@ export const HEMS_CATS: HemsCat[] = [
 export const HEMS_IMG_W = 1600;
 export const HEMS_IMG_H = 893;
 
-export const HEMS_PINS = [
-  { title: 'HEMS',       sub: 'Alles vernetzt · smart gesteuert', nx: 0.477, ny: 0.248, labelSide: 'right' },
-  { title: 'Solar',      sub: '4,2 kWp · ~3.900 kWh/Jahr',        nx: 0.554, ny: 0.388, labelSide: 'right' },
-  { title: 'Strom',      sub: '100 % Ökostrom · 3.200 kWh',       nx: 0.435, ny: 0.528, labelSide: 'left' },
-  { title: 'Wallbox',    sub: '11 kW · lädt mit Solar',           nx: 0.674, ny: 0.738, labelSide: 'right' },
-  { title: 'Wärmepumpe', sub: 'COP 4,1 · ~60 % weniger Gas',      nx: 0.435, ny: 0.700, labelSide: 'left' },
+/* ── House zoom ──────────────────────────────────────────────────────────────
+   Manual knob to make the house bigger (>1 zooms in; the overflow is clipped by
+   the panel). It scales BOTH the photo and the dot-placement math (hemsCover) so
+   the hotspots stay glued to their features. 1 = exact object-fit:cover. */
+export const HEMS_ZOOM = 1;
+
+export type HotspotLayout =
+  | 'right' | 'left' | 'top-right' | 'top-left' | 'bottom-right' | 'bottom-left';
+
+/* `variant` = which way the label points off the dot (Figma "Hotspot" set), chosen
+   per feature so the pill stays over the house (see the reference composition). */
+export const HEMS_PINS: { title: string; sub: string; nx: number; ny: number; variant: HotspotLayout }[] = [
+  { title: 'HEMS',       sub: 'Alles vernetzt · smart gesteuert', nx: 0.515, ny: 0.570, variant: 'right' },
+  { title: 'Solar',      sub: '4,2 kWp · ~3.900 kWh/Jahr',        nx: 0.550, ny: 0.350, variant: 'right' },
+  { title: 'Strom',      sub: '100 % Ökostrom · 3.200 kWh',       nx: 0.365, ny: 0.440, variant: 'top-right' },
+  { title: 'Wallbox',    sub: '11 kW · lädt mit Solar',           nx: 0.700, ny: 0.690, variant: 'bottom-left' },
+  { title: 'Wärmepumpe', sub: 'COP 4,1 · ~60 % weniger Gas',      nx: 0.420, ny: 0.770, variant: 'bottom-right' },
 ];
 
-/* map a native-image fraction → container px under object-fit:cover (centered) */
+/* map a native-image fraction → container px under object-fit:cover (centered),
+   scaled by HEMS_ZOOM so the dots track the (zoomed) photo */
 export const hemsCover = (cw: number, ch: number, nx: number, ny: number) => {
-  const s = Math.max(cw / HEMS_IMG_W, ch / HEMS_IMG_H);
+  const s = Math.max(cw / HEMS_IMG_W, ch / HEMS_IMG_H) * HEMS_ZOOM;
   const rw = HEMS_IMG_W * s, rh = HEMS_IMG_H * s;
   return { x: (cw - rw) / 2 + nx * rw, y: (ch - rh) / 2 + ny * rh };
 };

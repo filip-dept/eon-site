@@ -1,0 +1,88 @@
+/* ─── Hotspot — Figma "Hotspot" component set (node 1904:1302), 6 layouts ─────
+   A 40px dot anchor + a glass pill label placed in one of six positions around
+   it (right · left · top-right · top-left · bottom-right · bottom-left). The dot
+   is the positioned anchor (the scroll stage sets left/top on .hotspot); the
+   label floats off it via the layout class. */
+.hotspot {
+  position: absolute;
+  width: 40px;
+  height: 40px;
+  /* revealed by the stage once the house has unmasked */
+  opacity: 0;
+  transform: scale(0.92);
+  transform-origin: center;
+  transition: opacity 0.45s ease, transform 0.45s ease;
+}
+.hotspot[data-ready='true'] { opacity: 1; transform: scale(1); }
+
+/* the dot: translucent disc + solid centre (matches the Figma asset).
+   Once the wire reaches it (lit), the disc goes solid white with a red centre. */
+.dot {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.22);
+  backdrop-filter: blur(4px);
+  transition: background 0.35s ease;
+}
+/* only the live device is highlighted: solid white disc + red centre.
+   passed and not-yet-reached devices both keep the plain translucent disc + white dot. */
+.hotspot[data-active='true'] .dot { background: #fff; }
+/* centre dot — white by default, turns red once the wire reaches it (and stays) */
+.dot::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #fff;
+  transition: background 0.35s ease;
+  z-index: 1;
+}
+.hotspot[data-active='true'] .dot::after { background: var(--c-red, #ea1b0a); }
+
+/* the glass pill — bg rgba(99,85,82,0.5), 28px glass blur, soft light drop shadow */
+.label {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  padding: 8px 16px;
+  border-radius: 8px;
+  background: rgba(99, 85, 82, 0.5);
+  backdrop-filter: blur(28px) saturate(1.4);
+  box-shadow: 0 16px 50px rgba(208, 203, 200, 0.45);
+  color: #fff;
+  white-space: nowrap;
+}
+.title {
+  font-family: var(--font-body);
+  font-weight: 700;        /* Copy/lg Bold */
+  font-size: 18px;
+  line-height: 27px;
+}
+.sub {
+  font-family: var(--font-body);
+  font-weight: 400;
+  font-size: 16px;
+  line-height: 20px;
+  opacity: 0.8;
+}
+
+/* ── the six layouts: label position relative to the 40px dot (10px gap) ── */
+/* same row */
+.right .label  { left: calc(100% + 10px); top: 50%; transform: translateY(-50%); }
+.left .label   { right: calc(100% + 10px); top: 50%; transform: translateY(-50%); }
+/* label below the dot */
+.bottomRight .label { top: calc(100% + 10px); left: 0; }
+.bottomLeft .label  { top: calc(100% + 10px); right: 0; }
+/* label above the dot */
+.topRight .label    { bottom: calc(100% + 10px); left: 0; }
+.topLeft .label     { bottom: calc(100% + 10px); right: 0; }
+
+@media (prefers-reduced-motion: reduce) {
+  .hotspot { transition: opacity 0.45s ease; transform: none; }
+  .hotspot[data-ready='true'] { transform: none; }
+}

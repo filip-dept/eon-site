@@ -28,9 +28,6 @@ import { AiChat } from '@/components/chat/AiChat';
 import { emitEon, onEon } from '@/lib/eventBus';
 import styles from './tariff.module.css';
 
-/* the red "Tarif auswählen" CTAs open the conversational checkout journey */
-const startCheckout = () => emitEon('eon:checkout-start');
-
 /* AI-chat orb: one easing for every transition (default↔hover↔open) so they
    all feel the same. `back.out(n)`: higher n = more bounce. */
 const CHAT_EASE = 'back.out(1.1)';
@@ -145,6 +142,25 @@ export default function TariffPage() {
   const [eco,  setEco]  = useState(true);   // "Besonders nachhaltig" → Zukunft family
   const [pref, setPref] = useState(94);     // Flexibilität (0) ↔ Sicherheit (100)
   const tariff = tariffFor(eco, pref);
+
+  /* The checkout overlay mirrors the SHARED eco/pref state, and previews
+     tariffFor(eco, pref). Opening via a card jumps eco/pref to that card so its
+     tariff is shown; the overlay's slider + checkbox then cycle through all 6.
+     (stops are family-independent: [6, 50, 94] → Flex | Ausgewogen | Sicherheit) */
+  const startCheckout = useCallback((t?: Tariff) => {
+    if (t) {
+      const stops = stopsFor(true);
+      const zi = TARIFFS.zukunft.findIndex((x) => x.id === t.id);
+      if (zi >= 0) { setEco(true); setPref(stops[zi]); }
+      else {
+        const si = TARIFFS.standard.findIndex((x) => x.id === t.id);
+        if (si >= 0) { setEco(false); setPref(stops[si]); }
+      }
+    }
+    emitEon('eon:checkout-start');
+  }, []);
+  /* overlay slider → snap the shared preference to the nearest of the 3 stops */
+  const changePref = useCallback((p: number) => setPref(snapTo(p, stopsFor(true))), []);
   /* the active family's three tariffs (Flex | Ausgewogen | Sicherheit) — the
      recommended card is one of them; the other two are the comparison cards
      that fan out of the red panel when "Tarif vergleichen" is pressed */
@@ -507,7 +523,7 @@ export default function TariffPage() {
               <span className={styles.floatTariffName}>{tariff.name}</span>
               <span className={styles.floatTariffPrice}>{tariff.price} € pro Monat</span>
             </div>
-            <IconButton variant="primary" aria-label="Zum Warenkorb" onClick={startCheckout}><Icon name="cart" /></IconButton>
+            <IconButton variant="primary" aria-label="Zum Warenkorb" onClick={() => startCheckout()}><Icon name="cart" /></IconButton>
           </div>
         </div>
       </div>
@@ -620,7 +636,7 @@ export default function TariffPage() {
                           ))}
                         </div>
                         <div className={styles.cardActions}>
-                          <Button variant="primary" fullWidth onClick={startCheckout}>Tarif auswählen</Button>
+                          <Button variant="primary" fullWidth onClick={() => startCheckout(tariff)}>Tarif auswählen</Button>
                           <Button variant="outline" fullWidth iconRight={<Icon name="chevron-right" />} onClick={openCompare}>
                             Tarif vergleichen
                           </Button>
@@ -664,7 +680,7 @@ export default function TariffPage() {
                             ))}
                           </div>
                           <div className={styles.cardActions}>
-                            <Button variant={isRec ? 'primary' : 'outline'} fullWidth onClick={startCheckout}>
+                            <Button variant={isRec ? 'primary' : 'outline'} fullWidth onClick={() => startCheckout(t)}>
                               Tarif auswählen
                             </Button>
                           </div>
@@ -871,7 +887,16 @@ export default function TariffPage() {
       <Proof plz={plz} />
 
       {/* Conversational checkout journey — opened by the red "Tarif auswählen" CTAs */}
-      <CheckoutJourney />
+      <CheckoutJourney
+        tariff={tariff}
+        eco={eco}
+        pref={pref}
+        onEcoChange={toggleEco}
+        onPrefChange={changePref}
+        plz={plz}
+        persons={Number(persons)}
+        kwh={Number(kwh)}
+      />
     </div>
   );
 }
