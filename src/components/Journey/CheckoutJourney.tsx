@@ -461,9 +461,6 @@ export default function CheckoutJourney({ tariff, eco, pref, onEcoChange, onPref
       onBack={goBack}
       onClose={close}
     >
-      {/* From step 2 on, the context toolbar docks top-centre between the buttons */}
-      {step > 1 && <div className={styles.topBar}><ContextBar placement="docked" eco={eco} onEcoChange={onEcoChange} pref={pref} onPrefChange={onPrefChange} plz={plz} persons={persons} kwh={kwh} /></div>}
-
       {/* ── Body: left categories + centered content ── */}
       <div className={styles.modalBody}>
         <nav className={styles.sidebar} aria-label="Fortschritt">
@@ -489,7 +486,14 @@ export default function CheckoutJourney({ tariff, eco, pref, onEcoChange, onPref
           })}
         </nav>
 
-        <div className={styles.contentCol}>
+        <div className={`${styles.contentCol} ${step > 1 ? styles.withCtxHeader : ''}`}>
+          {/* From step 2 on, the full "initial screen" inputs bar sits as a band
+              above the question (outside the back/close chrome) */}
+          {step > 1 && (
+            <div className={styles.ctxHeader}>
+              <ContextBar eco={eco} onEcoChange={onEcoChange} pref={pref} onPrefChange={onPrefChange} plz={plz} persons={persons} kwh={kwh} />
+            </div>
+          )}
           <div className={styles.content}>
             {panels.map((panel, i) => (
               <div

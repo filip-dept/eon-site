@@ -32,12 +32,16 @@ export function Stories() {
         <div className={styles.storiesStage}>
           {STORY_CARDS.map((card) => (
             <div key={card.title} className={`${styles.storyCard} ${card.cls}`}>
-              <img src={card.img} alt="" className={styles.storyMedia} />
-              <div className={styles.storyShade} />
-              <div className={styles.storyPlay}><Icon name="play-carrier" /></div>
-              <div className={styles.storyCaption}>
-                <p className={styles.storyCaptionTitle}>{card.title}</p>
-                <p className={styles.storyCaptionSub}>{card.sub}</p>
+              {/* inner wrapper carries the magnetic pull + 3D tilt (useMagneticStories);
+                  the card itself is reserved for the scroll-driven parallax `y` */}
+              <div className={styles.storyInner}>
+                <img src={card.img} alt="" className={styles.storyMedia} />
+                <div className={styles.storyShade} />
+                <div className={styles.storyPlay}><Icon name="play-carrier" /></div>
+                <div className={styles.storyCaption}>
+                  <p className={styles.storyCaptionTitle}>{card.title}</p>
+                  <p className={styles.storyCaptionSub}>{card.sub}</p>
+                </div>
               </div>
             </div>
           ))}

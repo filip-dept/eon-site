@@ -1562,15 +1562,27 @@
   color: inherit;
 }
 
-/* story cards — y is driven by the per-card parallax scrub */
+/* story cards — y is driven by the per-card parallax scrub. `perspective` here
+   lets the inner wrapper tilt in 3D under the magnetic pointer effect
+   (useMagneticStories); the visual surface (clip/radius/shadow) lives on
+   `.storyInner` so the tilt and lift read correctly. */
 .storyCard {
   position: absolute;
   width: clamp(250px, 23.75vw, 342px);
   aspect-ratio: 342 / 475;
+  z-index: 1;
+  perspective: 900px;
+  border-radius: 8px;
+}
+
+.storyInner {
+  position: absolute;
+  inset: 0;
   border-radius: 4px;
   overflow: hidden;
-  z-index: 1;
   box-shadow: 0 18px 48px rgba(0, 0, 0, 0.22);
+  transform-style: preserve-3d;
+  will-change: transform;
 }
 
 /* horizontal lanes only — the vertical position is driven entirely by the

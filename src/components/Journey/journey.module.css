@@ -123,20 +123,6 @@
 .cornerBtn[data-pos='back']  { left: clamp(20px, 4vw, 62px); }
 .cornerBtn[data-pos='close'] { right: clamp(20px, 4vw, 32px); }
 
-/* ── Context toolbar docked top-centre (steps 2+), between back/close ── */
-.topBar {
-  position: absolute;
-  top: 34px;
-  left: 50%;
-  transform: translateX(-50%);
-  height: 48px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  max-width: calc(100% - 260px);   /* stay clear of the back/close buttons */
-  z-index: 6;
-}
-
 /* ─── Body — left categories + centred content (above the gradient) ───────── */
 .modalBody {
   position: relative;
@@ -197,21 +183,37 @@
   white-space: nowrap;
 }
 
-/* Centred content column — max-width matches Figma (800px) */
+/* Centred content column — max-width matches Figma (800px). Stacks the inputs
+   bar (steps 2+) above the question; the content frame fills the rest. */
 .contentCol {
   flex: 1;
   min-width: 0;
   display: flex;
-  justify-content: center;
+  flex-direction: column;
+  align-items: center;
   overflow: hidden;
 }
 .content {
   flex: 1 1 auto;
+  width: 100%;
   max-width: 1100px;
   position: relative;
   min-height: 0;
   overflow: hidden;
 }
+
+/* the "initial screen" inputs bar, relocated as a band above the question.
+   Top padding clears the back/close corner buttons; x-padding aligns it with
+   the step content. */
+.ctxHeader {
+  width: 100%;
+  max-width: 1100px;
+  flex-shrink: 0;
+  padding: 96px 24px 0;
+}
+/* with the header present the question no longer needs to reserve room for the
+   (now absent) docked toolbar — pull its top padding back in */
+.withCtxHeader .stepPanel { padding-top: 24px; }
 /* first journey (onboarding) — narrower content measure */
 .modalConv .content { max-width: 800px; }
 
