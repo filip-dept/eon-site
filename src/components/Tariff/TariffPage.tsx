@@ -19,6 +19,7 @@ import { TARIFFS, stopsFor, snapTo, tariffFor } from '@/data/tariffs';
 import { HEMS_CATS } from '@/data/hems';
 import { usePinnedTrack } from '@/hooks/usePinnedTrack';
 import { useStoriesParallax } from '@/hooks/useStoriesParallax';
+import { useMagneticStories } from '@/hooks/useMagneticStories';
 import { useHemsStage } from '@/hooks/useHemsStage';
 import { Proof } from './sections/Proof';
 import { Faq } from './sections/Faq';
@@ -428,6 +429,7 @@ export default function TariffPage() {
      after it (ScrollTrigger measures in creation order) or their scrub pins at 1. */
   usePinnedTrack({ pageRef, sectionRef, trackRef, orbRef, orbCentered, setOrbTariffQ });
   useStoriesParallax(pageRef); // story-card parallax + white→gradient bg switch (slice 1)
+  useMagneticStories(pageRef); // pointer-magnetic pull + 3D tilt on the story cards
   useHemsStage({               // connected-home reveal + scrub category-select + wires + idle (slice 2)
     pageRef,
     linesRef: hemsLinesRef,

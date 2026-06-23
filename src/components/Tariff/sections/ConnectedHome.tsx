@@ -46,7 +46,7 @@ export function ConnectedHome({ cat, activeIndex, pinsReady, onCatClick, textRef
         </div>
 
         <div className={styles.hemsRight}>
-          <img src="/hems-house.jpg" alt="Haus mit Solaranlage, Wallbox und E-Auto" className={styles.hemsPhoto} />
+          <img src="/houseproduct.png" alt="Haus mit Solaranlage, Wallbox und E-Auto" className={styles.hemsPhoto} />
           <div className={styles.hemsShade} />
           {/* connecting wires from the HEMS hub to each device; drawn on scroll */}
           <svg
