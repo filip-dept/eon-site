@@ -364,7 +364,7 @@ export default function TariffPage() {
       gsap.to(cards, {
         opacity: 1, x: 0,
         duration: 0.26, ease: 'power2.out',
-        stagger: { each: 0.12, from: 'end' },
+        stagger: { each: 0.07, from: 'end' },
         clearProps: 'opacity,transform',
         onComplete: () => { animatingCards.current = false; },
       });
