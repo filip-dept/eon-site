@@ -900,7 +900,7 @@
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
-  animation: featureLetterReveal 2.8s var(--ease-out) calc(0.5s + var(--i) * 0.05s) both;
+  animation: featureLetterReveal 3.4s var(--ease-out) calc(0.3s + var(--i) * 0.05s) both;
 }
 
 @media (prefers-reduced-motion: reduce) {
