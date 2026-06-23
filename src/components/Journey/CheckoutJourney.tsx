@@ -475,6 +475,7 @@ export default function CheckoutJourney({ tariff, eco, pref, onEcoChange, onPref
                 key={c.label}
                 type="button"
                 className={styles.sideItem}
+                data-aside
                 data-state={state}
                 onClick={() => goToStep(s)}
                 disabled={s > step}

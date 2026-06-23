@@ -103,6 +103,14 @@ export function useStepWizard<A>(config: StepWizardConfig<A>) {
     tl.to(overlay, { opacity: 1, duration: 0.28, ease: 'none' }, 0)
       .to(modal, { clipPath: 'inset(0px 0px 0px 0px)', duration: 0.7, ease: 'eonOut' }, 0);
 
+    /* progress-rail items slide in from the left, staggered, as the modal opens.
+       clearProps lets each item settle back to its data-state opacity (done/todo dim). */
+    const asides = modal.querySelectorAll<HTMLElement>('[data-aside]');
+    if (asides.length) {
+      gsap.set(asides, { x: -18, opacity: 0 });
+      tl.to(asides, { x: 0, opacity: 1, duration: 0.5, ease: 'eonOut', stagger: 0.08, clearProps: 'opacity,transform' }, 0.35);
+    }
+
     const firstStep = stepRefs.current[0];
     if (firstStep) {
       cfg.current.enterFirstStep?.(firstStep, tl);
