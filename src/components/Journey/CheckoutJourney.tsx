@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useCallback } from 'react';
+import type { Tariff } from '@/types/Tariff';
 import { gsap } from '@/lib/gsap';
 import { useStepWizard } from '@/hooks/useStepWizard';
 import { Button } from '@/ui/Button';
@@ -148,9 +149,20 @@ const CATEGORIES = [
 ];
 
 /* ─── Main modal ─────────────────────────────────────────────────────────── */
-export default function CheckoutJourney() {
-  const [eco, setEco] = useState(true); // "Besonders nachhaltig" toggle
-  const toggleEco = () => setEco((v) => !v);
+type CheckoutJourneyProps = {
+  /** the tariff for the current settings — tariffFor(eco, pref) — shown in the review */
+  tariff: Tariff;
+  eco: boolean;
+  pref: number;
+  onEcoChange: () => void;
+  /** drag/click on the review slider → updates the shared preference */
+  onPrefChange: (pref: number) => void;
+  plz: string;
+  persons: number;
+  kwh: number;
+};
+
+export default function CheckoutJourney({ tariff, eco, pref, onEcoChange, onPrefChange, plz, persons, kwh }: CheckoutJourneyProps) {
 
   /* blurred rise-in of the step's content blocks; the opening reveal waits longer
      (until the shell has opened) */
@@ -202,10 +214,11 @@ export default function CheckoutJourney() {
       <p className={styles.stepLabel}>Review</p>
       <h2 className={styles.stepHeadline}>Bereit für deine neue Energie? Wir schon.</h2>
 
-      <ContextBar eco={eco} onEcoChange={toggleEco} />
+      <ContextBar eco={eco} onEcoChange={onEcoChange} pref={pref} onPrefChange={onPrefChange} plz={plz} persons={persons} kwh={kwh} />
 
       <p className={styles.selLabel}>Deine Auswahl</p>
-      <TariffPreview />
+      {/* the "Empfehlung" badge only applies to the sustainable (eco) tariffs */}
+      <TariffPreview tariff={tariff} showBadge={eco} />
 
       <div className={styles.startRow}>
         <Button variant="primary" iconRight={<Icon name="arrow-right" />} onClick={goNext}>Start</Button>
@@ -449,7 +462,7 @@ export default function CheckoutJourney() {
       onClose={close}
     >
       {/* From step 2 on, the context toolbar docks top-centre between the buttons */}
-      {step > 1 && <div className={styles.topBar}><ContextBar placement="docked" eco={eco} onEcoChange={toggleEco} /></div>}
+      {step > 1 && <div className={styles.topBar}><ContextBar placement="docked" eco={eco} onEcoChange={onEcoChange} pref={pref} onPrefChange={onPrefChange} plz={plz} persons={persons} kwh={kwh} /></div>}
 
       {/* ── Body: left categories + centered content ── */}
       <div className={styles.modalBody}>
