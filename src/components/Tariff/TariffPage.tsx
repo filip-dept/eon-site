@@ -43,12 +43,25 @@ const INTRO_RISE = 300;       /* px the hero content rises on the journey → ta
 /* Location/Persons/Plug, Doc, Info, HomeGreen, CheckCircle, Bonus, ChevronRight, Cart,
    Menu → real <Icon name=…/>. Chat icons (mic/send/close) live in <AiChat>. */
 /* one feature row — shared by the solo card (grid) and the comparison cards (list) */
-function Feature({ icon, name, desc }: { icon: React.ReactNode; name: string; desc: string }) {
+function Feature({ icon, name, desc, gradient }: { icon: React.ReactNode; name: string; desc: string; gradient?: boolean }) {
   return (
     <div className={styles.feature}>
       {icon}
       <div className={styles.featureText}>
-        <span className={styles.featureName}>{name}</span>
+        {gradient ? (
+          /* per-letter brand gradient sweeps in as each letter blurs up */
+          <span className={styles.featureName}>
+            {name.split('').map((char, i) => (
+              <span
+                key={i}
+                className={styles.featureNameLetter}
+                style={{ '--i': i } as React.CSSProperties}
+              >{char === ' ' ? ' ' : char}</span>
+            ))}
+          </span>
+        ) : (
+          <span className={styles.featureName}>{name}</span>
+        )}
         <span className={styles.featureDesc}>{desc}</span>
       </div>
     </div>
@@ -171,6 +184,7 @@ export default function TariffPage() {
   const [cardPhase, setCardPhase] = useState<'solo' | 'compare'>('solo'); // which card SET is mounted
   const panelRef = useRef<HTMLDivElement>(null);
   const cardsRef = useRef<HTMLDivElement>(null);        // .cards container (to query the compare cards)
+  const soloCardsWidth = useRef(0);                     // .cards width in solo state — pins it during collapse so the solo card enters at its final width (no reflow)
   const animatingCards = useRef(false);
   const firstCardPhase = useRef(true);
 
@@ -305,8 +319,12 @@ export default function TariffPage() {
     if (animatingCards.current) return;
     animatingCards.current = true;
     const solo = cardRef.current;   // the solo card IS the rec card
+    /* capture the solo row's width NOW (steady state) so we can pin it during the
+       collapse — lets the solo card re-enter at its final width without reflow */
+    if (cardsRef.current) soloCardsWidth.current = cardsRef.current.getBoundingClientRect().width;
     const go = () => { setComparing(true); setCardPhase('compare'); };
-    if (solo) gsap.to(solo, { opacity: 0, y: -10, duration: 0.2, ease: 'power2.in', onComplete: go });
+    /* solo OUT mirrors the 3-card OUT: same x:80 slide / 0.26s / power2.in */
+    if (solo) gsap.to(solo, { opacity: 0, x: 80, duration: 0.26, ease: 'power2.in', onComplete: go });
     else go();
   }, []);
 
@@ -337,27 +355,38 @@ export default function TariffPage() {
       const cont = cardsRef.current;
       const cards = cont ? Array.from(cont.querySelectorAll<HTMLElement>(`.${styles.card}`)) : [];
       if (!cards.length) { animatingCards.current = false; return; }
-      /* Dramatic deck fly-in from fully off the right edge; bigger stagger so the
-         three read as a clear cascade — 3rd card first → 2nd → 1st. */
-      const off = Math.round(window.innerWidth - cont!.getBoundingClientRect().left + 80);
-      gsap.set(cards, { opacity: 0, x: off });
+      /* The row is pinned at its FINAL width by CSS (.frameHero[data-comparing] .cards),
+         so the cards never reflow as the panel expands behind them — which means we
+         no longer need to wait. Slide them in IMMEDIATELY, one-by-one (0.12s stagger),
+         3rd card first → 1st card last (from:'end', right → left) with ease-out — this
+         also matches the panel's right→left reveal, so no card slides in while clipped. */
+      gsap.set(cards, { opacity: 0, x: 80 });
       gsap.to(cards, {
         opacity: 1, x: 0,
-        duration: 0.42, ease: 'power3.out',
-        stagger: { each: 0.08, from: 'end' },
-        delay: 0.08,
+        duration: 0.26, ease: 'power2.out',
+        stagger: { each: 0.12, from: 'end' },
         clearProps: 'opacity,transform',
         onComplete: () => { animatingCards.current = false; },
       });
     } else {
       const solo = cardRef.current;
+      const cont = cardsRef.current;
       if (!solo) { animatingCards.current = false; return; }
-      gsap.set(solo, { opacity: 0, y: 12 });
+      /* Pin the row at its captured solo width (right-anchored) so the solo card
+         enters at its FINAL width while the panel is still collapsing behind it —
+         no reflow, no waiting. Then slide it in IMMEDIATELY from the LEFT
+         (left → right), mirroring how the 3 cards enter. */
+      if (cont && soloCardsWidth.current) {
+        gsap.set(cont, { width: soloCardsWidth.current, marginLeft: 'auto', flex: 'none' });
+      }
+      gsap.set(solo, { opacity: 0, x: -80 });
       gsap.to(solo, {
-        opacity: 1, y: 0, duration: 0.4, ease: 'power3.out',
-        delay: 0.16,   /* come in while the background is still collapsing */
+        opacity: 1, x: 0, duration: 0.26, ease: 'power2.out',
         clearProps: 'opacity,transform',
-        onComplete: () => { animatingCards.current = false; },
+        onComplete: () => {
+          if (cont) gsap.set(cont, { clearProps: 'width,marginLeft,flex' });
+          animatingCards.current = false;
+        },
       });
     }
   }, [cardPhase]);
@@ -585,7 +614,7 @@ export default function TariffPage() {
                       <div className={styles.cardBody}>
                         <div className={styles.cardDivider} />
                         <div className={styles.cardFeatures}>
-                          <Feature icon={<Icon name="bonus" className="text-brand-red shrink-0" />} name={tariff.bonus} desc={tariff.bonusUntil} />
+                          <Feature gradient icon={<Icon name="bonus" className="text-brand-red shrink-0" />} name={tariff.bonus} desc={tariff.bonusUntil} />
                           {tariff.features.map(([name, desc]) => (
                             <Feature key={name + desc} icon={<Icon name="check-circle" className="text-brand-red" />} name={name} desc={desc} />
                           ))}
@@ -645,9 +674,9 @@ export default function TariffPage() {
                   )}
                 </div>
               </div>{/* /panelNormal */}
-            </div>{/* /panel */}
 
-              {/* Social proof — sits BELOW the red panel, on the white page */}
+              {/* Social proof — now INSIDE the gradient panel, no background; rides
+                  on the red gradient with light (inverse) text */}
               <div className={styles.socialProof}>
                 <div className={styles.avatars}>
                   {[
@@ -662,8 +691,9 @@ export default function TariffPage() {
                   <p className={styles.socialPct}>68% der Haushalte</p>
                   <p className={styles.socialDesc}>mit ähnlichem Verbrauch wählen diesen Tarif</p>
                 </div>
-                <Link as="button" weight="medium" className="shrink-0">Mehr entdecken</Link>
+                <Link as="button" tone="inverse" weight="medium" className="shrink-0">Mehr entdecken</Link>
               </div>
+            </div>{/* /panel */}
             </div>{/* /heroRight */}
           </div>
 
