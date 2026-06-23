@@ -718,7 +718,7 @@ export default function TariffPage() {
                 frame-level clip-path would cut them off if you scroll mid-reveal.
                 Its content reveals via per-element data-ahero / data-aimg instead. ═══ */}
           <div className={`${styles.frame} ${styles.frameEditorial}`} data-noclip>
-            <div className={styles.editorialContent} data-ahero>
+            <div className={styles.editorialContent} data-alines>
               <span className={styles.editorialLabel}>Unsere Stromtransparenz</span>
               <h2 className={styles.editorialTitle}>Was passiert mit deinen 28 Cent?</h2>
               <p className={styles.editorialDesc}>
