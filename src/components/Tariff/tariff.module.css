@@ -411,10 +411,10 @@
 }
 /* comparison open → the image grows to absorb all slack the capped panel
    leaves, so image + panel always span the full frame (no side gutters).
-   expand: slower, eased-out, so the background glides open. */
+   expand: symmetric to the collapse (same 0.4s, eased-out). */
 .frameHero[data-comparing='true'] .frameImage {
   flex: 1 1 0;
-  transition: flex-basis 0.55s var(--ease-out), flex-grow 0.55s var(--ease-out);
+  transition: flex-basis 0.4s var(--ease-out), flex-grow 0.4s var(--ease-out);
 }
 /* right column: red panel stacked above the social-proof strip (on white page).
    Holds the column width the panel used to own, so image + column fill the frame. */
@@ -429,8 +429,8 @@
 }
 .frameHero[data-comparing='true'] .heroRight {
   flex: 0 1 1208px;            /* grows to hold the three capped cards */
-  /* expand: slower, eased-out — the comparison background glides open */
-  transition: flex-basis 0.55s var(--ease-out), flex-grow 0.55s var(--ease-out);
+  /* expand: symmetric to the collapse (same 0.4s, eased-out) */
+  transition: flex-basis 0.4s var(--ease-out), flex-grow 0.4s var(--ease-out);
 }
 /* comparing → drop the social-proof strip so the three tariff cards get full height */
 .frameHero[data-comparing='true'] .socialProof {
@@ -446,14 +446,15 @@
   object-position: top center;   /* fill, cropping evenly around the centre */
 }
 
-/* Social proof — plain content on the white page, below (outside) the red panel */
+/* Social proof — now INSIDE the red gradient panel: no background, light text,
+   a faint top hairline separates it from the recommendation card above */
 .socialProof {
   flex-shrink: 0;
   display: flex;
   align-items: center;
   gap: 16px;
-  padding: 10px 12px;
-  background: #F8F5F2;
+  padding: 16px 12px 4px;
+  background: transparent;
 }
 
 .avatars {
@@ -482,14 +483,14 @@
   font-family: var(--font-body);
   font-weight: 700;
   font-size: 16px;
-  color: var(--c-text-primary);
+  color: #fff;
   margin-bottom: 1px;
 }
 
 .socialDesc {
   font-family: var(--font-body);
   font-size: 14px;
-  color: rgba(38,38,38,0.65);
+  color: rgba(255, 255, 255, 0.8);
   line-height: 1.35;
 }
 
@@ -664,13 +665,13 @@
     margin-left 0.4s var(--ease-out),
     max-height 0.4s var(--ease-out);
 }
-/* expand: slower/smoother so the rec card eases into the row */
+/* expand: symmetric to the collapse — same 0.4s timing/easing in both directions */
 .cards[data-comparing='true'] .card[data-rec='true'] {
   transition:
-    flex-grow 0.55s var(--ease-out),
-    flex-basis 0.55s var(--ease-out),
-    margin-left 0.55s var(--ease-out),
-    max-height 0.55s var(--ease-out);
+    flex-grow 0.4s var(--ease-out),
+    flex-basis 0.4s var(--ease-out),
+    margin-left 0.4s var(--ease-out),
+    max-height 0.4s var(--ease-out);
 }
 /* the two alternatives never animate their OWN box — their width is just their
    flex share of the (eased) container; GSAP drives their move/fade in & out */
@@ -885,7 +886,7 @@
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
-  animation: featureLetterReveal 1.8s var(--ease-out) calc(var(--i) * 0.04s) both;
+  animation: featureLetterReveal 2.8s var(--ease-out) calc(0.5s + var(--i) * 0.05s) both;
 }
 
 @media (prefers-reduced-motion: reduce) {

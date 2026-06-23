@@ -319,7 +319,8 @@ export default function TariffPage() {
     animatingCards.current = true;
     const solo = cardRef.current;   // the solo card IS the rec card
     const go = () => { setComparing(true); setCardPhase('compare'); };
-    if (solo) gsap.to(solo, { opacity: 0, y: -10, duration: 0.2, ease: 'power2.in', onComplete: go });
+    /* solo OUT mirrors the 3-card OUT: same x:80 slide / 0.26s / power2.in */
+    if (solo) gsap.to(solo, { opacity: 0, x: 80, duration: 0.26, ease: 'power2.in', onComplete: go });
     else go();
   }, []);
 
@@ -350,25 +351,28 @@ export default function TariffPage() {
       const cont = cardsRef.current;
       const cards = cont ? Array.from(cont.querySelectorAll<HTMLElement>(`.${styles.card}`)) : [];
       if (!cards.length) { animatingCards.current = false; return; }
-      /* Dramatic deck fly-in from fully off the right edge; bigger stagger so the
-         three read as a clear cascade — 3rd card first → 2nd → 1st. */
-      const off = Math.round(window.innerWidth - cont!.getBoundingClientRect().left + 80);
-      gsap.set(cards, { opacity: 0, x: off });
+      /* Held until the panel has finished expanding (0.4s) so each card enters at
+         its FINAL width — no mid-slide reflow (mandatory). THEN slide in left →
+         right, clearly one-by-one (0.12s stagger), mirroring the collapse. */
+      gsap.set(cards, { opacity: 0, x: 80 });
       gsap.to(cards, {
         opacity: 1, x: 0,
-        duration: 0.42, ease: 'power3.out',
-        stagger: { each: 0.08, from: 'end' },
-        delay: 0.08,
+        duration: 0.26, ease: 'power2.out',
+        stagger: { each: 0.12, from: 'start' },
+        delay: 0.35,
         clearProps: 'opacity,transform',
         onComplete: () => { animatingCards.current = false; },
       });
     } else {
       const solo = cardRef.current;
       if (!solo) { animatingCards.current = false; return; }
-      gsap.set(solo, { opacity: 0, y: 12 });
+      /* solo IN: same x-slide manner as the 3 cards (0.26s / power2.out), entering
+         from the LEFT (left → right). Held until the panel finishes collapsing
+         (0.4s) so it appears at its final width — no reflow (mandatory). */
+      gsap.set(solo, { opacity: 0, x: -80 });
       gsap.to(solo, {
-        opacity: 1, y: 0, duration: 0.4, ease: 'power3.out',
-        delay: 0.16,   /* come in while the background is still collapsing */
+        opacity: 1, x: 0, duration: 0.26, ease: 'power2.out',
+        delay: 0.35,
         clearProps: 'opacity,transform',
         onComplete: () => { animatingCards.current = false; },
       });
@@ -658,9 +662,9 @@ export default function TariffPage() {
                   )}
                 </div>
               </div>{/* /panelNormal */}
-            </div>{/* /panel */}
 
-              {/* Social proof — sits BELOW the red panel, on the white page */}
+              {/* Social proof — now INSIDE the gradient panel, no background; rides
+                  on the red gradient with light (inverse) text */}
               <div className={styles.socialProof}>
                 <div className={styles.avatars}>
                   {[
@@ -675,8 +679,9 @@ export default function TariffPage() {
                   <p className={styles.socialPct}>68% der Haushalte</p>
                   <p className={styles.socialDesc}>mit ähnlichem Verbrauch wählen diesen Tarif</p>
                 </div>
-                <Link as="button" weight="medium" className="shrink-0">Mehr entdecken</Link>
+                <Link as="button" tone="inverse" weight="medium" className="shrink-0">Mehr entdecken</Link>
               </div>
+            </div>{/* /panel */}
             </div>{/* /heroRight */}
           </div>
 
