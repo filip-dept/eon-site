@@ -43,12 +43,25 @@ const INTRO_RISE = 300;       /* px the hero content rises on the journey → ta
 /* Location/Persons/Plug, Doc, Info, HomeGreen, CheckCircle, Bonus, ChevronRight, Cart,
    Menu → real <Icon name=…/>. Chat icons (mic/send/close) live in <AiChat>. */
 /* one feature row — shared by the solo card (grid) and the comparison cards (list) */
-function Feature({ icon, name, desc }: { icon: React.ReactNode; name: string; desc: string }) {
+function Feature({ icon, name, desc, gradient }: { icon: React.ReactNode; name: string; desc: string; gradient?: boolean }) {
   return (
     <div className={styles.feature}>
       {icon}
       <div className={styles.featureText}>
-        <span className={styles.featureName}>{name}</span>
+        {gradient ? (
+          /* per-letter brand gradient sweeps in as each letter blurs up */
+          <span className={styles.featureName}>
+            {name.split('').map((char, i) => (
+              <span
+                key={i}
+                className={styles.featureNameLetter}
+                style={{ '--i': i } as React.CSSProperties}
+              >{char === ' ' ? ' ' : char}</span>
+            ))}
+          </span>
+        ) : (
+          <span className={styles.featureName}>{name}</span>
+        )}
         <span className={styles.featureDesc}>{desc}</span>
       </div>
     </div>
@@ -585,7 +598,7 @@ export default function TariffPage() {
                       <div className={styles.cardBody}>
                         <div className={styles.cardDivider} />
                         <div className={styles.cardFeatures}>
-                          <Feature icon={<Icon name="bonus" className="text-brand-red shrink-0" />} name={tariff.bonus} desc={tariff.bonusUntil} />
+                          <Feature gradient icon={<Icon name="bonus" className="text-brand-red shrink-0" />} name={tariff.bonus} desc={tariff.bonusUntil} />
                           {tariff.features.map(([name, desc]) => (
                             <Feature key={name + desc} icon={<Icon name="check-circle" className="text-brand-red" />} name={name} desc={desc} />
                           ))}

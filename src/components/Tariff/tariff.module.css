@@ -860,6 +860,41 @@
   line-height: 24px;
   color: var(--c-text-primary);
 }
+
+/* ── Bonus feature: per-letter gradient reveal (only the 120 € Neukunden-Bonus) ──
+   Phase 1 (0-25%): the letter blurs up into place.
+   Phase 2 (25-100%): a brand gradient (red→purple→red→dark) sweeps across the
+   text and settles on the dark base colour. Staggered per letter via --i. */
+@keyframes featureLetterReveal {
+  0%   { filter: blur(10px); opacity: 0; background-position-x: 0%; }
+  25%  { filter: blur(0);    opacity: 1; background-position-x: 0%; }
+  100% { filter: blur(0);    opacity: 1; background-position-x: 100%; }
+}
+
+.featureNameLetter {
+  display: inline-block;
+  white-space: pre;          /* keep the space between words visible */
+  background: linear-gradient(90deg,
+    #ea1a1a 0%,
+    #9b27af 25%,
+    #ea1a1a 50%,
+    var(--c-text-primary) 66%,
+    var(--c-text-primary) 100%
+  );
+  background-size: 300% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: featureLetterReveal 1.8s var(--ease-out) calc(var(--i) * 0.04s) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .featureNameLetter {
+    animation: none;
+    color: var(--c-text-primary);
+    -webkit-text-fill-color: var(--c-text-primary);
+  }
+}
 .featureDesc {
   font-family: var(--font-body);
   font-weight: 400;          /* Copy/md Regular */
