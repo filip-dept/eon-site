@@ -215,6 +215,23 @@
 /* first journey (onboarding) — narrower content measure */
 .modalConv .content { max-width: 800px; }
 
+/* onboarding: on wide screens centre the question column in the viewport (the
+   sidebar leaves the flow so contentCol spans full width and centres the 800px
+   content) and float the progress rail 100px to its left (800/2 = 400 → +100 gap).
+   Below ~1500px there isn't room for that without the rail clipping off-screen, so
+   it stays in flow (rail on the left, content centred in the remaining space). */
+@media (min-width: 1500px) {
+  .modalConv .sidebar {
+    position: absolute;
+    top: 50%;
+    right: calc(50% + 400px + 100px);
+    transform: translateY(-50%);
+    width: auto;
+    align-self: auto;
+    z-index: 2;
+  }
+}
+
 /* ─── Step panel ──────────────────────────────────────────────────────────── */
 .stepPanel {
   position: absolute;
