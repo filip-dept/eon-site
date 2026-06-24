@@ -16,7 +16,7 @@ export function Proof({ plz }: ProofProps) {
           <span className={styles.proofLabel}>In deiner Nähe</span>
           <h2 className={styles.proofTitle}>Du bist nicht der<br />Erste rund um</h2>
           <div className={styles.proofZip}>
-            <Icon name="location" className="opacity-75" />
+            <Icon name="location" size={32} className="opacity-75" />
             <span className={styles.proofZipNum}>{plz}</span>
           </div>
           <p className={styles.proofDesc}>
