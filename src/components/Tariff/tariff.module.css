@@ -1191,7 +1191,7 @@
   flex-direction: column;
   gap: 2px;
   font-family: var(--font-body);
-  font-size: 13px;
+  font-size: 16px;
 }
 
 .barCt { opacity: 0.75; }
@@ -1324,7 +1324,7 @@
   flex-direction: column;
   gap: 1px;
   font-family: var(--font-body);
-  font-size: 14px;
+  font-size: 16px;
   opacity: 0.9;
 }
 

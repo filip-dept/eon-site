@@ -131,7 +131,15 @@ export function usePinnedTrack({ pageRef, sectionRef, trackRef, orbRef, orbCente
     gsap.set(footers.slice(0, 2).filter(Boolean) as HTMLElement[], { opacity: 0 });
     gsap.set(bdContent, { autoAlpha: 0 });
 
-    const ROT   = 1200; /* scroll px for one full stack rotation */
+    const FLIP_PX  = 600; /* scroll px for one card's flip */
+    const PAUSE_PX = 500; /* scroll px each card holds still (readable) before it flips */
+    const HOLD  = PAUSE_PX; /* the FIRST card's pause — dead-scroll before the rotation region */
+    /* Rotation region = 3 flips + 2 internal pauses (the 1st pause is HOLD above).
+       The `rot` timeline measures a flip as 1.0 unit and a pause as PAUSE_U units;
+       ROT is sized so one unit maps to FLIP_PX, making every flip = FLIP_PX and
+       every pause = PAUSE_PX (independently tunable). */
+    const PAUSE_U = PAUSE_PX / FLIP_PX;
+    const ROT   = 3 * FLIP_PX + 2 * PAUSE_PX;
     const MORPH = 1200; /* scroll px for the expand-to-breakdown morph */
 
     /* entrance reveals fire off the track's actual x position */
@@ -151,7 +159,7 @@ export function usePinnedTrack({ pageRef, sectionRef, trackRef, orbRef, orbCente
     const pinST = ScrollTrigger.create({
       trigger: section,
       start: 'top top',
-      end: () => `+=${phase1() + ROT + MORPH}`,
+      end: () => `+=${phase1() + HOLD + ROT + MORPH}`,
       pin: true,
       anticipatePin: 1,
       invalidateOnRefresh: true,
@@ -262,7 +270,7 @@ export function usePinnedTrack({ pageRef, sectionRef, trackRef, orbRef, orbCente
     gsap.set(hubWrap, { y: 70, opacity: 0 });
     const hubST = ScrollTrigger.create({
       start: () => pinST.start + phase1() - 2,
-      end:   () => pinST.start + phase1() + ROT + MORPH,
+      end:   () => pinST.start + phase1() + HOLD + ROT + MORPH,
       onEnter:     () => gsap.to(hubWrap, { y: 0, opacity: 1, duration: 1, ease: 'eonAppear', overwrite: 'auto' }),
       onLeaveBack: () => gsap.to(hubWrap, { y: 70, opacity: 0, duration: 0.45, ease: 'eonOut', overwrite: 'auto' }),
     });
@@ -276,7 +284,7 @@ export function usePinnedTrack({ pageRef, sectionRef, trackRef, orbRef, orbCente
     const rot = gsap.timeline();
     let order = [0, 1, 2]; /* element index occupying [back, mid, front] */
     for (let s = 0; s < 3; s++) {
-      const at = s;
+      const at = s * (1 + PAUSE_U); /* each flip (1u) is preceded by a PAUSE_PX pause */
       const [bi, mi, fi] = order;
       /* front card slides out right, shrinks + blurs, tucks to the back */
       rot.to(bars[fi], { x: 430, duration: 0.5, ease: 'power2.in' }, at);
@@ -296,8 +304,8 @@ export function usePinnedTrack({ pageRef, sectionRef, trackRef, orbRef, orbCente
     }
     const rotST = ScrollTrigger.create({
       animation: rot,
-      start: () => pinST.start + phase1(),
-      end:   () => pinST.start + phase1() + ROT,
+      start: () => pinST.start + phase1() + HOLD,
+      end:   () => pinST.start + phase1() + HOLD + ROT,
       scrub: 1,
       invalidateOnRefresh: true,
     });
@@ -341,9 +349,14 @@ export function usePinnedTrack({ pageRef, sectionRef, trackRef, orbRef, orbCente
       if (footers[i]) morph.to(footers[i], { opacity: 1, duration: 0.2 }, 0.55);
     });
 
-    /* seamless swap — cards and real columns overlap pixel-perfect here */
-    morph.to(bars, { autoAlpha: 0, duration: 0.04 }, 0.86);
-    morph.to(bdContent, { autoAlpha: 1, duration: 0.04 }, 0.86);
+    /* seamless swap — the flying bars are replaced by the real columns here.
+       Hard cut (instant .set, not a crossfade): the cards and columns are
+       pixel-aligned and look identical at this point, so swapping in one tick is
+       invisible. A crossfade would briefly leave BOTH layers translucent, letting
+       the page show through (an opacity dip ≈ a flash). bdContent is revealed
+       first (it stacks on top), then the now-redundant bars are hidden. */
+    morph.set(bdContent, { autoAlpha: 1 }, 0.86);
+    morph.set(bars, { autoAlpha: 0 }, 0.86);
 
     /* additional info appears in place */
     morph.to(colInfo, { opacity: 1, y: 0, duration: 0.22, ease: 'power2.out', stagger: 0.03 }, 0.92);
@@ -355,8 +368,8 @@ export function usePinnedTrack({ pageRef, sectionRef, trackRef, orbRef, orbCente
     );
     const morphST = ScrollTrigger.create({
       animation: morph,
-      start: () => pinST.start + phase1() + ROT,
-      end:   () => pinST.start + phase1() + ROT + MORPH,
+      start: () => pinST.start + phase1() + HOLD + ROT,
+      end:   () => pinST.start + phase1() + HOLD + ROT + MORPH,
       scrub: 1,
       invalidateOnRefresh: true,
     });
@@ -375,7 +388,7 @@ export function usePinnedTrack({ pageRef, sectionRef, trackRef, orbRef, orbCente
       gsap.to(orbEl, { x: toCentre ? orbCtrX : orbDockX, duration: 0.7, ease: 'power3.inOut', overwrite: 'auto' });
     };
     const orbCenterST = ScrollTrigger.create({
-      start: () => pinST.start + phase1() + ROT,     /* breakdown morph start */
+      start: () => pinST.start + phase1() + HOLD + ROT,     /* breakdown morph start */
       invalidateOnRefresh: true,
       onEnter:     () => centreOrb(true),
       onLeaveBack: () => centreOrb(false),
